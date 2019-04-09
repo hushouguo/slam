@@ -35,7 +35,7 @@
 
 //
 // benchmark:
-//	1 million EasylogMessage object constrctor and ostringstream waste: 546 ms
+//	1 million EasylogMessage object constructor and ostringstream waste: 546 ms
 //	1 million log_message but don't write to file and stdout waste: 1173 ms
 //	1 million log_message and write to file stream and not flush, not stdout, waste: 1231 ms
 //	1 million log_message to file and flush right now, waste: 2397 ms
@@ -47,17 +47,9 @@
 //
 
 namespace logger {
-//
-#define ENABLE_ASYNC_SEND					1
-#define ENABLE_PREFIX_DATETIME				1
-//#define ENABLE_PREFIX_DATETIME_LONG		1
-#define ENABLE_PREFIX_DATETIME_MILLISECOND	1
-#define ENABLE_PREFIX_LEVEL					1
-#define ENABLE_PREFIX_ERROR_FILE			1
 
+#define SafeFree(P)		do { if(P) { ::free((void*)P); (P) = nullptr; } } while(0)
 #define SafeDelete(P)	do { if(P) { delete (P); (P) = nullptr; } } while(0)
-
-#define CONVERT_CST_TIME
 
 	const char* level_string(EasylogSeverityLevel level) {
 		static const char* __level_string[] = {
@@ -85,7 +77,37 @@ namespace logger {
 		return __level_string[level];
 	}
 
-#ifdef HAS_LOG_LAYOUT
+	// cost of executing 1 million times is:
+	//		c++ 11 waste: 1721 ms
+	//		gettimeofday waste: 138 ms
+	//
+	// get current timestamp
+	//	if time_format is nullptr, default value is "%y/%02m/%02d %02H:%02M:%02S", like: 18/06/29 15:04:18
+	const char* timestamp(char* buffer, size_t len, struct timeval * tv, const char* time_format) {
+		struct timeval tv_now = { tv_sec: 0, tv_usec: 0 };
+		if (tv == nullptr) {
+			gettimeofday(&tv_now, nullptr);
+			tv = &tv_now;
+		}		
+	
+		if (time_format == nullptr) {
+			time_format = "%y/%02m/%02d %02H:%02M:%02S"; // 18/06/29 15:04:18
+		}
+
+#if EASYLOG_CONVERT_CST_TIME
+		// utc -> cst
+		tv.tv_sec += 8 * 3600;
+#endif
+
+		struct tm result;
+		gmtime_r(&tv->tv_sec, &result);
+
+		std::strftime(buffer, len, time_format, &result);
+
+		return (const char *) buffer;
+	}
+
+#if EASYLOG_HAS_LOG_LAYOUT
 	struct EasylogLayoutNode {
 		std::string plainstring;
 		int arg = -1;
@@ -109,7 +131,7 @@ namespace logger {
 		std::string filename, fullname;
 		std::ofstream* fs;
 		uint64_t fs_launchtime;
-#ifdef HAS_LOG_LAYOUT				
+#if EASYLOG_HAS_LOG_LAYOUT				
 		std::list<EasylogLayoutNode*> layouts_prefix;
 		std::list<EasylogLayoutNode*> layouts_postfix;
 #endif				
@@ -123,36 +145,11 @@ namespace logger {
 	};
 
 
-	// cost of executing 1 million times is:
-	//		c++ 11 waste: 1721 ms
-	//		gettimeofday waste: 138 ms
-	//
-	// get current timestamp
-	//	if time_format is nullptr, default value is "%y/%02m/%02d %02H:%02M:%02S", like: 18/06/29 15:04:18
-	const char* timestamp(char* buffer, size_t len, struct timeval & tv, const char* time_format) {
-		if (!time_format) {
-			time_format = "%y/%02m/%02d %02H:%02M:%02S"; // 18/06/29 15:04:18
-		}
-
-#ifdef CONVERT_CST_TIME
-		// utc -> cst
-		tv.tv_sec += 8 * 3600;
-#endif
-
-		struct tm result;
-		gmtime_r(&tv.tv_sec, &result);
-
-		std::strftime(buffer, len, time_format, &result);
-
-		return (const char *) buffer;
-	}
-
-
 	EasylogMessage::EasylogMessage(Easylog* easylog, EasylogSeverityLevel level, std::string file, int line, std::string func)
 		: std::ostream(nullptr)
 		, _easylog(easylog)
 		, _level(level)
-#ifdef HAS_LOG_LAYOUT		
+#if EASYLOG_HAS_LOG_LAYOUT		
 		, _file(file)
 		, _line(line)
 		, _function(func)
@@ -161,7 +158,7 @@ namespace logger {
 	{
 		rdbuf(&this->_log->buffer);
 
-#ifdef HAS_LOG_LAYOUT
+#if EASYLOG_HAS_LOG_LAYOUT
 		const std::list<EasylogLayoutNode*>& layouts = this->_easylog->layout_prefix(this->level());
 		for (auto& layoutNode : layouts) {
 			if (layoutNode->dynamicstring != nullptr) {
@@ -173,22 +170,22 @@ namespace logger {
 		}
 #else
 
-#ifdef ENABLE_PREFIX_DATETIME
+#if EASYLOG_ENABLE_PREFIX_DATETIME
 		struct timeval tv = { tv_sec: 0, tv_usec: 0 };
 		gettimeofday(&tv, nullptr);
 
 		char time_buffer[64];
 		
-#ifdef ENABLE_PREFIX_DATETIME_LONG
-		timestamp(time_buffer, sizeof(time_buffer), tv, "[%y/%02m/%02d %02H:%02M:%02S");
+#if EASYLOG_ENABLE_PREFIX_DATETIME_LONG
+		timestamp(time_buffer, sizeof(time_buffer), &tv, "[%y/%02m/%02d %02H:%02M:%02S");
 #else
-		timestamp(time_buffer, sizeof(time_buffer), tv, "[%02H:%02M:%02S");
+		timestamp(time_buffer, sizeof(time_buffer), &tv, "[%02H:%02M:%02S");
 			//easylog->autosplit_hour() ? "[%02M:%02S" : "[%02H:%02M:%02S");
 #endif
 
 		*this << time_buffer;
 
-#ifdef ENABLE_PREFIX_DATETIME_MILLISECOND
+#if EASYLOG_ENABLE_PREFIX_DATETIME_MILLISECOND
 		*this << "|" << std::setw(3) << std::setfill('0') << (tv.tv_usec / 1000) << "] ";
 #else
 		*this << "] ";
@@ -196,13 +193,13 @@ namespace logger {
 
 #endif
 
-#ifdef ENABLE_PREFIX_LEVEL
+#if EASYLOG_ENABLE_PREFIX_LEVEL
 		if (level != LEVEL_TRACE) {
 			*this << "<" << levelshort_string(level) << "> ";
 		}
 #endif
 
-#ifdef ENABLE_PREFIX_ERROR_FILE
+#if EASYLOG_ENABLE_PREFIX_ERROR_FILE
 		if (level == LEVEL_ERROR || level == LEVEL_PANIC) {
 			*this << "(" << file << ":" << line << ") ";
 		}
@@ -212,7 +209,7 @@ namespace logger {
 	}
 
 	EasylogMessage::~EasylogMessage() {
-#ifdef HAS_LOG_LAYOUT
+#if EASYLOG_HAS_LOG_LAYOUT
 		const std::list<EasylogLayoutNode*>& layouts = this->_easylog->layout_postfix(this->level());
 		for (auto& layoutNode : layouts) {
 			if (layoutNode->dynamicstring != nullptr) {
@@ -249,6 +246,23 @@ namespace logger {
 	}
 	////////////////////////////////////////////////////////////////////////////////////
 
+	class Spinlocker {
+		public:
+			void lock() {
+				while (this->_locker.test_and_set(std::memory_order_acquire));
+			}
+
+			bool trylock() {
+				return !this->_locker.test_and_set(std::memory_order_acquire);// set OK, return false
+			}
+
+			void unlock() {
+				this->_locker.clear(std::memory_order_release);
+			}
+		private:
+			std::atomic_flag _locker = ATOMIC_FLAG_INIT;
+	};
+
 	////////////////////////////////////////////////////////////////////////////////////
 
 	class EasylogInternal : public Easylog {
@@ -269,7 +283,7 @@ namespace logger {
 			bool autosplit_hour() override { return this->_autosplit_hour; }
 			void set_autosplit_day(bool value) override { this->_autosplit_day = value; }
 			void set_autosplit_hour(bool value) override { this->_autosplit_hour = value; }
-#ifdef HAS_LOG_LAYOUT			
+#if EASYLOG_HAS_LOG_LAYOUT			
 			bool set_layout(EasylogSeverityLevel level, std::string layout) override;
 			const std::list<EasylogLayoutNode*>& layout_prefix(EasylogSeverityLevel level) override { return this->_levels[level].layouts_prefix; }
 			const std::list<EasylogLayoutNode*>& layout_postfix(EasylogSeverityLevel level) override { return this->_levels[level].layouts_postfix; }
@@ -308,53 +322,54 @@ namespace logger {
 			std::map<EasylogSeverityLevel, EasylogLevelNode> _levels = {
 				{ LEVEL_DEBUG, 
 { level:LEVEL_DEBUG, color:CYAN, to_stdout:true, filename:"", fullname:"", fs:nullptr, fs_launchtime:0
-#ifdef HAS_LOG_LAYOUT
+#if EASYLOG_HAS_LOG_LAYOUT
 , layouts_prefix:{}, layouts_postfix:{} 
 #endif
 }},
 
 				{ LEVEL_TRACE, 
 { level:LEVEL_TRACE, color:GREY, to_stdout:true, filename:"", fullname:"", fs:nullptr, fs_launchtime:0
-#ifdef HAS_LOG_LAYOUT
+#if EASYLOG_HAS_LOG_LAYOUT
 , layouts_prefix:{}, layouts_postfix:{} 
 #endif
 }},
 				{ LEVEL_ALARM, 
 { level:LEVEL_ALARM, color:YELLOW, to_stdout:true, filename:"", fullname:"", fs:nullptr, fs_launchtime:0
-#ifdef HAS_LOG_LAYOUT
+#if EASYLOG_HAS_LOG_LAYOUT
 , layouts_prefix:{}, layouts_postfix:{} 
 #endif
 }},
 				{ LEVEL_ERROR, 
 { level:LEVEL_ERROR, color:LRED, to_stdout:true, filename:"", fullname:"", fs:nullptr, fs_launchtime:0
-#ifdef HAS_LOG_LAYOUT
+#if EASYLOG_HAS_LOG_LAYOUT
 , layouts_prefix:{}, layouts_postfix:{} 
 #endif
 }},
 				{ LEVEL_PANIC, 
 { level:LEVEL_PANIC, color:LMAGENTA, to_stdout:true, filename:"", fullname:"", fs:nullptr, fs_launchtime:0
-#ifdef HAS_LOG_LAYOUT
+#if EASYLOG_HAS_LOG_LAYOUT
 , layouts_prefix:{}, layouts_postfix:{} 
 #endif
 }},
 				{ LEVEL_SYSTEM, 
 { level:LEVEL_SYSTEM, color:LCYAN, to_stdout:true, filename:"", fullname:"", fs:nullptr, fs_launchtime:0
-#ifdef HAS_LOG_LAYOUT
+#if EASYLOG_HAS_LOG_LAYOUT
 , layouts_prefix:{}, layouts_postfix:{} 
 #endif
 }},
 			};
 
 		private:
-#ifdef ENABLE_ASYNC_SEND		
-			LockfreeQueue<EasylogNode*> _logQueue;
+#if EASYLOG_ENABLE_ASYNC_SEND
+			Spinlocker _locker;
+			std::list<EasylogNode*> _logQueue;
 			std::mutex _logMutex;
 			std::condition_variable _logCondition;
 			std::thread* _logthread = nullptr;
 			void logProcess();
 #endif			
 
-#ifdef HAS_LOG_LAYOUT
+#if EASYLOG_HAS_LOG_LAYOUT
 		private:
 			std::unordered_map<std::string, EasylogLayoutNode*> _initnodes = {
 				{ "process", new EasylogLayoutNode(std::to_string(getpid())) },
@@ -420,9 +435,11 @@ namespace logger {
 		if (!this->isstop() && easylogMessage->level() >= this->level()) {
 			EasylogLevelNode* levelNode = &this->_levels[easylogMessage->level()];
 			
-#ifdef ENABLE_ASYNC_SEND
+#if EASYLOG_ENABLE_ASYNC_SEND
 			easylogMessage->log()->levelNode = levelNode;
+			this->_locker.lock();
 			this->_logQueue.push_back(easylogMessage->log());
+			this->_locker.unlock();
 			this->_logCondition.notify_all();
 #else
 			const std::string& s = easylogMessage->log()->buffer.str();
@@ -447,13 +464,17 @@ namespace logger {
 		}
 	}
 
-#ifdef ENABLE_ASYNC_SEND
+#if EASYLOG_ENABLE_ASYNC_SEND
 	void EasylogInternal::logProcess() {
 		while (true) {
 			EasylogNode* logNode = nullptr;
+			this->_locker.lock();
 			if (!this->_logQueue.empty()) {
-				logNode = this->_logQueue.pop_front();
+				logNode = this->_logQueue.front();
+				this->_logQueue.pop_front();
 			}
+			this->_locker.unlock();
+			
 			if (logNode) {
 				const std::string& s = logNode->buffer.str();
 				this->send_to_stdout(logNode->levelNode, s);
@@ -472,7 +493,7 @@ namespace logger {
 	}
 #endif
 
-#ifdef HAS_LOG_LAYOUT
+#if EASYLOG_HAS_LOG_LAYOUT
 	bool EasylogInternal::set_layout(EasylogSeverityLevel level, std::string layout) {
 		auto parsefunc = [this](std::list<EasylogLayoutNode*>& layouts_prefix, std::list<EasylogLayoutNode*>& layouts_postfix, const std::string& layout) -> bool {
 			std::string::size_type i = 0;
@@ -560,6 +581,84 @@ namespace logger {
 	}
 #endif
 
+	//
+	// get current time seconds	
+	uint64_t currentSecond() {		
+		return std::time(nullptr); // cost of executing 1 million times is: 4 ms
+	}
+
+	const char* getDirectoryName(const char* fullname) {
+		static char __dir_buffer[PATH_MAX];
+		strncpy(__dir_buffer, fullname, sizeof(__dir_buffer));
+		return dirname(__dir_buffer);
+	}
+
+	const char* getFilename(const char* fullname) {
+		static char __filename_buffer[PATH_MAX];
+		strncpy(__filename_buffer, fullname, sizeof(__filename_buffer));
+		return basename(__filename_buffer);
+	}
+
+	const char* absoluteDirectory(const char* fullname) {
+		static char __dir_buffer[PATH_MAX];		
+		char* realdir = realpath(getDirectoryName(fullname), nullptr);
+		snprintf(__dir_buffer, sizeof(__dir_buffer), "%s/%s", realdir, getFilename(fullname));
+		SafeFree(realdir);
+		return __dir_buffer;
+	}
+
+	//
+	// test for the file is a directory
+	bool isDir(const char* file) {
+		struct stat buf;
+		if (stat(file, &buf) != 0) { return false; }
+		return S_ISDIR(buf.st_mode);
+	}
+
+	//
+	// existDir: 
+	//	test for the existence of the file
+	// accessableDir, readableDir, writableDir:
+	// 	test whether the file exists and grants read, write, and execute permissions, respectively.
+	bool existDir(const char* file) {
+		return access(file, F_OK) == 0;
+	}
+	bool readableDir(const char* file) {
+		return access(file, R_OK) == 0;
+	}
+	bool writableDir(const char* file) {
+		return access(file, W_OK) == 0;
+	}
+	bool accessableDir(const char* file) {
+		return access(file, X_OK) == 0;
+	}
+
+	//
+	// create inexistence folder
+	bool createDirectory(const char* path) {
+		std::string fullPath = absoluteDirectory(path);
+		std::string::size_type i = 0;
+		umask(0);
+		while (i < fullPath.length()) {
+			std::string::size_type head = fullPath.find('/', i);
+			std::string dir;
+			dir.assign(fullPath, 0, head == std::string::npos ? fullPath.length() : head);
+			if (!dir.empty()) {
+				int rc = mkdir(dir.c_str(), S_IRUSR | S_IWUSR | S_IXUSR | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH);
+				//CHECK_RETURN(rc == 0 || errno == EEXIST, false, "mkdir:%s error:%d,%s", dir.c_str(), errno, strerror(errno));
+				if (rc != 0 && errno != EEXIST) {
+					fprintf(stderr, "mkdir:%s error:%d,%s", dir.c_str(), errno, strerror(errno));
+					return false;
+				}
+			}
+			if (head == std::string::npos) {
+				break;
+			}
+			i = head + 1;
+		}
+		return true;
+	}
+
 	bool EasylogInternal::set_destination(std::string dir) {
 		const char* realdir = absoluteDirectory(dir.c_str());
 		CHECK_RETURN(realdir, false, "dir: `%s` is not valid directory", dir.c_str());
@@ -576,16 +675,14 @@ namespace logger {
 
 	void EasylogInternal::full_filename(const std::string& filename, std::string& fullname) {
 		fullname = this->_dest_dir + "/" + filename;
-		struct timeval tv = { tv_sec: 0, tv_usec: 0 };
-		gettimeofday(&tv, nullptr);
 		if (this->_autosplit_hour) {
 			char time_buffer[64];
-			timestamp(time_buffer, sizeof(time_buffer), tv, ".%Y-%02m-%02d.%02H");
+			timestamp(time_buffer, sizeof(time_buffer), nullptr, ".%Y-%02m-%02d.%02H");
 			fullname += time_buffer;
 		}
 		else if (this->_autosplit_day) {
 			char time_buffer[64];
-			timestamp(time_buffer, sizeof(time_buffer), tv, ".%Y-%02m-%02d");
+			timestamp(time_buffer, sizeof(time_buffer), nullptr, ".%Y-%02m-%02d");
 			fullname += time_buffer;
 		}
 	}
@@ -607,8 +704,7 @@ namespace logger {
 
 	void EasylogInternal::autosplit_file(EasylogLevelNode* levelNode) {
 		if (this->_autosplit_day || this->_autosplit_hour) {
-			//u64 nowtime = sTime.secondPart();
-			uint64_t nowtime = std::time(nullptr);
+			uint64_t nowtime = currentSecond();
 			struct tm tm_nowtime, tm_launchtime;
 			gmtime_r((const time_t *) &nowtime, &tm_nowtime);
 			gmtime_r((const time_t *) &levelNode->fs_launchtime, &tm_launchtime);
@@ -664,7 +760,7 @@ namespace logger {
 
 	void EasylogInternal::stop() {
 		this->_stop = true;
-#ifdef ENABLE_ASYNC_SEND		
+#if EASYLOG_ENABLE_ASYNC_SEND		
 		this->_logCondition.notify_all();
 		if (this->_logthread && this->_logthread->joinable()) {
 			this->_logthread->join();
@@ -675,7 +771,7 @@ namespace logger {
 		
 	
 	EasylogInternal::EasylogInternal() {
-#ifdef ENABLE_ASYNC_SEND	
+#if EASYLOG_ENABLE_ASYNC_SEND	
 		SafeDelete(this->_logthread);
 		this->_logthread = new std::thread([this]() {
 			this->logProcess();
@@ -685,7 +781,7 @@ namespace logger {
 
 	Easylog::~Easylog() {}
 	EasylogInternal::~EasylogInternal() {
-#ifdef HAS_LOG_LAYOUT
+#if EASYLOG_HAS_LOG_LAYOUT
 		for (auto& i : this->_initnodes) {
 			SafeDelete(i.second);
 		}
@@ -699,7 +795,7 @@ namespace logger {
 				SafeDelete(levelNode.fs);
 			}
 
-#ifdef HAS_LOG_LAYOUT
+#if EASYLOG_HAS_LOG_LAYOUT
 			for (auto& layoutNode : levelNode.layouts_prefix) {
 				SafeDelete(layoutNode);
 			}

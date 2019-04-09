@@ -16,8 +16,27 @@
 #include <sstream>
 #include <iomanip>
 
-//#define HAS_LOG_LAYOUT
+#define EASYLOG_VERSION_MAJOR		0
+#define EASYLOG_VERSION_MINOR		1
+#define EASYLOG_VERSION_PATCH		0
 
+#if defined(__plusplus)
+#if __cplusplus <= 199711L
+#error "REQUIRE C++ 11 SUPPORT"
+#endif
+#endif
+
+#define EASYLOG_ENABLE_ASYNC_SEND					1	// another thread to flush
+#define EASYLOG_ENABLE_PREFIX_DATETIME				1	// date prefix, like: [11:02:21|708]
+#define EASYLOG_ENABLE_PREFIX_DATETIME_LONG			0	// long date prefix, like: [2019/04/09 11:02:21|708]
+#define EASYLOG_ENABLE_PREFIX_DATETIME_MILLISECOND	1	// milliseconds in date prefix, like [|708]
+#define EASYLOG_ENABLE_PREFIX_LEVEL					1	// log level, like: <ALM>
+#define EASYLOG_ENABLE_PREFIX_ERROR_FILE			1	// on error or panic level, like: (src/lua/MessageParser.cpp:98)
+#define EASYLOG_CONVERT_CST_TIME					1	// utc -> cst
+#define EASYLOG_HAS_LOG_LAYOUT						0	// custom layout, {host}, {thread}, etc...
+
+//
+// shortcut macro
 #define Debug	logger::EasylogMessage(logger::Easylog::syslog(), logger::LEVEL_DEBUG,  __FILE__, __LINE__, __FUNCTION__)
 #define Trace	logger::EasylogMessage(logger::Easylog::syslog(), logger::LEVEL_TRACE,  __FILE__, __LINE__, __FUNCTION__)
 #define Alarm	logger::EasylogMessage(logger::Easylog::syslog(), logger::LEVEL_ALARM,  __FILE__, __LINE__, __FUNCTION__)
@@ -25,6 +44,8 @@
 #define Panic	logger::EasylogMessage(logger::Easylog::syslog(), logger::LEVEL_PANIC,  __FILE__, __LINE__, __FUNCTION__)
 #define System	logger::EasylogMessage(logger::Easylog::syslog(), logger::LEVEL_SYSTEM, __FILE__, __LINE__, __FUNCTION__)
 
+//
+// override assert
 #ifdef assert
 #undef assert
 #endif
