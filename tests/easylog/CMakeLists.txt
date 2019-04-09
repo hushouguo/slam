@@ -19,4 +19,5 @@ add_executable(${target} ${src})
 
 target_link_libraries(${target} rt dl -pthread)
 target_link_libraries(${target} ${EASYLOG_DIR}/lib/libeasylog.a)
+target_link_libraries(${target} ${TCMALLOC_DIR}/lib/libtcmalloc_minimal.a)
 

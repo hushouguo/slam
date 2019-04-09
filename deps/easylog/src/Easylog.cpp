@@ -526,7 +526,8 @@ namespace logger {
 				this->_logCondition.wait(locker);
 			}
 		}
-		fprintf(stderr, "Easylog exit, logQueue: %ld\n", this->_logQueue.size());
+		//fprintf(stderr, "Easylog exit, logQueue: %ld\n", this->_logQueue.size());
+		fprintf(stderr, "Easylog exit, logQueue: %s\n", this->_headQueue == nullptr ? "empty" : "uncleanup");
 	}
 #endif
 
