@@ -3,9 +3,9 @@
  * \brief: Created by hushouguo at 20:07:30 Aug 09 2018
  */
 
-#include "tnode.h"
+#include "Network.h"
 
-BEGIN_NAMESPACE_TNODE {
+namespace net {	
 
 	//
 	// errno helper
