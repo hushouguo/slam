@@ -369,7 +369,35 @@ namespace logger {
 		private:
 #if EASYLOG_ENABLE_ASYNC_SEND
 			Spinlocker _locker;
-			std::list<EasylogNode*> _logQueue;
+			//std::list<EasylogNode*> _logQueue;
+			EasylogNode *_headQueue = nullptr, *_tailQueue = nullptr;
+			inline void pushNode(EasylogNode* node) {
+				this->_locker.lock();
+				if (!this->_headQueue) {
+					assert(this->_tailQueue == nullptr);
+					this->_headQueue = this->_tailQueue = node;
+				}
+				else {
+					assert(this->_tailQueue != nullptr);
+					this->_tailQueue->next = node;
+					this->_tailQueue = node;
+				}
+				this->_locker.unlock();
+			}
+			inline EasylogNode* popNode() {
+				this->_locker.lock();
+				EasylogNode* node = this->_headQueue;
+				if (this->_headQueue != nullptr) {
+					this->_headQueue = this->_headQueue->next;
+					if (this->_headQueue == nullptr) {
+						assert(this->_tailQueue == node);
+						this->_tailQueue = nullptr;
+					}
+				}
+				this->_locker.unlock();
+				return node;
+			}
+			
 			std::mutex _logMutex;
 			std::condition_variable _logCondition;
 			std::thread* _logthread = nullptr;
@@ -444,9 +472,10 @@ namespace logger {
 			
 #if EASYLOG_ENABLE_ASYNC_SEND
 			easylogMessage->log()->levelNode = levelNode;
-			this->_locker.lock();
-			this->_logQueue.push_back(easylogMessage->log());
-			this->_locker.unlock();
+			///this->_locker.lock();
+			///this->_logQueue.push_back(easylogMessage->log());
+			///this->_locker.unlock();
+			this->pushNode(easylogMessage->log());
 			this->_logCondition.notify_all();
 #else
 			const std::string& s = easylogMessage->log()->buffer.str();
@@ -475,12 +504,13 @@ namespace logger {
 	void EasylogInternal::logProcess() {
 		while (true) {
 			EasylogNode* logNode = nullptr;
-			this->_locker.lock();
-			if (!this->_logQueue.empty()) {
-				logNode = this->_logQueue.front();
-				this->_logQueue.pop_front();
-			}
-			this->_locker.unlock();
+			///this->_locker.lock();
+			///if (!this->_logQueue.empty()) {
+			///	logNode = this->_logQueue.front();
+			///	this->_logQueue.pop_front();
+			///}
+			///this->_locker.unlock();
+			logNode = this->popNode();
 			
 			if (logNode) {
 				const std::string& s = logNode->buffer.str();
