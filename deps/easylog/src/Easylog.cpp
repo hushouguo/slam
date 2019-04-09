@@ -3,14 +3,6 @@
  * \brief: Created by hushouguo at 17:58:34 Aug 10 2018
  */
 
-#include <stdio.h>
-#include <stdarg.h>
-#include <list>
-#include <thread>
-#include <mutex>
-#include <functional>
-#include <condition_variable>
-
 #include "Easylog.h"
 
 //
@@ -96,7 +88,7 @@ namespace logger {
 
 #if EASYLOG_CONVERT_CST_TIME
 		// utc -> cst
-		tv.tv_sec += 8 * 3600;
+		tv->tv_sec += 8 * 3600;
 #endif
 
 		struct tm result;
@@ -107,6 +99,21 @@ namespace logger {
 		return (const char *) buffer;
 	}
 
+	const char* getCurrentDirectory() {
+		static char __dir_buffer[PATH_MAX];
+		//#if defined(_GNU_SOURCE)
+#if false
+		// absolute path name, like: /home/hushouguo/libtnode/tests 
+		const char* s = get_current_dir_name();			
+		strncpy(__dir_buffer, s, sizeof(__dir_buffer));
+		SafeFree(s);
+		return __dir_buffer;
+#else
+		// absolute path name, like: /home/hushouguo/libtnode/tests
+		return ::getcwd(__dir_buffer, sizeof(__dir_buffer));
+#endif
+	}
+	
 #if EASYLOG_HAS_LOG_LAYOUT
 	struct EasylogLayoutNode {
 		std::string plainstring;
