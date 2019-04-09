@@ -17,10 +17,14 @@
 #endif
 
 #ifdef PLATFORM_WINDOWS
-#define SOCKET							intptr_t
+#define SOCKET						intptr_t
 #else
-#define SOCKET							int
+#define SOCKET						int
 #endif
+
+#define EASYNET_ENABLE_DEBUG		1
+#define EASYNET_REUSE_ADDRESS		1
+#define EASYNET_REUSE_PORT			1
 
 namespace net {
 	struct SocketMessage {
@@ -28,6 +32,7 @@ namespace net {
 		size_t payload_len;
 		char payload[0];
 	};
+
 	SocketMessage* allocateSocketMessage(size_t payload_len);
 	void releaseSocketMessage(const SocketMessage*);
 

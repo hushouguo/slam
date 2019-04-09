@@ -3,13 +3,13 @@
  * \brief: Created by hushouguo at 16:29:36 Jun 21 2018
  */
 
-#include "Easynet.h"
 #include "Socket.h"
+#include "EasynetInternal.h"
 
 namespace net {
 	class SocketInternal : public Socket {
 		public:
-			SocketInternal(SOCKET s, Easynet* easynet);
+			SocketInternal(SOCKET s, EasynetInternal* easynet);
 			~SocketInternal();
 			
 		public:
@@ -21,12 +21,13 @@ namespace net {
 			bool receive() override;
 			bool send(const Servicemessage* message) override;
 			bool send() override;
-			const Servicemessage* getMessage() override { return this->_rlist.empty() ? nullptr : this->_rlist.pop_front(); }
 
 		private:
 			SOCKET _fd = -1;
 			int _socket_type = -1;
-			Easynet* _easynet = nullptr;
+			EasynetInternal* _easynet = nullptr;
+			Spinlocker _locker;
+			std::list<const ServiceMessage*> _sendQueue;
 
 		private:			
 			ByteBuffer _rbuffer, _wbuffer;
@@ -116,6 +117,7 @@ namespace net {
 		while (true) {
 			ssize_t rc = TEMP_FAILURE_RETRY(::recv(this->_fd, buffer + bytes, len - bytes, MSG_DONTWAIT | MSG_NOSIGNAL));			
 			if (rc == 0) {
+
 				//Error.cout("lost Connection: %d", this->_fd);
 				return -1; // lost connection
 			}
@@ -162,9 +164,10 @@ namespace net {
 		return bytes;
 	}
 	
-	SocketInternal::SocketInternal(SOCKET s, Easynet* easynet) {
+	SocketInternal::SocketInternal(SOCKET s, EasynetInternal* easynet) {
 		this->_fd = s;
 		this->_socket_type = SOCKET_CONNECTION;
+		this->_easynet = easynet;
 	}
 
 	Socket::~Socket() {}
@@ -180,7 +183,7 @@ namespace net {
 		}
 	}
 
-	Socket* SocketCreator::create(SOCKET s, Easynet* easynet) {
+	Socket* SocketCreator::create(SOCKET s, EasynetInternal* easynet) {
 		return new SocketInternal(s, easynet);
 	}
 }

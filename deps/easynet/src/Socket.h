@@ -11,7 +11,7 @@ namespace net {
 		SOCKET_SERVER, SOCKET_CLIENT, SOCKET_CONNECTION
 	};
 
-	class Easynet;
+	class EasynetInternal;
 	class Socket {
 		public:
 			virtual ~Socket() = 0;
@@ -25,11 +25,10 @@ namespace net {
 			virtual bool receive() = 0;
 			virtual bool send(const SocketMessage* msg) = 0;
 			virtual bool send() = 0;
-			//virtual const SocketMessage* getMessage() = 0;
 	};
 
 	struct SocketCreator {
-		static Socket* create(SOCKET s, Easynet* easynet);
+		static Socket* create(SOCKET s, EasynetInternal* easynet);
 	};
 }
 
