@@ -22,7 +22,24 @@ namespace net {
 			void stop() override;
 
 		public:
-		
+			void run();
+
+		private:
+			std::mutex _mtx;
+			std::condition_variable _cond;
+			std::thread* _thread = nullptr;
+
+		public:
+			inline bool isstop() { return this->_isstop; }
+			inline std::function<int(const void*, size_t)>& spliter() {
+				return this->_spliter;
+			}
+			inline Poll& poll() { return this->_poll; }
+
+		private:
+			bool _isstop = false;
+			std::function<int(const void*, size_t)> _spliter;
+			
 		private:
 			Poll _poll;
 			Socket* _sockets[MAX_SOCKET];
@@ -43,7 +60,6 @@ namespace net {
 				this->_locker.unlock();
 				return msg;
 			}
-			std::function<int(const void*, size_t)> _spliter;
 	};
 }
 

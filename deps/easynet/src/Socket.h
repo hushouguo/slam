@@ -14,21 +14,30 @@ namespace net {
 	class EasynetInternal;
 	class Socket {
 		public:
-			virtual ~Socket() = 0;
-
-		public:
-			virtual SOCKET fd() = 0;
-			virtual int socket_type() = 0;
-			virtual void socket_type(int) = 0;
+			Socket(SOCKET s, EasynetInternal* easynet);
+			~Socket();
 			
 		public:
-			virtual bool receive() = 0;
-			virtual bool send(const SocketMessage* msg) = 0;
-			virtual bool send() = 0;
-	};
+			SOCKET fd() { return this->_fd; }
+			int socket_type() { return this->_socket_type; }
+			void socket_type(int value) { this->_socket_type = value; }
+						
+		public:
+			bool receive();
+			bool send(const SocketMessage* msg);
+			bool send();
 
-	struct SocketCreator {
-		static Socket* create(SOCKET s, EasynetInternal* easynet);
+		private:
+			SOCKET _fd = -1;
+			int _socket_type = -1;
+			EasynetInternal* _easynet = nullptr;
+			Spinlocker _locker;
+			std::list<const SocketMessage*> _sendQueue;
+
+		private:			
+			ByteBuffer _rbuffer, _wbuffer;
+			ssize_t readBytes(Byte*, size_t);
+			ssize_t sendBytes(const Byte*, size_t);
 	};
 }
 

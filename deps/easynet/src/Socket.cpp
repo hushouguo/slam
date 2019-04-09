@@ -3,46 +3,21 @@
  * \brief: Created by hushouguo at 16:29:36 Jun 21 2018
  */
 
-#include "Socket.h"
-#include "EasynetInternal.h"
+#include "Network.h"
 
 namespace net {
-	class SocketInternal : public Socket {
-		public:
-			SocketInternal(SOCKET s, EasynetInternal* easynet);
-			~SocketInternal();
-			
-		public:
-			SOCKET fd() override { return this->_fd; }
-			int socket_type() override { return this->_socket_type; }
-			void socket_type(int value) override { this->_socket_type = value; }
-						
-		public:
-			bool receive() override;
-			bool send(const Servicemessage* message) override;
-			bool send() override;
 
-		private:
-			SOCKET _fd = -1;
-			int _socket_type = -1;
-			EasynetInternal* _easynet = nullptr;
-			Spinlocker _locker;
-			std::list<const ServiceMessage*> _sendQueue;
-
-		private:			
-			ByteBuffer _rbuffer, _wbuffer;
-			ssize_t readBytes(Byte*, size_t);
-			ssize_t sendBytes(const Byte*, size_t);
-	};
-
-	bool SocketInternal::receive() {
+	bool Socket::receive() {
 		size_t readlen = 960;
 		ssize_t bytes = this->readBytes(this->_rbuffer.wbuffer(readlen), readlen);
-		CHECK_RETURN(bytes >= 0, false, "readBytes error");
+		//CHECK_RETURN(bytes >= 0, false, "readBytes error");
+		if (bytes < 0) {
+			return false;
+		}
+		
 		if (bytes > 0) {
 			this->_rbuffer.wlength(size_t(bytes));
 		}
-		//Debug << "Socket: " << this->_fd << " receive bytes: " << bytes;
 		
 		ByteBuffer& buffer = this->_rbuffer;
 		while (true) {
@@ -68,12 +43,12 @@ namespace net {
 		return true;	
 	}
 		
-	bool SocketInternal::send(const Servicemessage* message) {
+	bool Socket::send(const SocketMessage* msg) {
 		this->_slist.push_back(message);
 		return this->send();
 	}	
 
-	bool SocketInternal::send() {
+	bool Socket::send() {
 		SpinlockerGuard guard(&this->_slocker);
 					
 		if (this->_wbuffer.size() > 0) {
@@ -112,13 +87,12 @@ namespace net {
 
 	//
 	// < 0: error
-	ssize_t SocketInternal::readBytes(Byte* buffer, size_t len) {
+	ssize_t Socket::readBytes(Byte* buffer, size_t len) {
 		ssize_t bytes = 0;
 		while (true) {
 			ssize_t rc = TEMP_FAILURE_RETRY(::recv(this->_fd, buffer + bytes, len - bytes, MSG_DONTWAIT | MSG_NOSIGNAL));			
 			if (rc == 0) {
-
-				//Error.cout("lost Connection: %d", this->_fd);
+				Debug("lost Connection: %d", this->_fd);
 				return -1; // lost connection
 			}
 			else if (rc < 0) {
@@ -127,24 +101,25 @@ namespace net {
 				}				
 				if (wouldblock()) {
 					break; // no more data to read
-				}				
+				}
 				CHECK_RETURN(false, rc, "socket receive error: %d, %s", errno, strerror(errno));
 			}
 			else {
 				bytes += rc;
 			}			
 		}
+		Debug("Socket: %d, readBytes: %ld, expect: %ld", this->fd(), bytes, len);
 		return bytes;
 	}
 
 	//
 	// < 0: error
-	ssize_t SocketInternal::sendBytes(const Byte* buffer, size_t len) {
+	ssize_t Socket::sendBytes(const Byte* buffer, size_t len) {
 		ssize_t bytes = 0;
 		while (len > size_t(bytes)) {
 			ssize_t rc = TEMP_FAILURE_RETRY(::send(this->_fd, buffer + bytes, len - bytes, MSG_DONTWAIT | MSG_NOSIGNAL));
 			if (rc == 0) {
-				//Error.cout("lost Connection:%d", this->_fd);
+				Debug("lost Connection:%d", this->_fd);
 				return -1; // lost connection
 			}
 			else if (rc < 0) {
@@ -160,18 +135,17 @@ namespace net {
 				bytes += rc;
 			}			
 		}
-		//Debug << "Socket: " << this->fd() << " sendBytes: " << bytes << ", expect: " << len;
+		Debug("Socket: %d, sendBytes: %ld, expect: %ld", this->fd(), bytes, len);
 		return bytes;
 	}
 	
-	SocketInternal::SocketInternal(SOCKET s, EasynetInternal* easynet) {
+	Socket::Socket(SOCKET s, EasynetInternal* easynet) {
 		this->_fd = s;
 		this->_socket_type = SOCKET_CONNECTION;
 		this->_easynet = easynet;
 	}
 
-	Socket::~Socket() {}
-	SocketInternal::~SocketInternal() {
+	Socket::~Socket() {
 		SafeClose(this->_fd);
 		while (!this->_rlist.empty()) {
 			const Servicemessage* message = this->_rlist.pop_front();
@@ -181,10 +155,6 @@ namespace net {
 			const Servicemessage* message = this->_slist.pop_front();
 			release_message(message);
 		}
-	}
-
-	Socket* SocketCreator::create(SOCKET s, EasynetInternal* easynet) {
-		return new SocketInternal(s, easynet);
 	}
 }
 
