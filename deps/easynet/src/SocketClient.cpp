@@ -22,7 +22,7 @@ namespace net {
 			
 		public:
 			bool receive() override { return this->_socket->receive(); }
-			bool sendMessage(const SocketMessage* msg) override { return this->_socket->sendMessage(msg); }
+			bool sendMessage(const NetMessage* msg) override { return this->_socket->sendMessage(msg); }
 			bool send() override { return this->_socket->send(); }
 
 		public:

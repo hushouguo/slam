@@ -34,7 +34,7 @@ namespace net {
 		return socketClient->fd();
 	}
 	
-	bool EasynetInternal::sendMessage(const SocketMessage* msg) {
+	bool EasynetInternal::sendMessage(const NetMessage* msg) {
 		SOCKET s = msg->fd;
 		assert(s < MAX_SOCKET);
 		Socket* socket = this->_sockets[s];
@@ -46,8 +46,8 @@ namespace net {
 		return true;
 	}
 	
-	const SocketMessage* EasynetInternal::getMessage() {
-		const SocketMessage* msg = nullptr;
+	const NetMessage* EasynetInternal::getMessage() {
+		const NetMessage* msg = nullptr;
 		this->_locker.lock();
 		if (!this->_msgQueue.empty()) {
 			msg = this->_msgQueue.front();
@@ -127,7 +127,7 @@ namespace net {
 			SafeDelete(this->_threadWorker);
 			
 			for (auto& msg : this->_msgQueue) {
-				releaseSocketMessage(msg);
+				releaseNetMessage(msg);
 			}
 			this->_msgQueue.clear();
 		}

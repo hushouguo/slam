@@ -27,15 +27,15 @@
 #define EASYNET_REUSE_PORT			0
 
 namespace net {
-	struct SocketMessage {
+	struct NetMessage {
 		SOCKET fd;
 		size_t payload_len;
 		char payload[0];
 	};
 
-	SocketMessage* allocateSocketMessage(size_t payload_len);
-	void releaseSocketMessage(const SocketMessage*);
-
+	NetMessage* allocateNetMessage(size_t payload_len);
+	void releaseNetMessage(const NetMessage*);
+	
 	class Easynet {
 		public:
 			virtual ~Easynet() = 0;
@@ -48,11 +48,11 @@ namespace net {
 			// address, port, timeout(seconds), 
 			virtual SOCKET createClient(const char*, int) = 0;
 			//
-			// `msg` MUST be allocated by allocateSocketMessage function
-			virtual bool sendMessage(const SocketMessage* msg) = 0;
+			// `msg` MUST be allocated by allocateNetMessage function
+			virtual bool sendMessage(SOCKET s, void* msg) = 0;
 			//
 			// return nullptr when no more Message
-			virtual const SocketMessage* getMessage() = 0;
+			virtual const void* getMessage() = 0;
 			//
 			// close Socket right now
 			virtual void closeSocket(SOCKET) = 0;
@@ -60,6 +60,12 @@ namespace net {
 			// `s` exist and active
 			virtual bool isActive(SOCKET) = 0;
 
+		public:
+			virtual void* allocateMessage(size_t payload_len) = 0;
+			virtual void releaseMessage(void* msg) = 0;
+			virtual void setMessageContent(void* msg, const void* data, size_t len) = 0;
+			virtual const void* getMessageContent(void* msg, size_t& len) = 0;
+		
 		public:
 			//
 			// spliter: -1: error occupy, 0: incomplete package, > 0: len of package

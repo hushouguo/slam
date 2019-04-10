@@ -18,7 +18,7 @@ namespace net {
 						
 		public:
 			bool receive() override;
-			bool sendMessage(const SocketMessage* message) override;
+			bool sendMessage(const NetMessage* msg) override;
 			bool send() override;
 
 		private:
@@ -26,7 +26,7 @@ namespace net {
 			int _socket_type = -1;
 			EasynetInternal* _easynet = nullptr;
 			Spinlocker _locker;
-			std::list<const SocketMessage*> _sendQueue;
+			std::list<const NetMessage*> _sendQueue;
 
 		private:			
 			ByteBuffer _rbuffer, _wbuffer;
@@ -65,7 +65,7 @@ namespace net {
 			size_t msglen = size_t(rc);
 			//assert(size_t(rc) <= this->_rbuffer.size());
 			CHECK_RETURN(msglen <= this->_rbuffer.size(), false, "rc: %d overflow rbuffer size: %ld", rc, this->_rbuffer.size());
-			SocketMessage* msg = allocateSocketMessage(msglen);
+			NetMessage* msg = allocateNetMessage(msglen);
 			msg->fd = this->fd();
 			msg->payload_len = msglen;
 			memcpy(msg->payload, this->_rbuffer.rbuffer(), msg->payload_len);
@@ -78,7 +78,7 @@ namespace net {
 		return true;	
 	}
 		
-	bool SocketInternal::sendMessage(const SocketMessage* msg) {
+	bool SocketInternal::sendMessage(const NetMessage* msg) {
 		assert(msg->fd == this->fd());
 		this->_locker.lock();
 		this->_sendQueue.push_back(msg);
@@ -102,7 +102,7 @@ namespace net {
 			return true;	// wbuffer did not send all, wait for next poll
 		}
 
-		const SocketMessage* msg = nullptr;
+		const NetMessage* msg = nullptr;
 		while (true) {
 			this->_locker.lock();
 			if (!this->_sendQueue.empty()) {
