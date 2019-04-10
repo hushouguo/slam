@@ -1,0 +1,35 @@
+客户端和服务器的通信约定
+1. 协议编码采用protobuf, 版本建议3.0以上, 目前服务器端采用的版本是3.6.1
+2. 协议用名字空间来分割，测试协议文件里的名字空间是protocol
+3. 测试服务器地址是10.0.0.168, 端口:12306
+4. 测试协议服务器收到EchoRequest, 会回一条EchoResponse消息
+5. 包格式定义:
+每个网络包被分为两部分: 包头 + 包体, 包头按1字节pack, 
+包头定义如下:
+	len: 		4 bytes
+	entityid:	8 bytes
+	msgid:		2 bytes
+	flags:		2 bytes
+	Note 1: 共16个字节，其中entityid客户端默认不用填写，除非特别需求.
+	Note 2: len的长度是包含包头本身在内的, 比如len = 20, 那么包体的长度就是20 - 16 = 4
+	Note 3: flags字段目前未使用，未来需要支持压缩或加密包时会使用
+包体是由protobuf编码的二进制数据块
+
+6. 我刚看了看protobuf的c++接口定义，protobuf的变长数组，也就是repeated字段，是有Reserve方法来预先一次性分配制定空间的，
+举个例子:
+message EchoRequest {
+    repeated uint32 value_array = 1;
+}
+在填充消息的时候可以先调用Reserve方法
+EchoRequest msg;
+msg.mutable_value_array()->Reserve(10);
+for (int i = 0; i < 10; ++i) {
+    msg.add_value_array(i);
+}
+Reserve方法内部实现： 
+
+我看的是c++版，相信c#版也有这个接口，回头你可以关注下,
+
+
+
+

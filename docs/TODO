@@ -1,0 +1,25 @@
+
+1. closesocket
+2. exitservice
+3. how to cancel ref
+5. test and performance
+6. service receive msg to newserver or newclient, or to msgfunc
+7. lua release_message
+8. message how to manage avoid leak
+9. check multi-thread exclusion
+10. test multi-thread exclusion
+
+12. how to cleanup resource when system halt
+14. db agent
+15. remains lua apis
+16. next monday, debug communicate with client
+17. load static table and convert excel to lua, json
+18. hotfix
+19. 把主线程的任务也做成service，主线程
+21. zero-copy, lockfree
+22. 重构包含文件
+
+timer, 
+onSocketAccept, onClientConnected, onSocketShutdown
+
+GatewayServer, RecordServer
