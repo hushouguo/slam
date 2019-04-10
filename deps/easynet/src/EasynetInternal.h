@@ -6,6 +6,8 @@
 #ifndef __EASYNETINTERNAL_H__
 #define __EASYNETINTERNAL_H__
 
+#define MAX_SOCKET		65536
+
 namespace net {
 	class EasynetInternal : public Easynet {
 		public:

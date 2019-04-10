@@ -16,6 +16,8 @@
 #include <unistd.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <fcntl.h>
+#include <signal.h>
 #include <pthread.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -49,8 +51,8 @@ using Byte	=	unsigned char;
 
 #include "ByteBuffer.h"
 #include "Spinlocker.h"
-#include "Helper.h"
 #include "Easynet.h"
+#include "Helper.h"
 #include "Socket.h"
 #include "SocketClient.h"
 #include "SocketServer.h"

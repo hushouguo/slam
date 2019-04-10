@@ -65,7 +65,7 @@ namespace net {
 			size_t msglen = size_t(rc);
 			//assert(size_t(rc) <= this->_rbuffer.size());
 			CHECK_RETURN(msglen <= this->_rbuffer.size(), false, "rc: %d overflow rbuffer size: %ld", rc, this->_rbuffer.size());
-			const SocketMessage* msg = allocateSocketMessage(msglen);
+			SocketMessage* msg = allocateSocketMessage(msglen);
 			msg->fd = this->fd();
 			msg->payload_len = msglen;
 			memcpy(msg->payload, this->_rbuffer.rbuffer(), msg->payload_len);
@@ -99,7 +99,7 @@ namespace net {
 			return true;	// wbuffer did not send all, wait for next poll
 		}
 
-		const ServiceMessage* msg = nullptr;
+		const SocketMessage* msg = nullptr;
 		while (true) {
 			this->_locker.lock();
 			if (!this->_sendQueue.empty()) {

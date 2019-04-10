@@ -26,7 +26,7 @@ namespace net {
 			bool send() override { return this->_socket->send(); }
 
 		public:
-			bool connect(const char* address, int port, size_t seconds) override;
+			bool connect(const char* address, int port) override;
 
 		private:
 			Socket* _socket = nullptr;

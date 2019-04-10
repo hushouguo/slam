@@ -75,18 +75,18 @@ namespace net {
 			struct epoll_event* ee = &this->_events[i];
 			if (ee->events & (EPOLLERR | EPOLLHUP)) {
 				Error("fd: %d poll error or hup: %d", ee->data.fd, ee->events);
-				easynet->socketError(ee->data.fd);
+				this->_easynet->socketError(ee->data.fd);
 			}
 			else if (ee->events & EPOLLRDHUP) {
 				Error("fd: %d poll error or rdhup: %d", ee->data.fd, ee->events);
-				easynet->socketError(ee->data.fd);
+				this->_easynet->socketError(ee->data.fd);
 			}
 			else {
 				if (ee->events & EPOLLIN) {
-					easynet->socketRead(ee->data.fd);
+					this->_easynet->socketRead(ee->data.fd);
 				}
 				if (ee->events & EPOLLOUT) {
-					easynet->socketWrite(ee->data.fd);
+					this->_easynet->socketWrite(ee->data.fd);
 				}
 			}
 		}

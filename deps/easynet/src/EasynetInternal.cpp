@@ -3,7 +3,7 @@
  * \brief: Created by hushouguo at 17:02:54 Apr 09 2019
  */
 
-#define MAX_SOCKET		65536
+#include "Network.h"
 
 namespace net {
 	SOCKET EasynetInternal::createServer(const char* address, int port) {

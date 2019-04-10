@@ -78,10 +78,10 @@ namespace net {
 		blocking(s);
 		if (::connect(s, (struct sockaddr*)&sockaddr, sizeof(struct sockaddr_in)) < 0) {
 			if (errno == EINTR) {
-				Error.cout("connectSignal timeout");
+				Error("connectSignal timeout");
 			}
 			else {
-				Error.cout("connectSignal error: %d, %s", errno, strerror(errno));
+				Error("connectSignal error: %d, %s", errno, strerror(errno));
 			}
 			connectResult = false;
 		}
@@ -105,7 +105,7 @@ namespace net {
 		nonblocking(s);
 		if (::connect(s, (struct sockaddr*)&sockaddr, sizeof(struct sockaddr_in)) < 0) {
 			if (errno != EINPROGRESS) {
-				Error.cout("connectSelect error: %d, %s", errno, strerror(errno));
+				Error("connectSelect error: %d, %s", errno, strerror(errno));
 				return false;
 			}
 			
@@ -124,11 +124,11 @@ namespace net {
 			int rc = ::select(s + 1, &fdread, &fdwrite, nullptr, &tv);
 
 			if (rc < 0) {
-				Error.cout("connectSelect error: %d, %s", errno, strerror(errno));
+				Error("connectSelect error: %d, %s", errno, strerror(errno));
 				return false;
 			}
 			else if (rc == 0) {
-				Error.cout("connectSelect timeout");
+				Error("connectSelect timeout");
 			}
 			else {
 				if (FD_ISSET(s, &fdwrite) || FD_ISSET(s, &fdread)) {
@@ -136,12 +136,12 @@ namespace net {
 					socklen_t len = sizeof(error);
 					int rc = getsockopt(s, SOL_SOCKET, SO_ERROR, &error, &len);
 					if (rc != 0) {
-						Error.cout("connectSelect failure: %d, %s", errno, strerror(errno));
+						Error("connectSelect failure: %d, %s", errno, strerror(errno));
 						return false;
 					}
 
 					if (error != 0) {
-						Error.cout("connectSelect failure: %d, %s", errno, strerror(errno));
+						Error("connectSelect failure: %d, %s", errno, strerror(errno));
 						return false;
 					}
 
@@ -149,7 +149,7 @@ namespace net {
 					return true; // connect success
 				}
 				else {
-					Error.cout("connectSelect failure");
+					Error("connectSelect failure");
 				}
 			}
 		}

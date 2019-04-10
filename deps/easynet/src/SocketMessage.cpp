@@ -11,6 +11,6 @@ namespace net {
 	}
 	
 	void releaseSocketMessage(const SocketMessage* msg) {
-		free(msg);
+		free((void*) msg);
 	}
 }

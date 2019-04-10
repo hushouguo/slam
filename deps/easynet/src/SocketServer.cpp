@@ -69,7 +69,7 @@ namespace net {
 		val = ::listen(this->fd(), SOMAXCONN);
 		CHECK_RETURN(val == 0, false, "listen failure: %d, %s", errno, strerror(errno));
 
-		Debug("listen on: %s:port", address, port);
+		Debug("listen on: %s:%d", address, port);
 		return true;
 	}
 	
