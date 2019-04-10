@@ -429,11 +429,11 @@ namespace logger {
 				{ "msg", nullptr},
 				{ "datetime", new EasylogLayoutNode([](EasylogLayoutNode* layoutNode, EasylogMessage* easylogMessage, std::ostream& os) {
 					char time_buffer[64];
-					timestamp(time_buffer, sizeof(time_buffer), sTime.secondPart(), layoutNode->plainstring.c_str());
+					timestamp(time_buffer, sizeof(time_buffer), sTime.seconds(), layoutNode->plainstring.c_str());
 					os << time_buffer;
 				}) },
 				{ "millisecond", new EasylogLayoutNode([](EasylogLayoutNode* layoutNode, EasylogMessage* easylogMessage, std::ostream& os) {
-					os << std::setw(layoutNode->arg) << std::setfill('0') << sTime.millisecondPart();
+					os << std::setw(layoutNode->arg) << std::setfill('0') << sTime.milliseconds();
 				}) }
 			};
 #endif

@@ -16,84 +16,7 @@
 
 using namespace tnode;
 
-bool init_runtime_environment(int argc, char* argv[]) {
-	// Verify that the version of the library that we linked against is
-	// compatible with the version of the headers we compiled against.
-	GOOGLE_PROTOBUF_VERIFY_VERSION;
-
-	//
-	// parser command line arguments
-	//
-	if (!sConfig.init(argc, argv)) { return false; }
-
-	//
-	// config Easylog
-	//
-	Easylog::syslog()->set_level((EasylogSeverityLevel) sConfig.get("log.level", GLOBAL));
-	Easylog::syslog()->set_autosplit_day(sConfig.get("log.autosplit_day", true));
-	Easylog::syslog()->set_autosplit_hour(sConfig.get("log.autosplit_hour", false));
-	Easylog::syslog()->set_destination(sConfig.get("log.dir", ".logs"));
-	Easylog::syslog()->set_tofile(GLOBAL, getProgramName());
-	Easylog::syslog()->set_tostdout(GLOBAL, sConfig.runasdaemon ? false : true);
-
-
-	//
-	// tnode
-	//
-#ifdef DEBUG		
-	Trace.cout("tnode: %d.%d.%d, threads: %d, run as %s, %s, debug", TNODE_VERSION_MAJOR, TNODE_VERSION_MINOR, TNODE_VERSION_PATCH, sConfig.threads, sConfig.runasdaemon ? "daemon" : "console", sConfig.guard ? "with guard" : "no guard");
-#else		
-	Trace.cout("tnode: %d.%d.%d, threads: %d, run as %s, %s, release", TNODE_VERSION_MAJOR, TNODE_VERSION_MINOR, TNODE_VERSION_PATCH, sConfig.threads, sConfig.runasdaemon ? "daemon" : "console", sConfig.guard ? "with guard" : "no guard");
-#endif
-
-	//
-	// Config information
-	//
-	if (sConfig.confile.empty()) {
-		Alarm << "specify config file: Unspecified";
-	}
-	else {
-		Trace << "specify config file: " << sConfig.confile;
-	}
-	sConfig.dump();
-
-#if 0
-	//
-	// Easylog configure information
-	//
-	extern const char* tnode::level_string(EasylogSeverityLevel);
-	Trace.cout("Easylog:");
-	Trace.cout("    log.level: %s", level_string(Easylog::syslog()->level()));
-	Trace.cout("    log.autosplit_day: %s, log.autosplit_hour: %s", 
-			Easylog::syslog()->autosplit_day() ? "yes" : "no", 
-			Easylog::syslog()->autosplit_hour() ? "yes" : "no");
-	Trace.cout("    log.dir: %s", Easylog::syslog()->destination());
-#endif
-
-	//
-	// limit
-	//
-	size_t stack_size = sConfig.get("limit.stack_size", 0u);
-	if (stack_size > 0) {
-		setStackSizeLimit(stack_size);
-	}
-
-	size_t max_files = sConfig.get("limit.max_files", 0u);
-	if (max_files > 0) {
-		setOpenFilesLimit(max_files);
-	}
-
-	Trace.cout("stack size: %u (limit.stack_size), max files: %u (limit.max_files)", getStackSizeLimit(), getOpenFilesLimit());
-
-	//
-	// verify lua version
-	CHECK_RETURN(sizeof(lua_Integer) == 8, false, "require right version for lua");
-	CHECK_RETURN(sizeof(lua_Number) == 8, false, "require right version for lua");
-
-	
-	//
-	// install signal handler
-	//
+void install_signal_handler() {
 	struct sigaction act;
 	sigemptyset(&act.sa_mask);
 	act.sa_flags = SA_INTERRUPT; //The system call that is interrupted by this signal will not be restarted automatically
@@ -133,7 +56,67 @@ bool init_runtime_environment(int argc, char* argv[]) {
 	sigaction(SIGUSR2, &act, nullptr);
 	//sigaction(SIGALRM, &act, nullptr);
 	//sigaction(SIGRTMIN, &act, nullptr);
+}
 
+bool verify_limits() {
+	//
+	// limit
+	//
+	size_t stack_size = sConfig.get("limit.stack_size", 0u);
+	if (stack_size > 0) {
+		setStackSizeLimit(stack_size);
+	}
+
+	size_t max_files = sConfig.get("limit.max_files", 0u);
+	if (max_files > 0) {
+		setOpenFilesLimit(max_files);
+	}
+
+	Trace.cout("stack size: %u (limit.stack_size), max files: %u (limit.max_files)", getStackSizeLimit(), getOpenFilesLimit());
+
+	//
+	// verify lua version
+	CHECK_RETURN(sizeof(lua_Integer) == 8, false, "require right version for lua");
+	CHECK_RETURN(sizeof(lua_Number) == 8, false, "require right version for lua");
+
+	return true;
+}
+
+void dump_library_version() {
+	//
+	// tnode
+	//
+#ifdef DEBUG		
+	Trace.cout("tnode: %d.%d.%d, threads: %d, run as %s, %s, debug", TNODE_VERSION_MAJOR, TNODE_VERSION_MINOR, TNODE_VERSION_PATCH, sConfig.threads, sConfig.runasdaemon ? "daemon" : "console", sConfig.guard ? "with guard" : "no guard");
+#else		
+	Trace.cout("tnode: %d.%d.%d, threads: %d, run as %s, %s, release", TNODE_VERSION_MAJOR, TNODE_VERSION_MINOR, TNODE_VERSION_PATCH, sConfig.threads, sConfig.runasdaemon ? "daemon" : "console", sConfig.guard ? "with guard" : "no guard");
+#endif
+
+	//
+	// Config information
+	//
+	if (sConfig.confile.empty()) {
+		Alarm << "specify config file: Unspecified";
+	}
+	else {
+		Trace << "specify config file: " << sConfig.confile;
+	}
+	sConfig.dump();
+
+#if 0
+	//
+	// Easylog configure information
+	//
+	extern const char* tnode::level_string(EasylogSeverityLevel);
+	Trace.cout("Easylog:");
+	Trace.cout("    log.level: %s", level_string(Easylog::syslog()->level()));
+	Trace.cout("    log.autosplit_day: %s, log.autosplit_hour: %s", 
+			Easylog::syslog()->autosplit_day() ? "yes" : "no", 
+			Easylog::syslog()->autosplit_hour() ? "yes" : "no");
+	Trace.cout("    log.dir: %s", Easylog::syslog()->destination());
+#endif
+
+	
 	//
 	// output 3rd libraries
 	//
@@ -169,16 +152,56 @@ bool init_runtime_environment(int argc, char* argv[]) {
 
 	Trace.cout("    gcc version: %d.%d.%d", __GNUC__, __GNUC_MINOR__, __GNUC_PATCHLEVEL__);
 
-	return true;
 }
 
 int main(int argc, char* argv[]) {
-	if (!init_runtime_environment(argc, argv)) { return 1; }
+	// Verify that the version of the library that we linked against is
+	// compatible with the version of the headers we compiled against.
+	GOOGLE_PROTOBUF_VERIFY_VERSION;
 
+	//
+	// parser command line arguments
+	//
+	if (!sConfig.init(argc, argv)) { return false; }
+
+	//
+	// limit
+	//
+	if (!verify_limits()) { return false; }
+
+	//
+	// install signal handler
+	//
+	install_signal_handler();
+
+	//
+	// config Easylog
+	//
+	Easylog::syslog()->set_level((EasylogSeverityLevel) sConfig.get("log.level", GLOBAL));
+	Easylog::syslog()->set_autosplit_day(sConfig.get("log.autosplit_day", true));
+	Easylog::syslog()->set_autosplit_hour(sConfig.get("log.autosplit_hour", false));
+	Easylog::syslog()->set_destination(sConfig.get("log.dir", ".logs"));
+	Easylog::syslog()->set_tofile(GLOBAL, getProgramName());
+	Easylog::syslog()->set_tostdout(GLOBAL, sConfig.runasdaemon ? false : true);
+
+	dump_library_version();
+
+	//
+	// init thread pool
 	sThreadPool.init(sConfig.threads);
+
+	//
+	// init Easynet
 	sNetworkManager.init();
+
+	//
+	// init Service
 	CHECK_GOTO(sServiceManager.init(sConfig.get("tnode.entryfile", "N/A")), exit_failure, "ServiceManager init failure");
 
+	//
+	// delivery message to service
+	// scheduling service
+	// todo: monitor, control server by command line, reload config etc...
 	while (!sConfig.halt) {
 		sTime.now();
 		sNetworkManager.run();

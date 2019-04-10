@@ -184,7 +184,7 @@ BEGIN_NAMESPACE_TNODE {
 	// u64 timesec()
 	static int cc_timesec(lua_State* L) {
 		sTime.now();
-		lua_pushinteger(L, sTime.secondPart());
+		lua_pushinteger(L, sTime.seconds());
 		return 1;
 	}
 

@@ -13,6 +13,17 @@
 BEGIN_NAMESPACE_TNODE {
 	class Service : public Runnable {
 		public:
+			Service(u32 id) : Runnable(id) {}
+			virtual ~Service() = 0;
+
+		public:
+			virtual bool init(const char* entryfile) = 0;
+			virtual void stop() = 0;
+			virtual bool need_schedule() = 0;
+	};
+	
+	class Service : public Runnable {
+		public:
 			Service(u32 id);
 			const char* getClassName() override { return "Service"; }
 

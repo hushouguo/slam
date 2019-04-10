@@ -16,10 +16,10 @@ BEGIN_NAMESPACE_TNODE {
 
 		public:
 			void now();
-			inline u64 secondPart() const { return this->_tv.tv_sec; }
-			inline u64 millisecondPart() const { return this->_tv.tv_usec / 1000; }
+			inline u64 seconds() const { return this->_tv.tv_sec; }
+			inline u64 milliseconds() const { return this->seconds() * 1000 + this->millisecondsPart(); }
+			inline u64 millisecondsPart() const { return this->_tv.tv_usec / 1000; }
 			inline u64 microsecondsPart() const { return this->_tv.tv_usec; }
-			inline u64 milliseconds() const { return this->_tv.tv_sec * 1000 + this->millisecondPart(); }
 			
 		public:
 			void operator =(u64 milliseconds);
