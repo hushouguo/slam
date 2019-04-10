@@ -4,9 +4,7 @@
  */
 
 #include "tnode.h"
-#include "tools/Singleton.h"
 #include "tools/Tools.h"
-#include "tools/Registry.h"
 #include "xml/XmlParser.h"
 #include "config/Config.h"
 

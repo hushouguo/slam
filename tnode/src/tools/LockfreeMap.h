@@ -6,6 +6,8 @@
 #ifndef __LOCKFREEMAP_H__
 #define __LOCKFREEMAP_H__
 
+#include "tools/Spinlocker.h"
+
 BEGIN_NAMESPACE_TNODE {
 	template <typename KEY, typename VALUE> class LockfreeMap {
 		public:

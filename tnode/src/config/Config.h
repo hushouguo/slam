@@ -6,6 +6,9 @@
 #ifndef __CONFIG_H__
 #define __CONFIG_H__
 
+#include "tools/Registry.h"
+#include "tools/Singleton.h"
+
 //
 // NOTE: some config items in here
 //

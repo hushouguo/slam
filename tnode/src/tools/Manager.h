@@ -6,6 +6,8 @@
 #ifndef __MANAGER_H__
 #define __MANAGER_H__
 
+#include "tools/Entry.h"
+
 BEGIN_NAMESPACE_TNODE {
 	template<class ENTRY> class Manager {
 		public:

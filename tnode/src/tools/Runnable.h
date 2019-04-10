@@ -6,6 +6,9 @@
 #ifndef __RUNNABLE_H__
 #define __RUNNABLE_H__
 
+#include "tools/Entry.h"
+#include "tools/ThreadPool.h"
+
 BEGIN_NAMESPACE_TNODE {
 	class Runnable : public Entry<u32>{
 		public:

@@ -6,6 +6,8 @@
 #ifndef __LOCKFREEQUEUE_H__
 #define __LOCKFREEQUEUE_H__
 
+#include "tools/Spinlocker.h"
+
 BEGIN_NAMESPACE_TNODE {
 	template <typename T> class LockfreeQueue {
 		public:

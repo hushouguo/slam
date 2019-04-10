@@ -6,6 +6,8 @@
 #ifndef __THREAD_POOL_H__
 #define __THREAD_POOL_H__
 
+#include "tools/Singleton.h"
+
 BEGIN_NAMESPACE_TNODE {
 	class ThreadPool {
 		public:
