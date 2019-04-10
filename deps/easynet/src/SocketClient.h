@@ -6,7 +6,7 @@
 #ifndef __SOCKET_CLIENT_H__
 #define __SOCKET_CLIENT_H__
 
-BEGIN_NAMESPACE_TNODE {
+namespace net {
 	class SocketClient : public Socket {
 		public:
 			virtual ~SocketClient() = 0;
@@ -15,8 +15,9 @@ BEGIN_NAMESPACE_TNODE {
 			virtual bool connect(const char* address, int port) = 0;
 	};
 
+	class EasynetInternal;
 	struct SocketClientCreator {
-		static SocketClient* create();
+		static SocketClient* create(EasynetInternal* easynet);
 	};
 }
 

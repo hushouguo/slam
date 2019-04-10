@@ -28,7 +28,7 @@
 
 namespace net {
 	struct SocketMessage {
-		SOCKET s;
+		SOCKET fd;
 		size_t payload_len;
 		char payload[0];
 	};
@@ -43,10 +43,10 @@ namespace net {
 		public:
 			//
 			// address, port, maxconn
-			virtual SOCKET createServer(const char*, int, size_t) = 0;
+			virtual SOCKET createServer(const char*, int) = 0;
 			//
 			// address, port, timeout(seconds), 
-			virtual SOCKET createClient(const char*, int, size_t) = 0;
+			virtual SOCKET createClient(const char*, int) = 0;
 			//
 			// `msg` MUST be allocated by allocateSocketMessage function
 			virtual bool sendMessage(const SocketMessage* msg) = 0;

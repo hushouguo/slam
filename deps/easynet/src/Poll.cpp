@@ -3,10 +3,11 @@
  * \brief: Created by hushouguo at 14:39:56 Jun 28 2018
  */
 
-#include "tnode.h"
+#include "Network.h"
 
-BEGIN_NAMESPACE_TNODE {
-	Poll::Poll() {
+namespace net {
+	Poll::Poll(EasynetInternal* easynet) {
+		this->_easynet = easynet;
 		this->_epfd = epoll_create(NM_POLL_EVENT); /* `NM_POLL_EVENT` is just a hint for the kernel */
 		memset(this->_events, 0, sizeof(this->_events));
 	}
@@ -17,7 +18,8 @@ BEGIN_NAMESPACE_TNODE {
 	bool Poll::addSocket(SOCKET s) {
 		//System << "Poll::addSocket: " << s;
 		struct epoll_event ee;
-		ee.events = EPOLLET | EPOLLIN | EPOLLOUT | EPOLLERR;
+		//ee.events = EPOLLET | EPOLLIN | EPOLLOUT | EPOLLERR;
+		ee.events = EPOLLET | EPOLLIN | EPOLLERR;
 		ee.data.u64 = 0; /* avoid valgrind warning */
 		ee.data.fd = s;
 		int rc = epoll_ctl(this->_epfd, EPOLL_CTL_ADD, s, &ee);		
@@ -49,37 +51,42 @@ BEGIN_NAMESPACE_TNODE {
 	}
 
 	void Poll::stop() {
-		this->addSocket(STDOUT_FILENO);// try to wakeup epoll_wait
+		if (!this->_isstop) {
+			this->_isstop = true;
+			this->addSocket(STDOUT_FILENO);// try to wakeup epoll_wait
+		}
 	}
 
-	void Poll::run(int milliseconds, std::function<void(SOCKET)> readfunc, std::function<void(SOCKET)> writefunc, std::function<void(SOCKET)> errorfunc) {
+	void Poll::run(int milliseconds) {
 		/* -1 to block indefinitely, 0 to return immediately, even if no events are available. */
 		int numevents = ::epoll_wait(this->_epfd, this->_events, NM_POLL_EVENT, milliseconds);
-		if (sConfig.halt) {
-			return; // test system if halt
+		if (this->_isstop) {
+			return;
 		}
+		
 		if (numevents < 0) {
 			if (errno == EINTR) {
 				return; // wake up by signal
 			}
 			CHECK_RETURN(false, void(0), "epoll wait error:%d, %s", errno, strerror(errno));
 		}
+		
 		for (int i = 0; i < numevents; ++i) {
 			struct epoll_event* ee = &this->_events[i];
 			if (ee->events & (EPOLLERR | EPOLLHUP)) {
-				Error.cout("fd: %d poll error or hup: %d", ee->data.fd, ee->events);
-				errorfunc(ee->data.fd);
+				Error("fd: %d poll error or hup: %d", ee->data.fd, ee->events);
+				easynet->socketError(ee->data.fd);
 			}
 			else if (ee->events & EPOLLRDHUP) {
-				Error.cout("fd: %d poll error or rdhup: %d", ee->data.fd, ee->events);
-				errorfunc(ee->data.fd);
+				Error("fd: %d poll error or rdhup: %d", ee->data.fd, ee->events);
+				easynet->socketError(ee->data.fd);
 			}
 			else {
 				if (ee->events & EPOLLIN) {
-					readfunc(ee->data.fd);
+					easynet->socketRead(ee->data.fd);
 				}
 				if (ee->events & EPOLLOUT) {
-					writefunc(ee->data.fd);
+					easynet->socketWrite(ee->data.fd);
 				}
 			}
 		}

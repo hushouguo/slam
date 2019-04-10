@@ -9,15 +9,15 @@
 #define NM_POLL_EVENT		128
 
 namespace net {
-	class Socket;
+	class EasynetInternal;
 	class Poll {
 		public:
-			Poll();
+			Poll(EasynetInternal* easynet);
 			~Poll();
 
 		public:
 			void stop();
-			void run(int milliseconds, std::function<void(SOCKET)> readfunc, std::function<void(SOCKET)> writefunc, std::function<void(SOCKET)> errorfunc);
+			void run(int milliseconds);
 			
 		public:
 			bool addSocket(SOCKET s);
@@ -25,8 +25,10 @@ namespace net {
 			bool setSocketPollout(SOCKET s, bool value);
 
 		private:
+			bool _isstop = false;
 			int _epfd = -1;
 			struct epoll_event _events[NM_POLL_EVENT];
+			EasynetInternal* _easynet = nullptr;
 	};
 }
 

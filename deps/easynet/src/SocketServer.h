@@ -6,7 +6,7 @@
 #ifndef __SOCKET_SERVER_H__
 #define __SOCKET_SERVER_H__
 
-BEGIN_NAMESPACE_TNODE {
+namespace net {
 	class SocketServer : public Socket {
 		public:
 			virtual ~SocketServer() = 0;
@@ -16,8 +16,9 @@ BEGIN_NAMESPACE_TNODE {
 			virtual SOCKET accept() = 0;
 	};
 
+	class EasynetInternal;
 	struct SocketServerCreator {
-		static SocketServer* create();
+		static SocketServer* create(EasynetInternal* easynet);
 	};
 }
 

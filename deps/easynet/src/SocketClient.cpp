@@ -3,16 +3,16 @@
  * \brief: Created by hushouguo at 01:57:59 Aug 09 2018
  */
 
-#include "tnode.h"
+#include "Network.h"
 
 #define CONNECT_TIMEOUT		10
 //#define CONNECT_INTERVAL	5
 //#define WAKE_PROCESS_SIGNAL	SIGRTMIN
 
-BEGIN_NAMESPACE_TNODE {
+namespace net {
 	class SocketClientInternal : public SocketClient {
 		public:
-			SocketClientInternal();
+			SocketClientInternal(EasynetInternal* easynet);
 			~SocketClientInternal();
 
 		public:
@@ -22,19 +22,18 @@ BEGIN_NAMESPACE_TNODE {
 			
 		public:
 			bool receive() override { return this->_socket->receive(); }
-			bool send(const Servicemessage* message) override { return this->_socket->send(message); }
+			bool sendMessage(const SocketMessage* msg) override { return this->_socket->sendMessage(msg); }
 			bool send() override { return this->_socket->send(); }
-			const Servicemessage* getMessage() override { return this->_socket->getMessage(); }
 
 		public:
-			bool connect(const char* address, int port) override;
+			bool connect(const char* address, int port, size_t seconds) override;
 
 		private:
 			Socket* _socket = nullptr;
 	};
 
-	SocketClientInternal::SocketClientInternal() {
-		this->_socket = SocketCreator::create(::socket(AF_INET, SOCK_STREAM, 0));
+	SocketClientInternal::SocketClientInternal(EasynetInternal* easynet) {
+		this->_socket = SocketCreator::create(::socket(AF_INET, SOCK_STREAM, 0), easynet);
 		assert(this->_socket);
 		this->_socket->socket_type(SOCKET_CLIENT);		
 	}
@@ -54,7 +53,7 @@ BEGIN_NAMESPACE_TNODE {
 		return rc;
 	}
 	
-	SocketClient* SocketClientCreator::create() {
-		return new SocketClientInternal();
+	SocketClient* SocketClientCreator::create(EasynetInternal* easynet) {
+		return new SocketClientInternal(easynet);
 	}
 }

@@ -6,88 +6,139 @@
 #include "Network.h"
 
 namespace net {
-
-	bool Socket::receive() {
-		size_t readlen = 960;
-		ssize_t bytes = this->readBytes(this->_rbuffer.wbuffer(readlen), readlen);
-		//CHECK_RETURN(bytes >= 0, false, "readBytes error");
-		if (bytes < 0) {
-			return false;
-		}
-		
-		if (bytes > 0) {
-			this->_rbuffer.wlength(size_t(bytes));
-		}
-		
-		ByteBuffer& buffer = this->_rbuffer;
-		while (true) {
-			Socketmessage* rawmsg = (Socketmessage*) (buffer.rbuffer());
-			if (buffer.size() < sizeof(rawmsg->len) || buffer.size() < rawmsg->len) {
-				return true;	// not enough data
-			}
-
-			if (rawmsg->len < sizeof(Socketmessage)) {
-				Error << "illegal package, len: " << rawmsg->len << ", at least: " << sizeof(Socketmessage);
-				return false;	// illegal package
-			}
-
-			// got a new message
-			Servicemessage* newmsg = allocate_message(rawmsg->len);	// Note: rawmsg->len - sizeof(Socketmessage)
-			newmsg->fd = this->fd();
-			memcpy(&newmsg->rawmsg, rawmsg, rawmsg->len);
-			this->_rlist.push_back(newmsg);
+	class SocketInternal : public Socket {
+		public:
+			SocketInternal(SOCKET s, EasynetInternal* easynet);
+			~SocketInternal();
 			
-			buffer.rlength(rawmsg->len);
+		public:
+			SOCKET fd() override { return this->_fd; }
+			int socket_type() override { return this->_socket_type; }
+			void socket_type(int value) override { this->_socket_type = value; }
+						
+		public:
+			bool receive() override;
+			bool sendMessage(const SocketMessage* message) override;
+			bool send() override;
+
+		private:
+			SOCKET _fd = -1;
+			int _socket_type = -1;
+			EasynetInternal* _easynet = nullptr;
+			Spinlocker _locker;
+			std::list<const SocketMessage*> _sendQueue;
+
+		private:			
+			ByteBuffer _rbuffer, _wbuffer;
+			ssize_t readBytes(Byte*, size_t);
+			ssize_t sendBytes(const Byte*, size_t);
+	};
+
+	bool SocketInternal::receive() {
+		while (true) {
+			size_t readlen = 1024;
+			ssize_t bytes = this->readBytes(this->_rbuffer.wbuffer(readlen), readlen);
+			if (bytes < 0) {
+				return false;	// error occupy when socketRead
+			}
+			
+			if (bytes > 0) {
+				this->_rbuffer.wlength(size_t(bytes));
+			}
+			
+			if (size_t(bytes) < readlen) {
+				break;	// read would block
+			}
+		}
+		
+		while (true) {
+			// spliter: -1: error occupy, 0: incomplete package, > 0: len of package
+			int rc = this->_easynet->spliter()(this->_rbuffer.rbuffer(), this->_rbuffer.size());
+			if (rc == 0) {
+				//return true;	// incomplete message
+				break;
+			}
+			else if (rc < 0) {
+				return false;	// illegal message
+			}
+
+			size_t msglen = size_t(rc);
+			//assert(size_t(rc) <= this->_rbuffer.size());
+			CHECK_RETURN(msglen <= this->_rbuffer.size(), false, "rc: %d overflow rbuffer size: %ld", rc, this->_rbuffer.size());
+			const SocketMessage* msg = allocateSocketMessage(msglen);
+			msg->fd = this->fd();
+			msg->payload_len = msglen;
+			memcpy(msg->payload, this->_rbuffer.rbuffer(), msg->payload_len);
+			this->_rbuffer.rlength(msglen);
+			this->_easynet->pushMessage(msg);
 		}
 		
 		return true;	
 	}
 		
-	bool Socket::send(const SocketMessage* msg) {
-		this->_slist.push_back(message);
-		return this->send();
+	bool SocketInternal::sendMessage(const SocketMessage* msg) {
+		this->_locker.lock();
+		this->_sendQueue.push_back(msg);
+		this->_locker.unlock();
+		return this->_easynet->poll()->setSocketPollout(msg->fd, true);	// set EPOLL_OUT
 	}	
 
-	bool Socket::send() {
-		SpinlockerGuard guard(&this->_slocker);
-					
+	bool SocketInternal::send() {
 		if (this->_wbuffer.size() > 0) {
 			ssize_t bytes = this->sendBytes(this->_wbuffer.rbuffer(), this->_wbuffer.size());
-			CHECK_RETURN(bytes >= 0, false, "sendBytes error");
-			if (size_t(bytes) > 0) {
+			if (bytes < 0) {
+				return false;	// error occupy when socketSend
+			}
+			
+			if (bytes > 0) {
 				this->_wbuffer.rlength(size_t(bytes));
 			}
 		}
 
 		if (this->_wbuffer.size() > 0) {
-			return true;	// wbuffer did not send all
+			return true;	// wbuffer did not send all, wait for next poll
 		}
 
-		while (!this->_slist.empty()) {
-			const Servicemessage* message = this->_slist.pop_front();
-			ssize_t bytes = this->sendBytes((const Byte*) &message->rawmsg, message->rawmsg.len);
+		const ServiceMessage* msg = nullptr;
+		while (true) {
+			this->_locker.lock();
+			if (!this->_sendQueue.empty()) {
+				msg = this->_sendQueue.front();
+				this->_sendQueue.pop_front();
+			}
+			else {
+				msg = nullptr;
+			}
+			this->_sendQueue.push_back(msg);
+			this->_locker.unlock();
+
+			if (!msg) {
+				// remove EPOLL_OUT when send all messages over
+				this->_easynet->poll()->setSocketPollout(msg->fd, false);
+				break;	// no more message to send
+			}
+
+			ssize_t bytes = this->sendBytes((const Byte*) msg->payload, msg->payload_len);
 			if (bytes < 0) {
-				release_message(message);
-				CHECK_RETURN(bytes >= 0, false, "sendBytes error");
+				releaseSocketMessage(msg);
+				return false;	// error occupy when socketSend
 			}
 
-			if (size_t(bytes) < message->rawmsg.len) {
-				this->_wbuffer.append((const Byte*) (&message->rawmsg) + bytes, message->rawmsg.len - bytes);
+			if (size_t(bytes) < msg->payload_len) {
+				this->_wbuffer.append((const Byte*) msg->payload + bytes, msg->payload_len - bytes);
+				releaseSocketMessage(msg);
+				return true;	// send wouldblock, wait for next poll
 			}
 
-			release_message(message);
-
-			if (this->_wbuffer.size() > 0) {
-				return true;	// send wouldblock
-			}
-		}			
-
+			releaseSocketMessage(msg);
+		}
+		
 		return true;
 	}
 
 	//
 	// < 0: error
-	ssize_t Socket::readBytes(Byte* buffer, size_t len) {
+	ssize_t SocketInternal::readBytes(Byte* buffer, size_t len) {
 		ssize_t bytes = 0;
 		while (true) {
 			ssize_t rc = TEMP_FAILURE_RETRY(::recv(this->_fd, buffer + bytes, len - bytes, MSG_DONTWAIT | MSG_NOSIGNAL));			
@@ -114,7 +165,7 @@ namespace net {
 
 	//
 	// < 0: error
-	ssize_t Socket::sendBytes(const Byte* buffer, size_t len) {
+	ssize_t SocketInternal::sendBytes(const Byte* buffer, size_t len) {
 		ssize_t bytes = 0;
 		while (len > size_t(bytes)) {
 			ssize_t rc = TEMP_FAILURE_RETRY(::send(this->_fd, buffer + bytes, len - bytes, MSG_DONTWAIT | MSG_NOSIGNAL));
@@ -138,23 +189,25 @@ namespace net {
 		Debug("Socket: %d, sendBytes: %ld, expect: %ld", this->fd(), bytes, len);
 		return bytes;
 	}
+
 	
-	Socket::Socket(SOCKET s, EasynetInternal* easynet) {
+	SocketInternal::SocketInternal(SOCKET s, EasynetInternal* easynet) {
 		this->_fd = s;
 		this->_socket_type = SOCKET_CONNECTION;
 		this->_easynet = easynet;
 	}
 
-	Socket::~Socket() {
+	Socket::~Socket() {}
+	SocketInternal::~SocketInternal() {
 		SafeClose(this->_fd);
-		while (!this->_rlist.empty()) {
-			const Servicemessage* message = this->_rlist.pop_front();
-			release_message(message);
-		}		
-		while (!this->_slist.empty()) {
-			const Servicemessage* message = this->_slist.pop_front();
-			release_message(message);
+		for (auto& msg : this->_sendQueue) {
+			releaseSocketMessage(msg);
 		}
+		this->_sendQueue.clear();
 	}
+
+	Socket* SocketCreator::create(SOCKET s, EasynetInternal* easynet) {
+		return new SocketInternal(s, easynet);
+	}	
 }
 

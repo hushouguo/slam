@@ -3,12 +3,12 @@
  * \brief: Created by hushouguo at 01:55:44 Aug 09 2018
  */
 
-#include "tnode.h"
+#include "Network.h"
 
-BEGIN_NAMESPACE_TNODE {	
+namespace net {	
 	class SocketServerInternal : public SocketServer {
 		public:
-			SocketServerInternal();
+			SocketServerInternal(EasynetInternal* easynet);
 			~SocketServerInternal();
 
 		public:
@@ -18,9 +18,8 @@ BEGIN_NAMESPACE_TNODE {
 			
 		public:
 			bool receive() override { return this->_socket->receive(); }
-			bool send(const Servicemessage* message) override { return this->_socket->send(message); }
+			bool sendMessage(const SocketMessage* msg) override { return this->_socket->sendMessage(msg); }
 			bool send() override { return this->_socket->send(); }
-			const Servicemessage* getMessage() override { return this->_socket->getMessage(); }
 
 		public:
 			bool listen(const char* address, int port) override;
@@ -30,8 +29,8 @@ BEGIN_NAMESPACE_TNODE {
 			Socket* _socket = nullptr;
 	};
 
-	SocketServerInternal::SocketServerInternal() {
-		this->_socket = SocketCreator::create(::socket(AF_INET, SOCK_STREAM, 0));
+	SocketServerInternal::SocketServerInternal(EasynetInternal* easynet) {
+		this->_socket = SocketCreator::create(::socket(AF_INET, SOCK_STREAM, 0), easynet);
 		assert(this->_socket);
 		this->_socket->socket_type(SOCKET_SERVER);		
 	}
@@ -41,14 +40,20 @@ BEGIN_NAMESPACE_TNODE {
 		SafeDelete(this->_socket);
 	}
 
-	SocketServer* SocketServerCreator::create() {
-		return new SocketServerInternal();
+	SocketServer* SocketServerCreator::create(EasynetInternal* easynet) {
+		return new SocketServerInternal(easynet);
 	}
 
 	bool SocketServerInternal::listen(const char* address, int port) {
 		CHECK_RETURN(this->fd() >= 0, false, "create socket failure: %d, %s", errno, strerror(errno));
+#if EASYNET_REUSE_ADDRESS		
 		bool rc = reuseableAddress(this->fd());
 		CHECK_RETURN(rc, false, "reuseableAddress failure: %d, %s", errno, strerror(errno));
+#endif
+#if EASYNET_REUSE_PORT
+		bool rc = reuseablePort(this->fd());
+		CHECK_RETURN(rc, false, "reuseablePort failure: %d, %s", errno, strerror(errno));
+#endif
 		rc = nonblocking(this->fd());
 		CHECK_RETURN(rc, false, "nonblocking failure: %d, %s", errno, strerror(errno));
 
@@ -64,7 +69,7 @@ BEGIN_NAMESPACE_TNODE {
 		val = ::listen(this->fd(), SOMAXCONN);
 		CHECK_RETURN(val == 0, false, "listen failure: %d, %s", errno, strerror(errno));
 
-		Debug << "listen on: " << address << ":" << port;
+		Debug("listen on: %s:port", address, port);
 		return true;
 	}
 	
