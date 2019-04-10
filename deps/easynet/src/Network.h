@@ -53,6 +53,7 @@ using Byte	=	unsigned char;
 #include "Spinlocker.h"
 #include "Easynet.h"
 #include "Helper.h"
+#include "NetMessage.h"
 #include "Socket.h"
 #include "SocketClient.h"
 #include "SocketServer.h"
