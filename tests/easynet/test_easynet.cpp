@@ -44,16 +44,22 @@
 	}
 
 void test_easynet() {	
-	net::Easynet* easynet = net::Easynet::createInstance([](const void* buffer, size_t len) -> int {
+	net::Easynet* easynetS = net::Easynet::createInstance([](const void* buffer, size_t len) -> int {
 			return len;
 			//NetMessage* netmsg = (NetMessage*) buffer;
 			//return len < sizeof(NetMessage) || len < netmsg->len ? 0 : netmsg->len;
 			});
 
-	SOCKET ss = easynet->createServer("127.0.0.1", 12306);
+	SOCKET ss = easynetS->createServer("127.0.0.1", 12306);
 	assert(ss != -1);
 
-	SOCKET cs = easynet->createClient("127.0.0.1", 12306);
+	net::Easynet* easynetC = net::Easynet::createInstance([](const void* buffer, size_t len) -> int {
+			return len;
+			//NetMessage* netmsg = (NetMessage*) buffer;
+			//return len < sizeof(NetMessage) || len < netmsg->len ? 0 : netmsg->len;
+			});
+
+	SOCKET cs = easynetC->createClient("127.0.0.1", 12306);
 	assert(cs != -1);
 
 	Debug.cout("socketServer: %d, socketClient: %d", ss, cs);
@@ -68,7 +74,7 @@ void test_easynet() {
 					size_t len = 0;
 					const void* payload = easynet->getMessageContent(msg, &len);
 					//Debug.cout("Server recv: %s(%ld) from (%d)", (const char*) payload, len, fd);
-					fprintf(stderr, "Server recv: %s(%ld) from (%d)\n", (const char*) payload, len, fd);
+					fprintf(stderr, "Server recv: %s(%ld) from (%d)\n\n", (const char*) payload, len, fd);
 					easynet->releaseMessage(msg);
 
 					++total;
@@ -89,7 +95,7 @@ void test_easynet() {
 					std::this_thread::sleep_for(std::chrono::milliseconds(1));
 				}
 			}
-			}, easynet, ss);
+			}, easynetS, ss);
 
 	// client thread
 	std::thread* tc = new std::thread([](net::Easynet* easynet, SOCKET s) {
@@ -101,7 +107,7 @@ void test_easynet() {
 					size_t len = 0;
 					const void* payload = easynet->getMessageContent(msg, &len);
 					//Debug.cout("Client recv: %s(%ld) from (%d)", (const char*) payload, len, fd);
-					fprintf(stderr, "Client recv: %s(%ld) from (%d)\n", (const char*) payload, len, fd);
+					fprintf(stderr, "Client recv: %s(%ld) from (%d)\n\n", (const char*) payload, len, fd);
 					easynet->releaseMessage(msg);
 				}
 				else {
@@ -121,14 +127,16 @@ void test_easynet() {
 					}
 				}
 			}
-			}, easynet, cs);
+			}, easynetC, cs);
 
 	tc->join();
 	ts->join();
-	easynet->stop();
+	easynetC->stop();
+	easynetS->stop();
 	delete tc;
 	delete ts;
-	delete easynet;
+	delete easynetC;
+	delete easynetS;
 	Debug << "easynet test OK";
 }
 

@@ -22,7 +22,7 @@
 #define SOCKET						int
 #endif
 
-#define EASYNET_ENABLE_DEBUG		0
+#define EASYNET_ENABLE_DEBUG		0	
 #define EASYNET_REUSE_ADDRESS		1
 #define EASYNET_REUSE_PORT			0
 
