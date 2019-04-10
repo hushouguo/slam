@@ -4,7 +4,9 @@ set(ROOT_DIR ${PROJECT_SOURCE_DIR})
 set(DEPS_DIR ${PROJECT_SOURCE_DIR}/../deps)
 
 set(EASYLOG_DIR ${DEPS_DIR}/easylog)
+set(EASYNET_DIR ${DEPS_DIR}/easynet)
 set(TCMALLOC_DIR ${DEPS_DIR}/gperftools-2.7)
+
 #set(PROTOBUF_DIR ${DEPS_DIR}/protobuf-3.6.1)
 #set(RAPIDXML_DIR ${DEPS_DIR}/rapidxml-1.13)
 #set(RAPIDJSON_DIR ${DEPS_DIR}/rapidjson-1.1.0)
@@ -14,3 +16,4 @@ set(TCMALLOC_DIR ${DEPS_DIR}/gperftools-2.7)
 #set(LIBZMQ_DIR ${DEPS_DIR}/libzmq-4.3.0)
 
 ADD_SUBDIRECTORY(easylog)
+ADD_SUBDIRECTORY(easynet)
