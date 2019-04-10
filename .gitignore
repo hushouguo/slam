@@ -5,4 +5,4 @@ Makefile
 cmake_install.cmake
 test_easylog
 test_easynet
-tnode
+tnode/tnode

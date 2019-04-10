@@ -25,7 +25,7 @@ BEGIN_NAMESPACE_TNODE {
 		}
 	}
 
-	bool ServiceManager::pushMessage(const ServiceMessage* msg) {
+	bool ServiceManager::pushMessage(SOCKET fd, const ServiceMessage* msg) {
 #if 0		
 		u32 sid = 0;
 		Service* initservice = this->getService(this->_initid);

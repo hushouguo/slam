@@ -45,6 +45,7 @@ aux_source_directory(src/message src)
 aux_source_directory(src/service src)
 aux_source_directory(src/time src)
 aux_source_directory(src/tools src)
+aux_source_directory(src/net src)
 
 link_directories(/usr/lib64)
 add_executable(${target} ${src})

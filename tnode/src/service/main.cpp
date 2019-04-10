@@ -12,9 +12,8 @@
 #include "message/ServiceMessage.h"
 #include "service/Service.h"
 #include "service/ServiceManager.h"
+#include "net/NetworkManager.h"
 
-using namespace logger;
-using namespace net;
 using namespace tnode;
 
 bool init_runtime_environment(int argc, char* argv[]) {
@@ -177,11 +176,12 @@ int main(int argc, char* argv[]) {
 	if (!init_runtime_environment(argc, argv)) { return 1; }
 
 	sThreadPool.init(sConfig.threads);
-	//sNetworkManager.init();
+	sNetworkManager.init();
 	CHECK_GOTO(sServiceManager.init(sConfig.get("tnode.entryfile", "N/A")), exit_failure, "ServiceManager init failure");
 
 	while (!sConfig.halt) {
 		sTime.now();
+		sNetworkManager.run();
 		sServiceManager.schedule();
 		std::this_thread::sleep_for(std::chrono::milliseconds(1));
 	}
@@ -189,7 +189,7 @@ int main(int argc, char* argv[]) {
 exit_failure:
 	sConfig.syshalt(0);
 	sServiceManager.stop();
-	//sNetworkManager.stop();
+	sNetworkManager.stop();
 	sThreadPool.stop();
 	Trace.cout("shutdown system with terminate reason: %d", sConfig.terminate_reason);
 	Easylog::syslog()->stop();

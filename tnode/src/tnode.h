@@ -211,4 +211,7 @@ using Byte	=	unsigned char;
 
 #define BEGIN_NAMESPACE_TNODE			namespace tnode
 
+using namespace logger;
+using namespace net;
+
 #endif
