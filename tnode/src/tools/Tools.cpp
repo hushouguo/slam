@@ -15,13 +15,10 @@
 BEGIN_NAMESPACE_TNODE {
 
 	static u32 __sys_cpus = 1;
-
-#ifdef PLATFORM_LINUX
 	__attribute__((constructor)) static void __sys_cpus_init() {
 		int i = sysconf(_SC_NPROCESSORS_CONF);
 		__sys_cpus = i < 0 ? 1 : i;
 	}
-#endif
 
 	//
 	// get the number of cpu

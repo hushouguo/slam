@@ -4,6 +4,7 @@
  */
 
 #include "tnode.h"
+#include "tools/Tools.h"
 #include "tools/Registry.h"
 
 BEGIN_NAMESPACE_TNODE {

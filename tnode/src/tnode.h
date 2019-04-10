@@ -108,7 +108,6 @@
 #if __GNUC__ >= 5
 #include <codecvt>
 #endif
-#endif
 
 #include "Easylog.h"
 #include "Easynet.h"
@@ -117,12 +116,12 @@
 #include "gperftools/tcmalloc.h"
 
 // rapidxml-1.13
-#include "rapidxml-1.13/rapidxml.hpp"  
-#include "rapidxml-1.13/rapidxml_utils.hpp"//rapidxml::file  
-#include "rapidxml-1.13/rapidxml_print.hpp"//rapidxml::print 
+#include "rapidxml.hpp"  
+#include "rapidxml_utils.hpp"//rapidxml::file  
+#include "rapidxml_print.hpp"//rapidxml::print 
 
 // rapidjson-1.1.0
-#include "rapidjson-1.1.0/document.h"
+#include "document.h"
 
 //luajit-2.0.5
 #include "lua.hpp"
