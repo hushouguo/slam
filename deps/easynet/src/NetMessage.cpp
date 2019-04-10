@@ -6,11 +6,11 @@
 #include "Network.h"
 
 namespace net {
-	NetMessage* allocateSocketMessage(size_t payload_len) {
+	NetMessage* allocateNetMessage(size_t payload_len) {
 		return (NetMessage*) malloc(sizeof(NetMessage) + payload_len);
 	}
 	
-	void releaseSocketMessage(const NetMessage* msg) {
+	void releaseNetMessage(const NetMessage* msg) {
 		free((void*) msg);
 	}
 }
