@@ -56,6 +56,7 @@ namespace net {
 			virtual void releaseMessage(const void* msg) = 0;
 			virtual void setMessageContent(void* msg, const void* data, size_t len) = 0;
 			virtual const void* getMessageContent(const void* msg, size_t* len) = 0;
+			virtual SOCKET getMessageSocket(const void* msg) = 0;
 		
 		public:
 			//

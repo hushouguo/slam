@@ -56,7 +56,7 @@ namespace net {
 			this->_msgQueue.pop_front();
 		}
 		this->_locker.unlock();
-		if (msg) {
+		if (msg && s) {
 			*s = msg->fd;
 		}
 		return msg;
@@ -160,8 +160,16 @@ namespace net {
 	const void* EasynetInternal::getMessageContent(const void* msg, size_t* len) {
 		assert(isValidNetMessage(msg));
 		const NetMessage* netmsg = (const NetMessage*) msg;
-		*len = netmsg->payload_len;
+		if (len) {
+			*len = netmsg->payload_len;
+		}
 		return netmsg->payload;
+	}
+
+	SOCKET EasynetInternal::getMessageSocket(const void* msg) {
+		assert(isValidNetMessage(msg));
+		const NetMessage* netmsg = (const NetMessage*) msg;
+		return netmsg->fd;
 	}
 
 	EasynetInternal::EasynetInternal(std::function<int(const void*, size_t)> spliter) {

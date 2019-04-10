@@ -25,20 +25,13 @@ BEGIN_NAMESPACE_TNODE {
 
 	void NetworkManager::run() {
 		while (!sConfig.halt) {
-			SOCKET fd = -1;
-			const void* netmsg = this->_easynet->getMessage(&fd);
+			const void* netmsg = this->_easynet->getMessage(nullptr);
 			if (!netmsg) {
 				break;
 			}
-			sServiceManager.pushMessage(fd, netmsg);
-#if 0
-			size_t len = 0;
-			const void* payload = this->_easynet->getMessageContent(netmsg, &len);
-			assert(len >= sizeof(ServiceMessage));
-			const ServiceMessage* msg = (const ServiceMessage*) payload;
-			assert(len == msg->len);
-			sServiceManager.pushMessage(fd, msg);
-#endif			
+			if (!sServiceManager.pushMessage(netmsg)) {
+				this->_easynet->releaseMessage(netmsg);
+			}
 		}
 	}
 

@@ -25,31 +25,26 @@ BEGIN_NAMESPACE_TNODE {
 		}
 	}
 
-	bool ServiceManager::pushMessage(SOCKET fd, const void* netmsg) {
-#if 0		
-		u32 sid = 0;
+	bool ServiceManager::pushMessage(const void* netmsg) {	
 		Service* initservice = this->getService(this->_initid);
-		CHECK_GOTO(initservice, exit_failure, "Not found initservice: %d", this->_initid);
+		CHECK_RETURN(initservice, false, "Not found initservice: %d", this->_initid);
 
-		sid = initservice->dispatch(msg->rawmsg.entityid, msg->rawmsg.msgid);
-		CHECK_GOTO(sid != ILLEGAL_SERVICE, exit_failure, "initservice: %s call `dispatch` error", initservice->entryfile().c_str());
+		size_t len = 0;
+		const void* payload = sNetworkManager.easynet()->getMessageContent(netmsg, &len);
+		CHECK_RETURN(len >= sizeof(ServiceMessage), false, "illegal netmsg.len: %ld, ServiceMessage: %ld", len, sizeof(ServiceMessage));
+		const ServiceMessage* msg = (const ServiceMessage*) payload;
+		CHECK_RETURN(len >= sizeof(ServiceMessage), false, "illegal netmsg.len: %ld, msg->len: %ld", len, msg->len);
+
+		u32 sid = initservice->dispatch(msg->entityid, msg->msgid);
+		CHECK_RETURN(sid != ILLEGAL_SERVICE, false, "initservice: %s call `dispatch` error", initservice->entryfile().c_str());
+
+		Service* service = this->getService(sid);
+		CHECK_RETURN(service, false, "Not found dispatch service: %d", sid);
 		
-		if (true) {
-			Service* service = this->getService(sid);
-			CHECK_GOTO(service, exit_failure, "Not found dispatch service: %d", sid);
-			service->pushMessage(msg);
-			
-			this->schedule(service);	// schedule service right now
-		}
+		service->pushMessage(netmsg);			
+		this->schedule(service);	// schedule service right now
 
 		return true;
-		
-exit_failure:	
-		release_message(msg);
-		return false;
-#else
-		return false;
-#endif
 	}
 	
 	Service* ServiceManager::newservice(const char* entryfile) {

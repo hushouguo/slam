@@ -28,6 +28,7 @@ namespace net {
 			void releaseMessage(const void* msg) override;
 			void setMessageContent(void* msg, const void* data, size_t len) override;
 			const void* getMessageContent(const void* msg, size_t* len) override;
+			SOCKET getMessageSocket(const void* msg) override;
 		
 		public:
 			void run();

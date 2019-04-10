@@ -38,8 +38,8 @@ BEGIN_NAMESPACE_TNODE {
 		// message handle
 		public:
 			u32 dispatch(u64 entityid, u32 msgid);
-			bool msgParser(const ServiceMessage* msg);
 			void pushMessage(const void* netmsg);
+			bool msgParser(const void* netmsg);
 			
 		private:
 			LockfreeQueue<const void*> _msgQueue;
