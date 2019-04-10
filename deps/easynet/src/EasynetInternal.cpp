@@ -34,11 +34,13 @@ namespace net {
 		return socketClient->fd();
 	}
 	
-	bool EasynetInternal::sendMessage(const NetMessage* msg) {
-		SOCKET s = msg->fd;
+	bool EasynetInternal::sendMessage(SOCKET s, void* msg) {
 		assert(s < MAX_SOCKET);
+		assert(isValidNetMessage(msg));
 		Socket* socket = this->_sockets[s];
 		CHECK_RETURN(socket, false, "Not found socket: %d when send msg", s);
+		NetMessage* netmsg = (NetMessage*) msg;
+		netmsg->fd = s;
 		if (!socket->sendMessage(msg)) {
 			this->closeSocket(s, "sendMessage error");
 			return false;
@@ -46,7 +48,7 @@ namespace net {
 		return true;
 	}
 	
-	const NetMessage* EasynetInternal::getMessage() {
+	const void* EasynetInternal::getMessage(SOCKET* s) {
 		const NetMessage* msg = nullptr;
 		this->_locker.lock();
 		if (!this->_msgQueue.empty()) {
@@ -54,6 +56,7 @@ namespace net {
 			this->_msgQueue.pop_front();
 		}
 		this->_locker.unlock();
+		*s = msg->fd;
 		return msg;
 	}
 	
@@ -131,6 +134,32 @@ namespace net {
 			}
 			this->_msgQueue.clear();
 		}
+	}
+
+	void* EasynetInternal::allocateMessage(size_t payload_len) {
+		NetMessage* msg = allocateNetMessage(payload_len);
+		msg->payload_len = payload_len;
+		return msg;
+	}
+	
+	void EasynetInternal::releaseMessage(void* msg) {
+		assert(isValidNetMessage(msg));
+		releaseNetMessage((const NetMessage*) msg);
+	}
+	
+	void EasynetInternal::setMessageContent(void* msg, const void* data, size_t len) {
+		assert(isValidNetMessage(msg));
+		NetMessage* netmsg = (NetMessage*) msg;
+		assert(netmsg->size >= len);
+		memcpy(netmsg->payload, data, len);
+		netmsg->payload_len = len;
+	}
+	
+	const void* EasynetInternal::getMessageContent(void* msg, size_t* len) {
+		assert(isValidNetMessage(msg));
+		NetMessage* netmsg = (NetMessage*) msg;
+		*len = netmsg->payload_len;
+		return netmsg;
 	}
 
 	EasynetInternal::EasynetInternal(std::function<int(const void*, size_t)> spliter) {

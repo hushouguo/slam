@@ -124,17 +124,17 @@ namespace net {
 
 			ssize_t bytes = this->sendBytes((const Byte*) msg->payload, msg->payload_len);
 			if (bytes < 0) {
-				releaseSocketMessage(msg);
+				releaseNetMessage(msg);
 				return false;	// error occupy when socketSend
 			}
 
 			if (size_t(bytes) < msg->payload_len) {
 				this->_wbuffer.append((const Byte*) msg->payload + bytes, msg->payload_len - bytes);
-				releaseSocketMessage(msg);
+				releaseNetMessage(msg);
 				return true;	// send wouldblock, wait for next poll
 			}
 
-			releaseSocketMessage(msg);
+			releaseNetMessage(msg);
 		}
 		
 		return true;
@@ -205,7 +205,7 @@ namespace net {
 	SocketInternal::~SocketInternal() {
 		SafeClose(this->_fd);
 		for (auto& msg : this->_sendQueue) {
-			releaseSocketMessage(msg);
+			releaseNetMessage(msg);
 		}
 		this->_sendQueue.clear();
 	}

@@ -26,16 +26,7 @@
 #define EASYNET_REUSE_ADDRESS		1
 #define EASYNET_REUSE_PORT			0
 
-namespace net {
-	struct NetMessage {
-		SOCKET fd;
-		size_t payload_len;
-		char payload[0];
-	};
-
-	NetMessage* allocateNetMessage(size_t payload_len);
-	void releaseNetMessage(const NetMessage*);
-	
+namespace net {	
 	class Easynet {
 		public:
 			virtual ~Easynet() = 0;
@@ -48,11 +39,11 @@ namespace net {
 			// address, port, timeout(seconds), 
 			virtual SOCKET createClient(const char*, int) = 0;
 			//
-			// `msg` MUST be allocated by allocateNetMessage function
+			// `msg` MUST be allocated by allocateMessage function
 			virtual bool sendMessage(SOCKET s, void* msg) = 0;
 			//
 			// return nullptr when no more Message
-			virtual const void* getMessage() = 0;
+			virtual const void* getMessage(SOCKET*) = 0;
 			//
 			// close Socket right now
 			virtual void closeSocket(SOCKET) = 0;
@@ -64,7 +55,7 @@ namespace net {
 			virtual void* allocateMessage(size_t payload_len) = 0;
 			virtual void releaseMessage(void* msg) = 0;
 			virtual void setMessageContent(void* msg, const void* data, size_t len) = 0;
-			virtual const void* getMessageContent(void* msg, size_t& len) = 0;
+			virtual const void* getMessageContent(void* msg, size_t* len) = 0;
 		
 		public:
 			//

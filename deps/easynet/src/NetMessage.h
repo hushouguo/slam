@@ -8,13 +8,16 @@
 
 namespace net {
 	struct NetMessage {
+		uint32_t magic;
 		SOCKET fd;
+		size_t size;
 		size_t payload_len;
 		char payload[0];
 	};
 
 	NetMessage* allocateNetMessage(size_t payload_len);
 	void releaseNetMessage(const NetMessage*);
+	bool isValidNetMessage(void* msg);
 }
 
 #endif

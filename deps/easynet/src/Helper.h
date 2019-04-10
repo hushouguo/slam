@@ -6,7 +6,6 @@
 #ifndef __HELPER_H__
 #define __HELPER_H__
 
-#define MAGIC	0x12345678	
 #define INTERNAL_SIGN	0x77abc3694dfb225e
 
 namespace net {
