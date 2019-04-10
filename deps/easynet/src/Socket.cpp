@@ -77,10 +77,11 @@ namespace net {
 	}
 		
 	bool SocketInternal::sendMessage(const SocketMessage* msg) {
+		assert(msg->fd == this->fd());
 		this->_locker.lock();
 		this->_sendQueue.push_back(msg);
 		this->_locker.unlock();
-		return this->_easynet->poll()->setSocketPollout(msg->fd, true);	// set EPOLL_OUT
+		return this->_easynet->poll()->setSocketPollout(this->fd(), true);	// set EPOLL_OUT
 	}	
 
 	bool SocketInternal::send() {
@@ -109,14 +110,15 @@ namespace net {
 			else {
 				msg = nullptr;
 			}
-			this->_sendQueue.push_back(msg);
 			this->_locker.unlock();
 
 			if (!msg) {
 				// remove EPOLL_OUT when send all messages over
-				this->_easynet->poll()->setSocketPollout(msg->fd, false);
+				this->_easynet->poll()->setSocketPollout(this->fd(), false);
 				break;	// no more message to send
 			}
+
+			assert(msg->fd == this->fd());
 
 			ssize_t bytes = this->sendBytes((const Byte*) msg->payload, msg->payload_len);
 			if (bytes < 0) {
