@@ -17,13 +17,13 @@ BEGIN_NAMESPACE_TNODE {
 		this->_tv.tv_usec = (milliseconds % 1000) * 1000;
 	}
 
-	Time::Time(u64 secondPart, u64 millisecondPart) {
-		this->_tv.tv_sec = secondPart;
-		this->_tv.tv_usec = millisecondPart * 1000;
+	Time::Time(u64 seconds, u64 milliseconds) {
+		this->_tv.tv_sec = seconds;
+		this->_tv.tv_usec = milliseconds * 1000;
 	}
 
 	Time::Time(const Time& t) {
-		this->_tv.tv_sec = t.secondPart();
+		this->_tv.tv_sec = t.seconds();
 		this->_tv.tv_usec = t.microsecondsPart();
 	}
 	
@@ -37,7 +37,7 @@ BEGIN_NAMESPACE_TNODE {
  	}
 	
 	void Time::operator = (const Time& t) {
-		this->_tv.tv_sec = t.secondPart();
+		this->_tv.tv_sec = t.seconds();
 		this->_tv.tv_usec = t.microsecondsPart();
 	}
 	
