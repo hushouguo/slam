@@ -25,9 +25,9 @@ namespace net {
 
 		public:
 			void* allocateMessage(size_t payload_len) override;
-			void releaseMessage(void* msg) override;
+			void releaseMessage(const void* msg) override;
 			void setMessageContent(void* msg, const void* data, size_t len) override;
-			const void* getMessageContent(void* msg, size_t* len) override;
+			const void* getMessageContent(const void* msg, size_t* len) override;
 		
 		public:
 			void run();

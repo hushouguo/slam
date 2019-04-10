@@ -20,8 +20,8 @@ namespace net {
 		free((void*) msg);
 	}
 
-	bool isValidNetMessage(void* msg) {
-		NetMessage* netmsg = (NetMessage*) msg;
+	bool isValidNetMessage(const void* msg) {
+		const NetMessage* netmsg = (const NetMessage*) msg;
 		return netmsg->magic == MAGIC_MESSAGE;
 	}
 }

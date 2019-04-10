@@ -17,7 +17,7 @@ namespace net {
 
 	NetMessage* allocateNetMessage(size_t payload_len);
 	void releaseNetMessage(const NetMessage*);
-	bool isValidNetMessage(void* msg);
+	bool isValidNetMessage(const void* msg);
 }
 
 #endif

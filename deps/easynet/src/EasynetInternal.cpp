@@ -41,7 +41,7 @@ namespace net {
 		CHECK_RETURN(socket, false, "Not found socket: %d when send msg", s);
 		NetMessage* netmsg = (NetMessage*) msg;
 		netmsg->fd = s;
-		if (!socket->sendMessage(msg)) {
+		if (!socket->sendMessage(netmsg)) {
 			this->closeSocket(s, "sendMessage error");
 			return false;
 		}
@@ -56,7 +56,9 @@ namespace net {
 			this->_msgQueue.pop_front();
 		}
 		this->_locker.unlock();
-		*s = msg->fd;
+		if (msg) {
+			*s = msg->fd;
+		}
 		return msg;
 	}
 	
@@ -142,7 +144,7 @@ namespace net {
 		return msg;
 	}
 	
-	void EasynetInternal::releaseMessage(void* msg) {
+	void EasynetInternal::releaseMessage(const void* msg) {
 		assert(isValidNetMessage(msg));
 		releaseNetMessage((const NetMessage*) msg);
 	}
@@ -155,11 +157,11 @@ namespace net {
 		netmsg->payload_len = len;
 	}
 	
-	const void* EasynetInternal::getMessageContent(void* msg, size_t* len) {
+	const void* EasynetInternal::getMessageContent(const void* msg, size_t* len) {
 		assert(isValidNetMessage(msg));
-		NetMessage* netmsg = (NetMessage*) msg;
+		const NetMessage* netmsg = (const NetMessage*) msg;
 		*len = netmsg->payload_len;
-		return netmsg;
+		return netmsg->payload;
 	}
 
 	EasynetInternal::EasynetInternal(std::function<int(const void*, size_t)> spliter) {

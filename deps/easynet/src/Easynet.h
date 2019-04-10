@@ -22,7 +22,7 @@
 #define SOCKET						int
 #endif
 
-#define EASYNET_ENABLE_DEBUG		1
+#define EASYNET_ENABLE_DEBUG		0
 #define EASYNET_REUSE_ADDRESS		1
 #define EASYNET_REUSE_PORT			0
 
@@ -53,9 +53,9 @@ namespace net {
 
 		public:
 			virtual void* allocateMessage(size_t payload_len) = 0;
-			virtual void releaseMessage(void* msg) = 0;
+			virtual void releaseMessage(const void* msg) = 0;
 			virtual void setMessageContent(void* msg, const void* data, size_t len) = 0;
-			virtual const void* getMessageContent(void* msg, size_t* len) = 0;
+			virtual const void* getMessageContent(const void* msg, size_t* len) = 0;
 		
 		public:
 			//
