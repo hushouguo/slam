@@ -13,18 +13,8 @@
 BEGIN_NAMESPACE_TNODE {
 	class Service : public Runnable {
 		public:
-			Service(u32 id) : Runnable(id) {}
-			virtual ~Service() = 0;
-
-		public:
-			virtual bool init(const char* entryfile) = 0;
-			virtual void stop() = 0;
-			virtual bool need_schedule() = 0;
-	};
-	
-	class Service : public Runnable {
-		public:
-			Service(u32 id);
+			Service(u32 id) : Runnable(id) {
+			}
 			const char* getClassName() override { return "Service"; }
 
 		public:
@@ -49,11 +39,10 @@ BEGIN_NAMESPACE_TNODE {
 		public:
 			u32 dispatch(u64 entityid, u32 msgid);
 			bool msgParser(const ServiceMessage* msg);
-			void pushMessage(const ServiceMessage* msg);
+			void pushMessage(const void* netmsg);
 			
 		private:
-			LockfreeQueue<const ServiceMessage*> _msgQueue;
-			const ServiceMessage* getMessage();
+			LockfreeQueue<const void*> _msgQueue;
 
 		// timer handle
 		public:

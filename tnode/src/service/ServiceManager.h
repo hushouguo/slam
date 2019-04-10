@@ -18,7 +18,7 @@ BEGIN_NAMESPACE_TNODE {
 			void stop();
 			
 		public:
-			bool pushMessage(SOCKET fd, const ServiceMessage* msg);		
+			bool pushMessage(SOCKET fd, const void* netmsg);		
 			Service* newservice(const char* entryfile);
 			inline Service* getService(u32 sid) {
 				return this->_services.find(sid);

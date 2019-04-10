@@ -13,16 +13,12 @@
 #include "service/Service.h"
 
 BEGIN_NAMESPACE_TNODE {
-	Service::Service(u32 id) : Runnable(id) {
-	}
-
 	bool Service::init(const char* entryfile) {
-		SafeDelete(this->_messageParser);
-		const char* proto_dir = sConfig.get("tnode.protocol", (const char*) nullptr);
-		CHECK_RETURN(proto_dir, false, "lack `tnode.protocol`");
+		//const char* proto_dir = sConfig.get("tnode.protocol", (const char*) nullptr);
+		//CHECK_RETURN(proto_dir, false, "lack `tnode.protocol`");
 		this->_messageParser = MessageParserCreator::create();
-		bool retval = this->_messageParser->loadmsg(proto_dir);
-		CHECK_RETURN(retval, false, "load protocol: %s error", proto_dir);
+		//bool retval = this->_messageParser->loadmsg(proto_dir);
+		//CHECK_RETURN(retval, false, "load protocol: %s error", proto_dir);
 
 		this->_L = luaT_newstate();
 		luaT_setOwner(this->_L, this->id);
@@ -42,16 +38,12 @@ BEGIN_NAMESPACE_TNODE {
 	}
 
 	void Service::run() {
-#if 0		
-		while (!this->isstop()) {
-			const ServiceMessage* msg = this->getMessage();
-			if (!msg) {
-				break;
-			}
+		while (!this->isstop() && !this->_msgQueue.empty()) {
+			const ServiceMessage* msg = this->_msgQueue.pop_front();
+			assert(msg);
 			this->msgParser(msg);
 			release_message(msg);
 		}
-#endif			
 	}
 
 	//
@@ -96,7 +88,7 @@ BEGIN_NAMESPACE_TNODE {
 #endif		
 	}
 
-	void Service::pushMessage(const ServiceMessage* msg) {
+	void Service::pushMessage(const void* msg) {
 		this->_msgQueue.push_back(msg);
 	}
 
@@ -104,9 +96,6 @@ BEGIN_NAMESPACE_TNODE {
 		return !this->isstop() && this->_msgQueue.empty() == false;
 	}
 	
-	const ServiceMessage* Service::getMessage() {
-		return this->_msgQueue.empty() ? nullptr : this->_msgQueue.pop_front();
-	}
 
 	void Service::regtimer(u32 milliseconds, int ref) {
 		CHECK_RETURN(milliseconds > 0, void(0), "timer interval MUST greater than 0");

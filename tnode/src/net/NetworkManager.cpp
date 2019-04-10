@@ -30,13 +30,15 @@ BEGIN_NAMESPACE_TNODE {
 			if (!netmsg) {
 				break;
 			}
-
+			sServiceManager.pushMessage(fd, netmsg);
+#if 0
 			size_t len = 0;
 			const void* payload = this->_easynet->getMessageContent(netmsg, &len);
 			assert(len >= sizeof(ServiceMessage));
 			const ServiceMessage* msg = (const ServiceMessage*) payload;
 			assert(len == msg->len);
 			sServiceManager.pushMessage(fd, msg);
+#endif			
 		}
 	}
 
