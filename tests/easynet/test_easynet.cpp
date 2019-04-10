@@ -10,14 +10,6 @@
 
 //using namespace net;
 
-#pragma pack(push, 1)
-	struct NetMessage {
-		uint32_t len;
-		uint16_t msgid;
-		char payload[0];
-	};
-#pragma pack(pop)	
-
 	thread_local int _randomSeed = std::time(nullptr) + ::getpid();
 	thread_local std::default_random_engine _randomEngine(_randomSeed);
 
@@ -64,14 +56,27 @@ void test_easynet() {
 	assert(cs != -1);
 
 	std::thread* ts = new std::thread([](net::Easynet* easynet, SOCKET s) {
+			uint32_t total = 0;
 			while (true) {
-				const net::SocketMessage* msg = easynet->getMessage();
+				SOCKET fd = -1;
+				const void* msg = easynet->getMessage(&fd);
 				if (msg) {
-					assert(msg->payload_len >= sizeof(NetMessage));
-					NetMessage* netmsg = (NetMessage*) msg->payload;
-					Debug << "Server recv netmsg: len: " << netmsg->len << ", msgid: " << netmsg->msgid;
-					Debug << "    content: " << netmsg->payload;
-					net::releaseSocketMessage(msg);
+					size_t len = 0;
+					const void* payload = easynet->getMessageContent(msg, &len);
+					Debug << "Server recv msg: len: " << len << ", content: " << (const char*)(payload);
+					easynet->releaseMessage(msg);
+
+					++total;
+					if (total >= 5) {
+						total = 0;
+						std::string content;
+						size_t len = randomBetween(1, 10);
+						randomString(content, len, true, false, false);
+						//Debug << "Socket: " << s << " randomString: " << content.length() << ", msglen: " << (content.length() + sizeof(NetMessage));
+						void* newmsg = easynet->allocateMessage(content.length());
+						easynet->setMessageContent(newmsg, content.data(), content.length());
+						easynet->sendMessage(fd, newmsg);
+					}
 				}
 				else {
 					std::this_thread::sleep_for(std::chrono::milliseconds(1));
@@ -82,13 +87,13 @@ void test_easynet() {
 	std::thread* tc = new std::thread([](net::Easynet* easynet, SOCKET s) {
 			uint32_t total = 0;
 			while (true) {
-				const net::SocketMessage* msg = easynet->getMessage();
+				SOCKET fd = -1;
+				const void* msg = easynet->getMessage(&fd);
 				if (msg) {
-					assert(msg->payload_len >= sizeof(NetMessage));
-					NetMessage* netmsg = (NetMessage*) msg->payload;
-					Debug << "Client recv netmsg: len: " << netmsg->len << ", msgid: " << netmsg->msgid;
-					Debug << "    content: " << netmsg->payload;
-					net::releaseSocketMessage(msg);
+					size_t len = 0;
+					const void* payload = easynet->getMessageContent(msg, &len);
+					Debug << "Client recv msg: len: " << len << ", content: " << (const char*)(payload);
+					easynet->releaseMessage(msg);
 				}
 				else {
 					std::this_thread::sleep_for(std::chrono::milliseconds(1));
@@ -96,17 +101,12 @@ void test_easynet() {
 					if (total >= 1000) {
 						total = 0;
 						std::string content;
-						size_t len = randomBetween(10, 100);
-						randomString(content, len, true, true, true);
-						Debug << "Socket: " << s << " randomString: " << content.length() << ", msglen: " << (content.length() + sizeof(NetMessage));
-						net::SocketMessage* newmsg = net::allocateSocketMessage(content.length() + sizeof(NetMessage));
-						newmsg->fd = s;
-						newmsg->payload_len = content.length() + sizeof(NetMessage);
-						NetMessage* netmsg = (NetMessage*) newmsg->payload;
-						netmsg->len = content.length() + sizeof(NetMessage);
-						netmsg->msgid = s;
-						memcpy(netmsg->payload, content.data(), content.length());
-						easynet->sendMessage(newmsg);
+						size_t len = randomBetween(10, 20);
+						randomString(content, len, false, true, true);
+						//Debug << "Socket: " << s << " randomString: " << content.length() << ", msglen: " << (content.length() + sizeof(NetMessage));
+						void* newmsg = easynet->allocateMessage(content.length());
+						easynet->setMessageContent(newmsg, content.data(), content.length());
+						easynet->sendMessage(s, newmsg);
 					}
 				}
 			}
