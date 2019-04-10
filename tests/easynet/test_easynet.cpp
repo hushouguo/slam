@@ -98,10 +98,14 @@ void test_easynet() {
 						std::string content;
 						size_t len = randomBetween(10, 100);
 						randomString(content, len, true, true, true);
-						net::SocketMessage* newmsg = net::allocateSocketMessage(content.length());
+						Debug << "Socket: " << s << " randomString: " << content.length() << ", msglen: " << (content.length() + sizeof(NetMessage));
+						net::SocketMessage* newmsg = net::allocateSocketMessage(content.length() + sizeof(NetMessage));
 						newmsg->fd = s;
-						newmsg->payload_len = content.length();
-						memcpy(newmsg->payload, content.data(), content.length());
+						newmsg->payload_len = content.length() + sizeof(NetMessage);
+						NetMessage* netmsg = (NetMessage*) newmsg->payload;
+						netmsg->len = content.length() + sizeof(NetMessage);
+						netmsg->msgid = s;
+						memcpy(netmsg->payload, content.data(), content.length());
 						easynet->sendMessage(newmsg);
 					}
 				}

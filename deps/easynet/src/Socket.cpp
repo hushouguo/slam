@@ -71,6 +71,8 @@ namespace net {
 			memcpy(msg->payload, this->_rbuffer.rbuffer(), msg->payload_len);
 			this->_rbuffer.rlength(msglen);
 			this->_easynet->pushMessage(msg);
+
+			Debug("Socket: %d receive message: %ld", this->fd(), msglen);
 		}
 		
 		return true;	
