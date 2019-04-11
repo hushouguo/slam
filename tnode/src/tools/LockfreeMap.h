@@ -15,6 +15,7 @@ BEGIN_NAMESPACE_TNODE {
 			inline VALUE find(KEY key);
 			inline size_t size();
 			inline bool empty();
+			inline void clear();
 			inline VALUE pop_front();
 			inline void traverse(std::function<void(KEY, VALUE)> invoke);
 
@@ -23,8 +24,7 @@ BEGIN_NAMESPACE_TNODE {
 			std::unordered_map<KEY, VALUE> _map;
 	};
 
-	template <typename KEY, typename VALUE>
-	void LockfreeMap<KEY, VALUE>::traverse(std::function<void(KEY, VALUE)> invoke) {
+	template <typename KEY, typename VALUE>	void LockfreeMap<KEY, VALUE>::traverse(std::function<void(KEY, VALUE)> invoke) {
 		this->_locker.lock();
 		for (auto& i : this->_map) {
 			invoke(i.first, i.second);
@@ -32,16 +32,14 @@ BEGIN_NAMESPACE_TNODE {
 		this->_locker.unlock();
 	}
 	
-	template <typename KEY, typename VALUE>
-	bool LockfreeMap<KEY, VALUE>::insert(KEY key, VALUE value) {
+	template <typename KEY, typename VALUE>	bool LockfreeMap<KEY, VALUE>::insert(KEY key, VALUE value) {
 		this->_locker.lock();
 		bool retval = this->_map.insert(std::make_pair(key, value)).second;
 		this->_locker.unlock();
 		return retval;
 	}
 	
-	template <typename KEY, typename VALUE>
-	bool LockfreeMap<KEY, VALUE>::eraseKey(KEY key) {
+	template <typename KEY, typename VALUE>	bool LockfreeMap<KEY, VALUE>::eraseKey(KEY key) {
 		bool retval = false;
 		this->_locker.lock();
 		auto i = this->_map.find(key);
@@ -53,16 +51,14 @@ BEGIN_NAMESPACE_TNODE {
 		return retval;
 	}
 	
-	template <typename KEY, typename VALUE>
-	bool LockfreeMap<KEY, VALUE>::containKey(KEY key) {
+	template <typename KEY, typename VALUE>	bool LockfreeMap<KEY, VALUE>::containKey(KEY key) {
 		this->_locker.lock();
 		bool retval = this->_map.find(key) != this->_map.end();
 		this->_locker.unlock();
 		return retval;
 	}
 	
-	template <typename KEY, typename VALUE>
-	VALUE LockfreeMap<KEY, VALUE>::find(KEY key) {
+	template <typename KEY, typename VALUE>	VALUE LockfreeMap<KEY, VALUE>::find(KEY key) {
 		VALUE value = typename std::unordered_map<KEY, VALUE>::value_type::second_type();
 		this->_locker.lock();
 		auto i = this->_map.find(key);
@@ -73,8 +69,7 @@ BEGIN_NAMESPACE_TNODE {
 		return value;
 	}
 
-	template <typename KEY, typename VALUE>
-	VALUE LockfreeMap<KEY, VALUE>::pop_front() {
+	template <typename KEY, typename VALUE>	VALUE LockfreeMap<KEY, VALUE>::pop_front() {
 		VALUE value = typename std::unordered_map<KEY, VALUE>::value_type::second_type();
 		this->_locker.lock();
 		auto i = this->_map.begin();
@@ -86,20 +81,30 @@ BEGIN_NAMESPACE_TNODE {
 		return value;
 	}
 	
-	template <typename KEY, typename VALUE>
-	size_t LockfreeMap<KEY, VALUE>::size() {
+	template <typename KEY, typename VALUE>	size_t LockfreeMap<KEY, VALUE>::size() {
+		return this->_map.size();
+#if 0
 		this->_locker.lock();
 		size_t size = this->_map.size();
 		this->_locker.unlock();
 		return size;
+#endif
 	}
 	
-	template <typename KEY, typename VALUE>
-	bool LockfreeMap<KEY, VALUE>::empty() {
+	template <typename KEY, typename VALUE>	bool LockfreeMap<KEY, VALUE>::empty() {
+		return this->_map.empty();
+#if 0		
 		this->_locker.lock();
 		bool retval = this->_map.empty();
 		this->_locker.unlock();
 		return retval;
+#endif		
+	}
+	
+	template <typename KEY, typename VALUE>	void LockfreeMap<KEY, VALUE>::clear() {
+		this->_locker.lock();
+		this->_map.clear();
+		this->_locker.unlock();
 	}
 }
 

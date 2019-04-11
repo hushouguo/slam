@@ -55,7 +55,18 @@ function test_message_parser()
 	dump(o)
 end
 
-cc.regmsg(1, "tnode.AddressBook")
-test_message_parser()
+--cc.regmsg(1, "tnode.AddressBook")
+--test_message_parser()
 
+cc.log_trace("prepare register timer")
+local t1 = cc.newtimer(1000, -1, "this is a timer 1000", function(id, ctx)
+	cc.log_trace("timer tick, id: " .. id .. ", ctx: " .. ctx)
+end)
+local t2 = cc.newtimer(2000, 2, "this is a timer 2000", function(id, ctx)
+	cc.log_trace("timer tick, id: " .. id .. ", ctx: " .. ctx)
+end)
+local t3 = cc.newtimer(3000, 5, "this is a timer 3000", function(id, ctx)
+	cc.log_trace("timer tick, id: " .. id .. ", ctx: " .. ctx)
+end)
+cc.log_trace("t1: " .. t1 .. ", t2: " .. t2 .. ", t3: " .. t3)
 

@@ -5,6 +5,8 @@
 
 #include "tnode.h"
 #include "tools/Tools.h"
+#include "tools/Registry.h"
+#include "tools/Singleton.h"
 #include "xml/XmlParser.h"
 #include "config/Config.h"
 

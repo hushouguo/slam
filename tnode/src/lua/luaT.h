@@ -119,7 +119,7 @@ BEGIN_NAMESPACE_TNODE {
 	template <> void luaT_pushvalue(lua_State* L, const void* value);
 
 	// luaT_Value
-	template <> void luaT_pushvalue(lua_State* L, const luaT_Value& value);
+	template <> void luaT_pushvalue(lua_State* L, luaT_Value value);
 	
 #define LUA_REGISTER(L, F, ROUTINE) \
 	lua_pushstring(L, F);\

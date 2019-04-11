@@ -3,6 +3,7 @@ cc.log_trace("service: " .. _G["cc.service"])
 --cc.regmsg(20, "NetData.PlayerRegisterRequest")
 --cc.regmsg(60003, "NetData.PlayerRegisterRequest")
 --cc.regmsg(60005, "NetData.Heartbeat")
+cc.loadmsg("protocol/echo.proto")
 cc.regmsg(1, "protocol.EchoRequest")
 cc.regmsg(2, "protocol.EchoResponse")
 local total = 0
@@ -24,7 +25,7 @@ function msgParser(fd, entityid, msgid, o)
 		total = total + 1
 		if (total >= 5) then
 			cc.closesocket(fd)
-			cc.exitservice()
+			--cc.exitservice()
 		end
 	end
 end

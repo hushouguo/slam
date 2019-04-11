@@ -4,10 +4,15 @@
  */
 
 #include "tnode.h"
+#include "tools/Singleton.h"
+#include "tools/Entry.h"
+#include "tools/ThreadPool.h"
 #include "tools/Runnable.h"
+#include "tools/Spinlocker.h"
 #include "tools/LockfreeQueue.h"
 #include "tools/LockfreeMap.h"
-#include "tools/Singleton.h"
+#include "tools/Registry.h"
+#include "time/Time.h"
 #include "config/Config.h"
 #include "lua/luaT.h"
 #include "lua/MessageParser.h"

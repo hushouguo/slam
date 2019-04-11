@@ -17,10 +17,10 @@ BEGIN_NAMESPACE_TNODE {
 				if (!this->_isrunning) {
 					this->_isrunning = true;
 					sThreadPool.add([this](Runnable* runnable) {
-							System.cout("schedule: %s(%d) run", this->getClassName(), this->id);
+							//System.cout("schedule: %s(%d) run", this->getClassName(), this->id);
 							runnable->run();
 							runnable->_isrunning = false;
-							System.cout("schedule: %s(%d) run over", this->getClassName(), this->id);
+							//System.cout("schedule: %s(%d) run over", this->getClassName(), this->id);
 							}, this);
 				}
 			}

@@ -15,6 +15,7 @@ BEGIN_NAMESPACE_TNODE {
 			inline T pop_front();
 			inline size_t size();
 			inline bool empty();
+			inline void clear();
 			inline void traverse(std::function<void(T)> invoke);
 
 		private:
@@ -67,6 +68,12 @@ BEGIN_NAMESPACE_TNODE {
 
 	template <typename T> bool LockfreeQueue<T>::empty() {
 		return this->_list.empty();
+	}
+
+	template <typename T> void LockfreeQueue<T>::clear() {
+		this->_locker.lock();
+		this->_list.clear();
+		this->_locker.unlock();
 	}
 }
 

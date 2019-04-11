@@ -1,7 +1,7 @@
 cc.newservice("scripts/register.lua")
 cc.newservice("scripts/register.lua")
 --cc.newservice("scripts/client.lua")
-cc.newservice("scripts/benchmark.lua")
+--cc.newservice("scripts/benchmark.lua")
 --cc.newserivce("scripts/client.lua")
 
 local fd = cc.newserver("0.0.0.0", 12306)
@@ -28,3 +28,4 @@ function dispatch(entityid, msgid)
 		return 2
 	end
 end
+

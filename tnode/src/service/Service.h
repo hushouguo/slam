@@ -63,10 +63,10 @@ BEGIN_NAMESPACE_TNODE {
 				this->_timerQueue.push_back(ts);
 				this->_timerQueue.sort(timer_node());
 				this->_locker.unlock();
-				Debug << "Service: " << this->id << " all of timers";
-				for (auto& ts : this->_timerQueue) {
-					Debug << "    ts: " << ts->next_time_point << ", milliseconds: " << ts->milliseconds;
-				}
+				//Debug << "Service: " << this->id << " all of timers";
+				//for (auto& ts : this->_timerQueue) {
+				//	Debug << "    ts: " << ts->next_time_point << ", milliseconds: " << ts->milliseconds;
+				//}
 			}
 			inline timer_struct* popTimer() {
 				assert(!this->_timerQueue.empty());

@@ -349,7 +349,7 @@ template <typename T> T* luaT_get_object(lua_State* L, const char* name) {
 	}
 
 	// luaT_Value
-	template <> void luaT_pushvalue(lua_State* L, const luaT_Value& value) {
+	template <> void luaT_pushvalue(lua_State* L, luaT_Value value) {
 		switch (value.type) {
 			default: Error << "unknown value.type: " << value.type;
 			case LUA_TNIL: lua_pushnil(L); break;

@@ -5,9 +5,13 @@
 
 #include "tnode.h"
 #include "tools/Singleton.h"
+#include "tools/Entry.h"
+#include "tools/ThreadPool.h"
 #include "tools/Runnable.h"
+#include "tools/Spinlocker.h"
 #include "tools/LockfreeQueue.h"
 #include "tools/LockfreeMap.h"
+#include "tools/Registry.h"
 #include "message/ServiceMessage.h"
 #include "config/Config.h"
 #include "lua/luaT.h"
@@ -34,10 +38,17 @@ BEGIN_NAMESPACE_TNODE {
 			this->_isstop = true;
 			SafeDelete(this->_messageParser);
 			luaT_close(this->_L);
+
 			while (!this->_msgQueue.empty()) {
 				const void* netmsg = this->_msgQueue.pop_front();
 				sNetworkManager.easynet()->releaseMessage(netmsg);
 			}
+			this->_msgQueue.clear();
+
+			for (auto& ts : this->_timerQueue) {
+				SafeDelete(ts);
+			}
+			this->_timerQueue.clear();
 		}
 	}
 
@@ -59,13 +70,13 @@ BEGIN_NAMESPACE_TNODE {
 			luaT_entry_timer_expire(this->luaState(), ts->id, ts->ref, ts->ctx);
 			--ts->times;
 			if (ts->times == 0) {
-				Debug << "timer: " << ts->id << " exhause times";
+				//Debug << "timer: " << ts->id << " exhause times";
 				SafeDelete(ts);
 			}
 			else {
 				ts->next_time_point = sTime.milliseconds() + ts->milliseconds;
 				this->pushTimer(ts);
-				Debug << "timer: " << ts->id << " leave times: " << ts->times;
+				//Debug << "timer: " << ts->id << " leave times: " << ts->times;
 			}
 		}
 	}
@@ -75,7 +86,7 @@ BEGIN_NAMESPACE_TNODE {
 	}
     
 	u32 Service::regtimer(u32 milliseconds, s32 times, int ref, const luaT_Value& ctx) {
-		CHECK_RETURN(milliseconds > 0, void(0), "timer interval MUST greater than 0");
+		CHECK_RETURN(milliseconds > 0, 0, "timer interval MUST greater than 0");
 		timer_struct* ts = new timer_struct();
 		sTime.now();
 		ts->id = this->_init_timerid++;
@@ -86,6 +97,7 @@ BEGIN_NAMESPACE_TNODE {
 		ts->next_time_point = sTime.milliseconds() + milliseconds;
 		Debug << "regtimer: " << ts->id << " interval: " << ts->milliseconds;
 		this->pushTimer(ts);
+		return ts->id;
 	}
 }
 

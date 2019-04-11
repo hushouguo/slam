@@ -4,6 +4,7 @@
  */
 
 #include "tnode.h"
+#include "tools/Registry.h"
 #include "xml/XmlParser.h"
 #include "lua/luaT.h"
 
