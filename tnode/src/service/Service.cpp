@@ -33,27 +33,40 @@ BEGIN_NAMESPACE_TNODE {
 		return true;
 	}
 
-	void Service::stop() {
+	Service::~Service() {
+		this->cleanup();
+	}
+	
+	void Service::cleanup() {
 		if (!this->_isstop) {
 			this->_isstop = true;
-			SafeDelete(this->_messageParser);
-			luaT_close(this->_L);
-
-			while (!this->_msgQueue.empty()) {
-				const void* netmsg = this->_msgQueue.pop_front();
-				sNetworkManager.easynet()->releaseMessage(netmsg);
-			}
-			this->_msgQueue.clear();
-
-			for (auto& ts : this->_timerQueue) {
-				SafeDelete(ts);
-			}
-			this->_timerQueue.clear();
 		}
+		
+		SafeDelete(this->_messageParser);
+		luaT_close(this->_L);
+
+		while (!this->_msgQueue.empty()) {
+			const void* netmsg = this->_msgQueue.pop_front();
+			sNetworkManager.easynet()->releaseMessage(netmsg);
+		}
+		this->_msgQueue.clear();
+
+		for (auto& ts : this->_timerQueue) {
+			SafeDelete(ts);
+		}
+		this->_timerQueue.clear();
 	}
 
+	void Service::stop() {
+		this->_isstop = true;
+	}
+	
 	void Service::run() {
-		while (!this->isstop() && !this->_msgQueue.empty()) {
+		if (this->isstop()) {
+			return;
+		}
+		
+		while (!this->_msgQueue.empty()) {
 			const void* netmsg = this->_msgQueue.pop_front();
 			assert(netmsg);
 			luaT_entry_msgParser(this->luaState(), netmsg, this->messageParser());
@@ -61,7 +74,7 @@ BEGIN_NAMESPACE_TNODE {
 		}
 
 		sTime.now();
-		while (!this->isstop() && !this->_timerQueue.empty()) {
+		while (!this->_timerQueue.empty()) {
 			timer_struct* ts = this->popTimer();
 			if (ts->next_time_point > sTime.milliseconds()) {
 				this->pushTimer(ts);

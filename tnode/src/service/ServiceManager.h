@@ -16,7 +16,14 @@ BEGIN_NAMESPACE_TNODE {
 			bool pushMessage(const void* netmsg);
 			Service* newservice(const char* entryfile);
 			inline Service* getService(u32 sid) {
-				return this->_services.find(sid);
+				Service* service = nullptr;
+				this->_locker.lock();
+				auto i = this->_services.find(sid);
+				if (i != this->_services.end()) {
+					service = i->second;
+				}
+				this->_locker.unlock();
+				return service;
 			}
 			inline Service* getService(lua_State* L) {
 				u32 sid = luaT_getOwner(L);
@@ -33,7 +40,22 @@ BEGIN_NAMESPACE_TNODE {
 		private:
 			int _autoid =  0;
 			int _initid = -1;
-			LockfreeMap<u32, Service*> _services;
+			Spinlocker _locker;
+			std::unordered_map<u32, Service*> _services;
+			inline bool insertService(u32 sid, Service* service) {
+				this->_locker.lock();
+				bool rc = this->_services.insert(std::make_pair(sid, service)).second;
+				this->_locker.unlock();
+				return rc;
+			}
+			inline void removeService(u32 sid) {
+				this->_locker.lock();
+				auto i = this->_services.find(sid);
+				if (i != this->_services.end()) {
+					this->_services.erase(i);
+				}
+				this->_locker.unlock();
+			}
 	};
 }
 

@@ -11,6 +11,7 @@ BEGIN_NAMESPACE_TNODE {
 		public:
 			Runnable(u32 id) : Entry<u32>(id) {}
 			virtual void run() = 0;
+			inline bool isrunning() { return this->_isrunning; }
 
 		public:
 			void schedule() {

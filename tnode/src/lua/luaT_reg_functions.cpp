@@ -347,8 +347,6 @@ BEGIN_NAMESPACE_TNODE {
 	// void exitservice()
 	static int cc_exitservice(lua_State* L) {
 		u32 sid = luaT_getOwner(L);
-		Service* service = sServiceManager.getService(sid);
-		assert(service);
 		sServiceManager.exitservice(sid);
 		return 0;
 	}

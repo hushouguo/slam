@@ -44,6 +44,7 @@ BEGIN_NAMESPACE_TNODE {
 
 		Service* service = this->getService(sid);
 		CHECK_RETURN(service, false, "Not found dispatch service: %d", sid);
+		CHECK_RETURN(!service->isstop(), false, "service: %d isstop", sid);
 		
 		service->pushMessage(netmsg);			
 		this->schedule(service);	// schedule service right now
@@ -55,10 +56,10 @@ BEGIN_NAMESPACE_TNODE {
 		u32 sid = this->_autoid++;
 		assert(this->getService(sid) == nullptr);
 		Service* service = new Service(sid);
-		this->_services.insert(sid, service);
+		this->insertService(sid, service);
 		bool result = service->init(entryfile);
 		if (!result) {
-			this->_services.eraseKey(sid);
+			this->removeService(sid);
 			SafeDelete(service);
 		}
 		Debug << "new service: " << sid;
@@ -66,12 +67,10 @@ BEGIN_NAMESPACE_TNODE {
 	}
 
 	bool ServiceManager::exitservice(u32 sid) {
+		Debug << "exit service: " << sid;
 		Service* service = this->getService(sid);
 		CHECK_RETURN(service, false, "not found service: %d", sid);
-		//this->_services.eraseKey(sid);
-		//SafeDelete(service);
 		service->stop();
-		Debug << "exit service: " << sid;
 		return true;
 	}
 
@@ -82,24 +81,30 @@ BEGIN_NAMESPACE_TNODE {
 	}
 
 	void ServiceManager::schedule() {
-		std::vector<Service*> schelist, shutlist;
-		this->_services.traverse([&schelist, &shutlist](u32 sid, Service* service) {
+		std::vector<Service*> deprecated;
+		
+		this->_locker.lock();
+		for (auto& i : this->_services) {
+			Service* service = i.second;
 			if (service->isstop()) {
-				shutlist.push_back(service);
+				if (!service->isrunning()) {
+					deprecated.push_back(service);
+				}
 			}
 			else {
-				schelist.push_back(service);
+				this->schedule(service);
 			}
-		});
-
-		for (auto& service : shutlist) {
-			this->_services.eraseKey(service->id);
-			Debug << "destroy service: " << service->id;
-			SafeDelete(service);
 		}
-		
-		for (auto& service : schelist) {
-			this->schedule(service);
+		this->_locker.unlock();
+
+		if (!deprecated.empty()) {
+			for (auto& service : deprecated) {
+				assert(service->isstop());
+				assert(!service->isrunning());
+				this->removeService(service->sid);
+				Debug << "destroy service: " << service->id;
+				SafeDelete(service);
+			}
 		}
 	}
 	

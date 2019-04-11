@@ -11,6 +11,7 @@ BEGIN_NAMESPACE_TNODE {
 		public:
 			Service(u32 id) : Runnable(id) {
 			}
+			~Service();
 			const char* getClassName() override { return "Service"; }
 
 		public:
@@ -33,6 +34,7 @@ BEGIN_NAMESPACE_TNODE {
 			std::string _entryfile;
 			lua_State* _L = nullptr;
 			MessageParser* _messageParser = nullptr;
+			void cleanup();
 
 		private:
 			LockfreeQueue<const void*> _msgQueue;
