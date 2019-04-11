@@ -5,6 +5,9 @@
 
 #include "tnode.h"
 #include "tools/Singleton.h"
+#include "tools/Runnable.h"
+#include "tools/LockfreeQueue.h"
+#include "tools/LockfreeMap.h"
 #include "message/ServiceMessage.h"
 #include "config/Config.h"
 #include "lua/luaT.h"

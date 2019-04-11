@@ -4,7 +4,13 @@
  */
 
 #include "tnode.h"
+#include "tools/Runnable.h"
+#include "tools/LockfreeQueue.h"
+#include "tools/LockfreeMap.h"
+#include "tools/Singleton.h"
 #include "config/Config.h"
+#include "lua/luaT.h"
+#include "lua/MessageParser.h"
 #include "message/ServiceMessage.h"
 #include "service/Service.h"
 #include "service/ServiceManager.h"

@@ -5,8 +5,12 @@
 
 #include "tnode.h"
 #include "tools/Singleton.h"
+#include "tools/Runnable.h"
+#include "tools/LockfreeQueue.h"
+#include "tools/LockfreeMap.h"
 #include "message/ServiceMessage.h"
 #include "lua/luaT.h"
+#include "lua/MessageParser.h"
 #include "lua/luaT_entry.h"
 #include "service/Service.h"
 #include "service/ServiceManager.h"

@@ -4,6 +4,7 @@
  */
 
 #include "tnode.h"
+#include "tools/Singleton.h"
 #include "message/ServiceMessage.h"
 #include "lua/luaT.h"
 #include "lua/MessageParser.h"

@@ -6,10 +6,6 @@
 #ifndef __SERVICE_H__
 #define __SERVICE_H__
 
-#include "tools/Runnable.h"
-#include "tools/LockfreeQueue.h"
-#include "lua/MessageParser.h"
-
 BEGIN_NAMESPACE_TNODE {
 	class Service : public Runnable {
 		public:

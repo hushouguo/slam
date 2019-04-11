@@ -6,9 +6,6 @@
 #ifndef __NETWORKMANAGER_H__
 #define __NETWORKMANAGER_H__
 
-#include "tools/Runnable.h"
-#include "tools/Singleton.h"
-
 BEGIN_NAMESPACE_TNODE {
 	class NetworkManager {
 		public:

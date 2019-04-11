@@ -6,11 +6,6 @@
 #ifndef __SERVICEMANAGER_H__
 #define __SERVICEMANAGER_H__
 
-#include "tools/Singleton.h"
-#include "tools/LockfreeMap.h"
-
-#define ILLEGAL_SERVICE		u32(-1)
-
 BEGIN_NAMESPACE_TNODE {
 	class ServiceManager {
 		public:
@@ -22,6 +17,12 @@ BEGIN_NAMESPACE_TNODE {
 			Service* newservice(const char* entryfile);
 			inline Service* getService(u32 sid) {
 				return this->_services.find(sid);
+			}
+			inline Service* getService(lua_State* L) {
+				u32 sid = luaT_getOwner(L);
+				Service* service = this->getService(sid);
+				assert(service);
+				return service;
 			}
 			bool exitservice(u32 sid);
 

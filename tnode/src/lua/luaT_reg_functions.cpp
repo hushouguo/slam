@@ -9,6 +9,8 @@
 #include "tools/Runnable.h"
 #include "tools/Tools.h"
 #include "tools/Singleton.h"
+#include "tools/LockfreeQueue.h"
+#include "tools/LockfreeMap.h"
 #include "json/json_parser.h"
 #include "message/ServiceMessage.h"
 #include "time/Time.h"
@@ -135,7 +137,7 @@ BEGIN_NAMESPACE_TNODE {
 		CHECK_RETURN(lua_istable(L, -(args - 1)), 0, "[%s]", lua_typename(L, lua_type(L, -(args - 1))));
 		u32 msgid = lua_tointeger(L, -args);
 		std::string outstring;
-		bool retval = luaT_getService(L)->messageParser()->encode(L, msgid, outstring);
+		bool retval = sServiceManager.getService(L)->messageParser()->encode(L, msgid, outstring);
 		CHECK_RETURN(retval, 0, "encode message: %d error", msgid);
 		lua_pushstring(L, outstring.c_str());
 		return 1;
@@ -150,7 +152,7 @@ BEGIN_NAMESPACE_TNODE {
 		CHECK_RETURN(lua_isstring(L, -(args - 1)), 0, "[%s]", lua_typename(L, lua_type(L, -(args - 1))));			
 		u32 msgid = lua_tointeger(L, -args);
 		std::string instring = lua_tostring(L, -(args - 1));
-		bool retval = luaT_getService(L)->messageParser()->decode(L, msgid, instring);
+		bool retval = sServiceManager.getService(L)->messageParser()->decode(L, msgid, instring);
 		CHECK_RETURN(retval, 0, "decode message: %d error", msgid);
 		// table is in the top of stack
 		return 1;
@@ -398,7 +400,7 @@ BEGIN_NAMESPACE_TNODE {
 		u64 entityid = lua_tointeger(L, -(args - 1));
 		u32 msgid = lua_tointeger(L, -(args - 2));
 
-		google::protobuf::Message* message = luaT_getService(L)->messageParser()->encode(L, msgid);
+		google::protobuf::Message* message = sServiceManager.getService(L)->messageParser()->encode(L, msgid);
 		CHECK_RETURN(message, 0, "encode message: %d error", msgid);
 
 		size_t byteSize = message->ByteSize();
@@ -430,7 +432,7 @@ BEGIN_NAMESPACE_TNODE {
 		CHECK_RETURN(args == 1, 0, "`%s` lack args:%d", __FUNCTION__, args);
 		CHECK_RETURN(lua_isstring(L, -args), 0, "[%s]", lua_typename(L, lua_type(L, -args)));
 		const char* filename = lua_tostring(L, -args);
-		bool rc = luaT_getService(L)->messageParser()->loadmsg(filename);
+		bool rc = sServiceManager.getService(L)->messageParser()->loadmsg(filename);
 		CHECK_RETURN(rc, 0, "loadmsg: %s failure", filename);
 		return 0;
 	}
@@ -444,7 +446,7 @@ BEGIN_NAMESPACE_TNODE {
 		CHECK_RETURN(lua_isstring(L, -(args - 1)), 0, "[%s]", lua_typename(L, lua_type(L, -(args - 1))));
 		u32 msgid = lua_tointeger(L, -args);
 		const char* name = lua_tostring(L, -(args - 1));
-		bool retval = luaT_getService(L)->messageParser()->regmsg(msgid, name);
+		bool retval = sServiceManager.getService(L)->messageParser()->regmsg(msgid, name);
 		CHECK_RETURN(retval, 0, "regmsg: %d, %s failure", msgid, name);
 		return 0;
 	}
@@ -493,7 +495,7 @@ BEGIN_NAMESPACE_TNODE {
 		lua_pushvalue(L, -(args - 2));
 		int ref = luaL_ref(L, LUA_REGISTRYINDEX);
 
-		luaT_getService(L)->regtimer(milliseconds, ref, ctx);
+		sServiceManager.getService(L)->regtimer(milliseconds, ref, ctx);
 		
 		return 0;
 	}

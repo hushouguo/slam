@@ -205,6 +205,8 @@ using Byte	=	unsigned char;
 #define HOUR							3600U
 #define DAY								86400U
 
+#define ILLEGAL_SERVICE					u32(-1)
+
 #define SafeFree(P)						do { if(P) { ::free((void*)P); (P) = nullptr; } } while(0)
 #define SafeDelete(P)					do { if(P) { delete (P); (P) = nullptr; } } while(0)
 #define SafeClose(S)					do { if(S > 0) { ::close(S); S = -1; } } while(0)
