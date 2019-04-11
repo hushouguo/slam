@@ -46,6 +46,7 @@ aux_source_directory(src/service src)
 aux_source_directory(src/time src)
 aux_source_directory(src/tools src)
 aux_source_directory(src/net src)
+aux_source_directory(src/mysql src)
 
 link_directories(/usr/lib64)
 add_executable(${target} ${src})
