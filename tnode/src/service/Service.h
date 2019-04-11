@@ -43,7 +43,7 @@ BEGIN_NAMESPACE_TNODE {
 
 		// timer handle
 		public:
-			void regtimer(u32 milliseconds, int ref);
+			void regtimer(u32 milliseconds, int ref, const luaT_Value& ctx);
 		
 		private:
 			enum timer_type {
@@ -54,6 +54,7 @@ BEGIN_NAMESPACE_TNODE {
 				u64 next_time_point;
 				u32 milliseconds;
 				int ref;
+				luaT_Value ctx;
 				timer_type type;
 			};
 			Spinlocker _locker;

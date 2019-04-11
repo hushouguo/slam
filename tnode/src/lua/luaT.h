@@ -31,10 +31,18 @@ BEGIN_NAMESPACE_TNODE {
 		luaT_Value(lua_Integer value) : type(LUA_TINTEGER), value_integer(value) {}
 		luaT_Value(lua_Number value) : type(LUA_TNUMBER), value_float(value) {}
 		luaT_Value(const char* value) : type(LUA_TSTRING), value_string(value) {}
+		luaT_Value(const luaT_Value& value) { this->set(value); }
 		inline void set(bool value) { this->type = LUA_TBOOLEAN; this->value_bool = value; }
 		inline void set(lua_Integer value) { this->type = LUA_TINTEGER; this->value_integer = value; }
 		inline void set(lua_Number value) { this->type = LUA_TNUMBER; this->value_float = static_cast<float>(value); }
 		inline void set(const char* value) { this->type = LUA_TSTRING; this->value_string = value; }
+		inline void set(const luaT_Value& value) { 
+			this->type = value.type;
+			this->value_bool = value.value_bool;
+			this->value_integer = value.value_integer;
+			this->value_float = value.value_float;
+			this->value_string = value.value_string;
+		}
 		template <typename T> void operator = (T value) { this->set(value); }		
 		inline bool isbool() { return this->type == LUA_TBOOLEAN; }
 		inline bool isinteger() { return this->type == LUA_TINTEGER; }

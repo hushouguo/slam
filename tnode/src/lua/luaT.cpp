@@ -102,7 +102,7 @@ BEGIN_NAMESPACE_TNODE {
 			return false;
 		}
 
-		/* get return value */
+		// get return value
 		if (lua_isboolean(L, -1)) {
 			ret = lua_toboolean(L, -1) != 0;
 		}

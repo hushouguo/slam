@@ -63,7 +63,7 @@ BEGIN_NAMESPACE_TNODE {
 	
 	//
 	// void timer()
-	bool luaT_entry_timer_expire(lua_State* L, int ref) {
+	bool luaT_entry_timer_expire(lua_State* L, int ref, const luaT_Value& ctx) {
 		return true;
 	}
 }

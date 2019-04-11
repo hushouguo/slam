@@ -53,7 +53,7 @@ BEGIN_NAMESPACE_TNODE {
 				this->pushTimer(ts);
 				break;
 			}
-			luaT_entry_timer_expire(this->luaState(), ts->ref);
+			luaT_entry_timer_expire(this->luaState(), ts->ref, ts->ctx);
 			if (ts->type == timer_forever) {
 				ts->next_time_point = sTime.milliseconds() + ts->milliseconds;
 				this->pushTimer(ts);
@@ -68,7 +68,7 @@ BEGIN_NAMESPACE_TNODE {
 		return !this->isstop() && !this->_msgQueue.empty() && !this->_timerQueue.empty();
 	}
     
-	void Service::regtimer(u32 milliseconds, int ref) {
+	void Service::regtimer(u32 milliseconds, int ref, const luaT_Value& ctx) {
 		CHECK_RETURN(milliseconds > 0, void(0), "timer interval MUST greater than 0");
 		timer_struct* ts = new timer_struct();
 		sTime.now();
@@ -76,6 +76,7 @@ BEGIN_NAMESPACE_TNODE {
 		ts->milliseconds = milliseconds;
 		ts->type = timer_forever;
 		ts->ref = ref;
+		ts->ctx = ctx;
 		this->pushTimer(ts);
 	}
 }
