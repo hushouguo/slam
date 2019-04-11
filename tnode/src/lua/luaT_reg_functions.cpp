@@ -464,7 +464,7 @@ BEGIN_NAMESPACE_TNODE {
 	}
 	
 	//
-	// u32 newtimer(milliseconds, times, ctx, function(milliseconds, ctx) end)
+	// u32 newtimer(milliseconds, times, ctx, function(id, ctx) end)
 	// times: <= 0: forever, > 0: special times
 	static int cc_newtimer(lua_State* L) {
 		int args = lua_gettop(L);

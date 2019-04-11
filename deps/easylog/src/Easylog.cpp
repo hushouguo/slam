@@ -369,29 +369,23 @@ namespace logger {
 		private:
 #if EASYLOG_ENABLE_ASYNC_SEND
 			Spinlocker _locker;
-			//std::list<EasylogNode*> _logQueue;
-			EasylogNode *_headQueue = nullptr, *_tailQueue = nullptr;
+			EasylogNode _initNode;
+			EasylogNode *_headNode = &_initNode, *_tailNode = &_initNode;
+			
 			inline void pushNode(EasylogNode* node) {
 				this->_locker.lock();
-				if (!this->_headQueue) {
-					assert(this->_tailQueue == nullptr);
-					this->_headQueue = this->_tailQueue = node;
-				}
-				else {
-					assert(this->_tailQueue != nullptr);
-					this->_tailQueue->next = node;
-					this->_tailQueue = node;
-				}
+				this->_tailNode->next = node;
+				this->_tailNode = node;
 				this->_locker.unlock();
 			}
+			
 			inline EasylogNode* popNode() {
 				this->_locker.lock();
-				EasylogNode* node = this->_headQueue;
-				if (this->_headQueue != nullptr) {
-					this->_headQueue = this->_headQueue->next;
-					if (this->_headQueue == nullptr) {
-						assert(this->_tailQueue == node);
-						this->_tailQueue = nullptr;
+				EasylogNode* node = this->_headNode->next;
+				if (node) {
+					this->_headNode->next = node->next;
+					if (!this->_headNode->next) {
+						this->_tailNode = this->_headNode;
 					}
 				}
 				this->_locker.unlock();
@@ -503,15 +497,7 @@ namespace logger {
 #if EASYLOG_ENABLE_ASYNC_SEND
 	void EasylogInternal::logProcess() {
 		while (true) {
-			EasylogNode* logNode = nullptr;
-			///this->_locker.lock();
-			///if (!this->_logQueue.empty()) {
-			///	logNode = this->_logQueue.front();
-			///	this->_logQueue.pop_front();
-			///}
-			///this->_locker.unlock();
-			logNode = this->popNode();
-			
+			EasylogNode* logNode = this->popNode();			
 			if (logNode) {
 				const std::string& s = logNode->buffer.str();
 				this->send_to_stdout(logNode->levelNode, s);
@@ -527,7 +513,7 @@ namespace logger {
 			}
 		}
 		//fprintf(stderr, "Easylog exit, logQueue: %ld\n", this->_logQueue.size());
-		fprintf(stderr, "Easylog exit, logQueue: %s\n", this->_headQueue == nullptr ? "empty" : "uncleanup");
+		fprintf(stderr, "Easylog exit, logQueue: %s\n", this->_headNode->next == nullptr ? "empty" : "uncleanup");
 	}
 #endif
 

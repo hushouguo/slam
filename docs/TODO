@@ -1,25 +1,13 @@
-
-1. closesocket
-2. exitservice
-3. how to cancel ref
-5. test and performance
-6. service receive msg to newserver or newclient, or to msgfunc
-7. lua release_message
-8. message how to manage avoid leak
-9. check multi-thread exclusion
-10. test multi-thread exclusion
-
-12. how to cleanup resource when system halt
-14. db agent
-15. remains lua apis
-16. next monday, debug communicate with client
-17. load static table and convert excel to lua, json
+when remove timer, cancel lua reference
+test and performance
+check multi-thread exclusion
+test multi-thread exclusion
+db agent, recordserver, gatewayserver
+convert table tools
+load static table and convert excel to lua, json
 18. hotfix
 19. 把主线程的任务也做成service，主线程
-21. zero-copy, lockfree
-22. 重构包含文件
-
-timer, 
+21. zero-copy, lockfree for easylog
 onSocketAccept, onClientConnected, onSocketShutdown
-
-GatewayServer, RecordServer
+1.buildinfo.h
+config macro in config.h

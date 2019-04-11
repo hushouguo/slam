@@ -83,6 +83,7 @@ BEGIN_NAMESPACE_TNODE {
 			if (ts->times == 0) {
 				//Debug << "timer: " << ts->id << " exhause times";
 				SafeDelete(ts);
+				//TODO: cancel lua_State reference
 			}
 			else {
 				ts->next_time_point = sTime.milliseconds() + ts->milliseconds;
