@@ -75,6 +75,13 @@ BEGIN_NAMESPACE_TNODE {
 	void luaT_regString(lua_State* L, const char* key, const char* value);
 	void luaT_regObject(lua_State* L, const char* key, const void* value);
 
+	inline Service* luaT_getService(lua_State* L) {
+		u32 sid = luaT_getOwner(L);
+		Service* service = sServiceManager.getService(sid);
+		assert(service);
+		return service;
+	}
+	
 	template <typename T> void luaT_pushvalue(lua_State* L, T value) {
 		//assert(false);
 		//lua_pushlightuserdata(L, value);

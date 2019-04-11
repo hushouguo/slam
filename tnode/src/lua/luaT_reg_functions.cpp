@@ -133,11 +133,8 @@ BEGIN_NAMESPACE_TNODE {
 		CHECK_RETURN(lua_isnumber(L, -args), 0, "[%s]", lua_typename(L, lua_type(L, -args)));
 		CHECK_RETURN(lua_istable(L, -(args - 1)), 0, "[%s]", lua_typename(L, lua_type(L, -(args - 1))));
 		u32 msgid = lua_tointeger(L, -args);
-		u32 sid = luaT_getOwner(L);
-		Service* service = sServiceManager.getService(sid);
-		assert(service);
 		std::string outstring;
-		bool retval = service->messageParser()->encode(L, msgid, outstring);
+		bool retval = luaT_getService(L)->messageParser()->encode(L, msgid, outstring);
 		CHECK_RETURN(retval, 0, "encode message: %d error", msgid);
 		lua_pushstring(L, outstring.c_str());
 		return 1;
@@ -152,10 +149,7 @@ BEGIN_NAMESPACE_TNODE {
 		CHECK_RETURN(lua_isstring(L, -(args - 1)), 0, "[%s]", lua_typename(L, lua_type(L, -(args - 1))));			
 		u32 msgid = lua_tointeger(L, -args);
 		std::string instring = lua_tostring(L, -(args - 1));
-		u32 sid = luaT_getOwner(L);
-		Service* service = sServiceManager.getService(sid);
-		assert(service);
-		bool retval = service->messageParser()->decode(L, msgid, instring);
+		bool retval = luaT_getService(L)->messageParser()->decode(L, msgid, instring);
 		CHECK_RETURN(retval, 0, "decode message: %d error", msgid);
 		// table is in the top of stack
 		return 1;
@@ -362,9 +356,8 @@ BEGIN_NAMESPACE_TNODE {
 		CHECK_RETURN(lua_isstring(L, -args), 0, "[%s]", lua_typename(L, lua_type(L, -args)));
 		CHECK_RETURN(lua_isnumber(L, -(args - 1)), 0, "[%s]", lua_typename(L, lua_type(L, -(args - 1))));
 		const char* address = lua_tostring(L, -args);
-		int port = lua_tointeger(L, -(args - 1));		
-		//TODO:SOCKET fd = sNetworkManager.newserver(address, port);
-		SOCKET fd = -1;
+		int port = lua_tointeger(L, -(args - 1));
+		SOCKET fd = sNetworkManager.easynet()->createServer(address, port);
 		if (fd == -1) {
 			Error << "newserver: " << address << ", port: " << port << " failure";
 		}		
@@ -381,9 +374,8 @@ BEGIN_NAMESPACE_TNODE {
 		CHECK_RETURN(lua_isstring(L, -args), 0, "[%s]", lua_typename(L, lua_type(L, -args)));
 		CHECK_RETURN(lua_isnumber(L, -(args - 1)), 0, "[%s]", lua_typename(L, lua_type(L, -(args - 1))));
 		const char* address = lua_tostring(L, -args);
-		int port = lua_tonumber(L, -(args - 1));		
-		//TODO:SOCKET fd = sNetworkManager.newclient(address, port);
-		SOCKET fd = -1;
+		int port = lua_tonumber(L, -(args - 1));
+		SOCKET fd = sNetworkManager.easynet()->createClient(address, port);
 		if (fd == -1) {
 			Error << "newclient: " << address << ", port: " << port << " failure";
 		}		
@@ -394,7 +386,6 @@ BEGIN_NAMESPACE_TNODE {
 	//
 	// void response(fd, entityid, msgid, o)
 	static int cc_response(lua_State* L) {
-#if 0		
 		int args = lua_gettop(L);
 		CHECK_RETURN(args == 4, 0, "`%s` lack args:%d", __FUNCTION__, args);
 		CHECK_RETURN(lua_isnumber(L, -args), 0, "[%s]", lua_typename(L, lua_type(L, -args)));
@@ -406,32 +397,28 @@ BEGIN_NAMESPACE_TNODE {
 		u64 entityid = lua_tointeger(L, -(args - 1));
 		u32 msgid = lua_tointeger(L, -(args - 2));
 
-		u32 sid = luaT_getOwner(L);
-		Service* service = sServiceManager.getService(sid);
-		assert(service);
-
-		google::protobuf::Message* message = service->messageParser()->encode(L, msgid);
+		google::protobuf::Message* message = luaT_getService(L)->messageParser()->encode(L, msgid);
 		CHECK_RETURN(message, 0, "encode message: %d error", msgid);
 
-		size_t byteSize = message->ByteSize();		
-		//TODO:ServiceMessage* msg = allocate_message(byteSize);
-		ServiceMessage* msg = nullptr;
-
-		bool rc = message->SerializeToArray(msg->rawmsg.payload, byteSize);
+		size_t byteSize = message->ByteSize();
+		const void* netmsg = sNetworkManager.easynet()->allocateMessage(byteSize + sizeof(ServiceMessage));
+		size_t len = 0;
+		ServiceMessage* msg = (ServiceMessage*) sNetworkManager.easynet()->getMessageContent(netmsg, &len); 
+		assert(len == byteSize + sizeof(ServiceMessage));
+		
+		bool rc = message->SerializeToArray(msg->payload, byteSize);
 		if (!rc) {
-			release_message(msg);
+			sNetworkManager.easynet()->releaseMessage(netmsg);
 			Error.cout("Serialize message:%s failure, byteSize:%ld", message->GetTypeName().c_str(), byteSize);
 			return 0;
 		}
 		
-		msg->fd = fd;
-		msg->rawmsg.entityid = entityid;
-		msg->rawmsg.msgid = msgid;
-		msg->rawmsg.flags = 0;
-		msg->rawmsg.len = byteSize + sizeof(Socketmessage);
+		msg->len = byteSize + sizeof(ServiceMessage);
+		msg->entityid = entityid;
+		msg->msgid = msgid;
+		msg->flags = 0;
+		sNetworkManager.easynet()->sendMessage(fd, netmsg);
 		
-		//TODO:sNetworkManager.sendMessage(msg);
-#endif		
 		return 0;
 	}
 
@@ -441,13 +428,8 @@ BEGIN_NAMESPACE_TNODE {
 		int args = lua_gettop(L);
 		CHECK_RETURN(args == 1, 0, "`%s` lack args:%d", __FUNCTION__, args);
 		CHECK_RETURN(lua_isstring(L, -args), 0, "[%s]", lua_typename(L, lua_type(L, -args)));
-
-		u32 sid = luaT_getOwner(L);
-		Service* service = sServiceManager.getService(sid);
-		assert(service);
-		
 		const char* filename = lua_tostring(L, -args);
-		bool rc = service->messageParser()->loadmsg(filename);
+		bool rc = luaT_getService(L)->messageParser()->loadmsg(filename);
 		CHECK_RETURN(rc, 0, "loadmsg: %s failure", filename);
 		return 0;
 	}
@@ -459,41 +441,21 @@ BEGIN_NAMESPACE_TNODE {
 		CHECK_RETURN(args == 2, 0, "`%s` lack args:%d", __FUNCTION__, args);
 		CHECK_RETURN(lua_isnumber(L, -args), 0, "[%s]", lua_typename(L, lua_type(L, -args)));
 		CHECK_RETURN(lua_isstring(L, -(args - 1)), 0, "[%s]", lua_typename(L, lua_type(L, -(args - 1))));
-
-		u32 sid = luaT_getOwner(L);
-		Service* service = sServiceManager.getService(sid);
-		assert(service);
-		
 		u32 msgid = lua_tointeger(L, -args);
 		const char* name = lua_tostring(L, -(args - 1));
-		bool retval = service->messageParser()->regmsg(msgid, name);
+		bool retval = luaT_getService(L)->messageParser()->regmsg(msgid, name);
 		CHECK_RETURN(retval, 0, "regmsg: %d, %s failure", msgid, name);
-		return 0;
-	}
-
-	//
-	// void release_message(ServiceMessage*)
-	static int cc_release_message(lua_State* L) {
-#if 0		
-		int args = lua_gettop(L);
-		CHECK_RETURN(args == 1, 0, "`%s` lack args:%d", __FUNCTION__, args);
-		CHECK_RETURN(lua_islightuserdata(L, -args), 0, "[%s]", lua_typename(L, lua_type(L, -args)));
-		void* userdata = lua_touserdata(L, -args);
-		release_message(static_cast<ServiceMessage*>(userdata));
-#endif		
 		return 0;
 	}
 
 	//
 	// void closesocket(fd)
 	static int cc_closesocket(lua_State* L) {
-#if 0		
 		int args = lua_gettop(L);
 		CHECK_RETURN(args == 1, 0, "`%s` lack args:%d", __FUNCTION__, args);
 		CHECK_RETURN(lua_isnumber(L, -args), 0, "[%s]", lua_typename(L, lua_type(L, -args)));
 		SOCKET fd = lua_tointeger(L, -args);
-		sNetworkManager.closeSocket(fd, "LUA");
-#endif		
+		sNetworkManager.easynet()->closeSocket(fd);
 		return 0;
 	}
 	
@@ -531,7 +493,6 @@ BEGIN_NAMESPACE_TNODE {
 		LUA_REGISTER(L, "newserver", cc_newserver);
 		LUA_REGISTER(L, "newclient", cc_newclient);
 		LUA_REGISTER(L, "response", cc_response);
-		LUA_REGISTER(L, "release_message", cc_release_message);
 		LUA_REGISTER(L, "loadmsg", cc_loadmsg);
 		LUA_REGISTER(L, "regmsg", cc_regmsg);
 		LUA_REGISTER(L, "closesocket", cc_closesocket);
