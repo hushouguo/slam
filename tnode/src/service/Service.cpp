@@ -9,6 +9,7 @@
 #include "config/Config.h"
 #include "lua/luaT.h"
 #include "lua/MessageParser.h"
+#include "lua/luaT_entry.h"
 #include "time/Time.h"
 #include "service/Service.h"
 #include "net/NetworkManager.h"
@@ -41,51 +42,9 @@ BEGIN_NAMESPACE_TNODE {
 		while (!this->isstop() && !this->_msgQueue.empty()) {
 			const void* netmsg = this->_msgQueue.pop_front();
 			assert(netmsg);
-			this->msgParser(netmsg);
+			luaT_entry_msgParser(this->luaState(), netmsg, this->messageParser());
 			sNetworkManager.easynet()->releaseMessage(netmsg);
 		}
-	}
-
-	//
-	// rc msgParser(fd, entityid, msgid, o)
-	bool Service::msgParser(const void* netmsg) {
-		size_t len = 0;
-		const void* payload = sNetworkManager.easynet()->getMessageContent(netmsg, &len);
-		CHECK_RETURN(len >= sizeof(ServiceMessage), false, "illegal netmsg.len: %ld, ServiceMessage: %ld", len, sizeof(ServiceMessage));
-		const ServiceMessage* msg = (const ServiceMessage*) payload;
-		CHECK_RETURN(len >= sizeof(ServiceMessage), false, "illegal netmsg.len: %ld, msg->len: %ld", len, msg->len);
-		SOCKET fd = sNetworkManager.easynet()->getMessageSocket(netmsg);
-		assert(fd != -1);
-		
-		luaT_getGlobalFunction(this->luaState(), __FUNCTION__);
-		CHECK_RETURN(lua_isfunction(this->luaState(), -1), false, "not found `%s` function", __FUNCTION__);	
-		lua_pushinteger(this->luaState(), fd);
-		lua_pushinteger(this->luaState(), msg->entityid);
-		lua_pushinteger(this->luaState(), msg->msgid);		
-		bool rc = this->messageParser()->decode(this->luaState(), msg->msgid, msg->payload, msg->len - sizeof(ServiceMessage));
-		if (rc) {
-			luaT_Value ret;
-			rc = luaT_pcall(this->luaState(), 4, ret);
-		}
-		else {
-			Error << "decode message: " << msg->msgid << " error";
-		}
-		luaT_cleanup(this->luaState());
-		return rc;
-	}
-
-	//
-	// sid dispatch(entityid, msgid)
-	u32 Service::dispatch(u64 entityid, u32 msgid) {
-		luaT_getGlobalFunction(this->luaState(), __FUNCTION__);
-		CHECK_RETURN(lua_isfunction(this->luaState(), -1), ILLEGAL_SERVICE, "not found `%s` function", __FUNCTION__);		
-		luaT_Value ret;
-		CHECK_RETURN(
-			luaT_callFunction(this->luaState(), entityid,msgid, ret),
-			ILLEGAL_SERVICE, "call `sid %s(entityid, msgid)` failure", __FUNCTION__);
-		luaT_cleanup(this->luaState());
-		CHECK_RETURN(ret.isinteger(), ILLEGAL_SERVICE, "`%s` return error type: %d", __FUNCTION__, ret.type);
-		return ret.value_integer;
 	}
 
 	void Service::pushMessage(const void* netmsg) {

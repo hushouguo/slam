@@ -7,6 +7,7 @@
 #include "tools/Singleton.h"
 #include "message/ServiceMessage.h"
 #include "lua/luaT.h"
+#include "lua/luaT_entry.h"
 #include "service/Service.h"
 #include "service/ServiceManager.h"
 #include "net/NetworkManager.h"
@@ -30,13 +31,7 @@ BEGIN_NAMESPACE_TNODE {
 		Service* initservice = this->getService(this->_initid);
 		CHECK_RETURN(initservice, false, "Not found initservice: %d", this->_initid);
 
-		size_t len = 0;
-		const void* payload = sNetworkManager.easynet()->getMessageContent(netmsg, &len);
-		CHECK_RETURN(len >= sizeof(ServiceMessage), false, "illegal netmsg.len: %ld, ServiceMessage: %ld", len, sizeof(ServiceMessage));
-		const ServiceMessage* msg = (const ServiceMessage*) payload;
-		CHECK_RETURN(len >= sizeof(ServiceMessage), false, "illegal netmsg.len: %ld, msg->len: %ld", len, msg->len);
-
-		u32 sid = initservice->dispatch(msg->entityid, msg->msgid);
+		u32 sid = luaT_entry_dispatch(initservice->luaState(), netmsg);
 		CHECK_RETURN(sid != ILLEGAL_SERVICE, false, "initservice: %s call `dispatch` error", initservice->entryfile().c_str());
 
 		Service* service = this->getService(sid);

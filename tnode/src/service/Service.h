@@ -28,6 +28,7 @@ BEGIN_NAMESPACE_TNODE {
 			void stop();
 			void run() override;
 			bool need_schedule();
+			void pushMessage(const void* netmsg);
 
 		private:
 			bool _isstop = false;
@@ -35,12 +36,6 @@ BEGIN_NAMESPACE_TNODE {
 			lua_State* _L = nullptr;
 			MessageParser* _messageParser = nullptr;
 
-		// message handle
-		public:
-			u32 dispatch(u64 entityid, u32 msgid);
-			void pushMessage(const void* netmsg);
-			bool msgParser(const void* netmsg);
-			
 		private:
 			LockfreeQueue<const void*> _msgQueue;
 
