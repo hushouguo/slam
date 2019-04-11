@@ -348,5 +348,16 @@ template <typename T> T* luaT_get_object(lua_State* L, const char* name) {
 		lua_pushlightuserdata(L, (void*) value);
 	}
 
+	// luaT_Value
+	template <> void luaT_pushvalue(lua_State* L, const luaT_Value& value) {
+		switch (value.type) {
+			default: Error << "unknown value.type: " << value.type;
+			case LUA_TNIL: lua_pushnil(L); break;
+			case LUA_TBOOLEAN: luaT_pushvalue(L, value.value_bool); break;
+			case LUA_TINTEGER: luaT_pushvalue(L, value.value_integer); break;
+			case LUA_TNUMBER: luaT_pushvalue(L, value.value_float); break;
+			case LUA_TSTRING: luaT_pushvalue(L, value.value_string); break;
+		}
+	}
 }
 

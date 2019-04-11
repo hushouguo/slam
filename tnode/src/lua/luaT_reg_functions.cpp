@@ -463,41 +463,44 @@ BEGIN_NAMESPACE_TNODE {
 	}
 	
 	//
-	// void newtimer(milliseconds, ctx, function(milliseconds, ctx) end)
+	// u32 newtimer(milliseconds, times, ctx, function(milliseconds, ctx) end)
+	// times: <= 0: forever, > 0: special times
 	static int cc_newtimer(lua_State* L) {
 		int args = lua_gettop(L);
-		CHECK_RETURN(args == 3, 0, "`%s` lack args:%d", __FUNCTION__, args);
+		CHECK_RETURN(args == 4, 0, "`%s` lack args:%d", __FUNCTION__, args);
 		CHECK_RETURN(lua_isnumber(L, -args), 0, "[%s]", lua_typename(L, lua_type(L, -args)));
+		CHECK_RETURN(lua_isnumber(L, -(args - 1)), 0, "[%s]", lua_typename(L, lua_type(L, -(args - 1))));
+		lua_Integer milliseconds = lua_tointeger(L, -args);
+		lua_Integer times = lua_tointeger(L, -(args - 1));
 		
 		luaT_Value ctx;
-		if (lua_isboolean(L, -(args - 1))) {
-			ctx = lua_toboolean(L, -(args - 1)) != 0;
+		if (lua_isboolean(L, -(args - 2))) {
+			ctx = lua_toboolean(L, -(args - 2)) != 0;
 		}
-		else if (lua_isnumber(L, -(args - 1))) {
-			lua_Number value = lua_tonumber(L, -(args - 1));
+		else if (lua_isnumber(L, -(args - 2))) {
+			lua_Number value = lua_tonumber(L, -(args - 2));
 			if (isInteger(value)) {
-				ctx = lua_tointeger(L, -(args - 1));
+				ctx = lua_tointeger(L, -(args - 2));
 			}
 			else {
-				ctx = lua_tonumber(L, -(args - 1));
+				ctx = lua_tonumber(L, -(args - 2));
 			}
 		}
-		else if (lua_isstring(L, -(args - 1))) {
-			ctx = lua_tostring(L, -(args - 1));
+		else if (lua_isstring(L, -(args - 2))) {
+			ctx = lua_tostring(L, -(args - 2));
 		}
 		else {
-			Error << "Not support ctx type: " << lua_typename(L, lua_type(L, -(args - 1)));
+			Error << "Not support ctx type: " << lua_typename(L, lua_type(L, -(args - 2)));
 		}
 		
-		CHECK_RETURN(lua_isfunction(L, -(args - 2)), 0, "[%s]", lua_typename(L, lua_type(L, -(args - 2))));
-				
-		lua_Integer milliseconds = lua_tointeger(L, -args);
-		lua_pushvalue(L, -(args - 2));
+		CHECK_RETURN(lua_isfunction(L, -(args - 3)), 0, "[%s]", lua_typename(L, lua_type(L, -(args - 3))));				
+		lua_pushvalue(L, -(args - 3));
 		int ref = luaL_ref(L, LUA_REGISTRYINDEX);
 
-		sServiceManager.getService(L)->regtimer(milliseconds, ref, ctx);
-		
-		return 0;
+		u32 timer_id = sServiceManager.getService(L)->regtimer(milliseconds, times, ref, ctx);
+
+		lua_pushinteger(L, timer_id);
+		return 1;
 	}
 	
 	void luaT_reg_functions(lua_State* L) {

@@ -6,8 +6,6 @@
 #ifndef __XML_PARSER_H__
 #define __XML_PARSER_H__
 
-#include "tools/Registry.h"
-
 BEGIN_NAMESPACE_TNODE {
 	class XmlParser {
 		public:

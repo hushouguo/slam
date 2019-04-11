@@ -39,25 +39,23 @@ BEGIN_NAMESPACE_TNODE {
 
 		// timer handle
 		public:
-			void regtimer(u32 milliseconds, int ref, const luaT_Value& ctx);
+			u32 regtimer(u32 milliseconds, s32 times, int ref, const luaT_Value& ctx);
 		
 		private:
-			enum timer_type {
-				timer_once		=	1, 
-				timer_forever	=	2,
-			};
+			u32 _init_timerid = 1;
 			struct timer_struct {
-				u64 next_time_point;
+				u32 id;
 				u32 milliseconds;
+				s32 times;
 				int ref;
 				luaT_Value ctx;
-				timer_type type;
+				u64 next_time_point;
 			};
 			Spinlocker _locker;
 			std::list<timer_struct*> _timerQueue;
 			struct timer_node {
 				bool operator()(timer_struct* ts1, timer_struct* ts2) {
-					return ts1->next_time_point > ts2->next_time_point;
+					return ts1->next_time_point < ts2->next_time_point;
 				}	
 			};
 			inline void pushTimer(timer_struct* ts) {
@@ -65,17 +63,28 @@ BEGIN_NAMESPACE_TNODE {
 				this->_timerQueue.push_back(ts);
 				this->_timerQueue.sort(timer_node());
 				this->_locker.unlock();
+				Debug << "Service: " << this->id << " all of timers";
 				for (auto& ts : this->_timerQueue) {
-					Debug << "ts: " << ts->next_time_point << ", milliseconds: " << ts->milliseconds;
+					Debug << "    ts: " << ts->next_time_point << ", milliseconds: " << ts->milliseconds;
 				}
 			}
-			inline timer_struct* getTimer() {
+			inline timer_struct* popTimer() {
 				assert(!this->_timerQueue.empty());
 				this->_locker.lock();
 				timer_struct* ts = this->_timerQueue.front();
 				this->_timerQueue.pop_front();
 				this->_locker.unlock();
 				return ts;
+			}
+			inline bool hasTimerExpire() {
+				sTime.now();
+				if (!this->_timerQueue.empty()) {
+					this->_locker.lock();
+					timer_struct* ts = this->_timerQueue.front();
+					this->_locker.unlock();
+					return ts->next_time_point <= sTime.milliseconds();
+				}
+				return false;
 			}
 	};
 }

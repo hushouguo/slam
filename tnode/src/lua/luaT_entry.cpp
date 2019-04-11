@@ -63,8 +63,18 @@ BEGIN_NAMESPACE_TNODE {
 	}
 	
 	//
-	// void timer()
-	bool luaT_entry_timer_expire(lua_State* L, int ref, const luaT_Value& ctx) {
-		return true;
+	// void (timerid, ctx)
+	bool luaT_entry_timer_expire(lua_State* L, u32 timerid, int ref, const luaT_Value& ctx) {
+		luaT_getRegistry(L, ref);
+		CHECK_RETURN(lua_isfunction(L, -1), false, "not found `anonymouse` function: %d", ref);
+
+		lua_pushinteger(L, timerid);
+		luaT_pushvalue(L, ctx);
+
+		luaT_Value ret;
+		bool rc = luaT_pcall(L, 2, ret);
+		luaT_cleanup(L);
+		
+		return rc;
 	}
 }
