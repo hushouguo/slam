@@ -13,6 +13,9 @@ BEGIN_NAMESPACE_TNODE {
 	//
 	// void msgParser(fd, entityid, msgid, o)
 	bool luaT_entry_msgParser(lua_State* L, const void* netmsg, MessageParser* msgParser);
+	//
+	// void timer()
+	bool luaT_entry_timer_expire(lua_State* L, int ref);
 }
 
 #endif

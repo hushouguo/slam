@@ -45,25 +45,38 @@ BEGIN_NAMESPACE_TNODE {
 			luaT_entry_msgParser(this->luaState(), netmsg, this->messageParser());
 			sNetworkManager.easynet()->releaseMessage(netmsg);
 		}
-	}
 
-	void Service::pushMessage(const void* netmsg) {
-		this->_msgQueue.push_back(netmsg);
+		sTime.now();
+		while (!this->isstop() && !this->_timerQueue.empty()) {
+			timer_struct* ts = this->getTimer();
+			if (ts->next_time_point > sTime.milliseconds()) {
+				this->pushTimer(ts);
+				break;
+			}
+			luaT_entry_timer_expire(this->luaState(), ts->ref);
+			if (ts->type == timer_forever) {
+				ts->next_time_point = sTime.milliseconds() + ts->milliseconds;
+				this->pushTimer(ts);
+			}
+			else if (ts->type == timer_once) {
+				SafeDelete(ts);
+			}
+		}
 	}
 
 	bool Service::need_schedule() {
-		return !this->isstop() && this->_msgQueue.empty() == false;
+		return !this->isstop() && !this->_msgQueue.empty() && !this->_timerQueue.empty();
 	}
-	
+    
 	void Service::regtimer(u32 milliseconds, int ref) {
 		CHECK_RETURN(milliseconds > 0, void(0), "timer interval MUST greater than 0");
 		timer_struct* ts = new timer_struct();
 		sTime.now();
-		ts->last_check = sTime.milliseconds();
+		ts->next_time_point = sTime.milliseconds() + milliseconds;
 		ts->milliseconds = milliseconds;
 		ts->type = timer_forever;
 		ts->ref = ref;
-		this->_timerQueue.push_back(ts);
+		this->pushTimer(ts);
 	}
 }
 

@@ -60,4 +60,10 @@ BEGIN_NAMESPACE_TNODE {
 		luaT_cleanup(L);
 		return rc;
 	}
+	
+	//
+	// void timer()
+	bool luaT_entry_timer_expire(lua_State* L, int ref) {
+		return true;
+	}
 }

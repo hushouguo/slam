@@ -22,13 +22,15 @@ BEGIN_NAMESPACE_TNODE {
 			inline lua_State* luaState() { return this->_L; }
 			inline MessageParser* messageParser() { return this->_messageParser; }
 			inline const std::string& entryfile() { return this->_entryfile; }
+			inline void pushMessage(const void* netmsg) {
+				this->_msgQueue.push_back(netmsg);
+			}
 
 		public:
 			bool init(const char* entryfile);
 			void stop();
 			void run() override;
 			bool need_schedule();
-			void pushMessage(const void* netmsg);
 
 		private:
 			bool _isstop = false;
@@ -49,12 +51,35 @@ BEGIN_NAMESPACE_TNODE {
 				timer_forever	=	2,
 			};
 			struct timer_struct {
-				u64 last_check;
+				u64 next_time_point;
 				u32 milliseconds;
 				int ref;
 				timer_type type;
 			};
-			LockfreeQueue<timer_struct*> _timerQueue;
+			Spinlocker _locker;
+			std::list<timer_struct*> _timerQueue;
+			struct timer_node {
+				bool operator()(timer_struct* ts1, timer_struct* ts2) {
+					return ts1->next_time_point > ts2->next_time_point;
+				}	
+			};
+			inline void pushTimer(timer_struct* ts) {
+				this->_locker.lock();
+				this->_timerQueue.push_back(ts);
+				this->_timerQueue.sort(timer_node());
+				this->_locker.unlock();
+				for (auto& ts : this->_timerQueue) {
+					Debug << "ts: " << ts->next_time_point << ", milliseconds: " << ts->milliseconds;
+				}
+			}
+			inline timer_struct* getTimer() {
+				assert(!this->_timerQueue.empty());
+				this->_locker.lock();
+				timer_struct* ts = this->_timerQueue.front();
+				this->_timerQueue.pop_front();
+				this->_locker.unlock();
+				return ts;
+			}
 	};
 }
 
