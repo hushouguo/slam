@@ -78,10 +78,11 @@ void test_easylog() {
 	Easylog::syslog()->set_autosplit_day(true);
 	Easylog::syslog()->set_destination(".logs");
 	Easylog::syslog()->set_tostdout(GLOBAL, false);
+	Easylog::syslog()->set_tofile(GLOBAL, "tests");
 
 	auto performance_single_thread = [](int times) {
 		for (int i = 0; i < times; ++i) {
-			Trace << "For the average case, it is not always a big difference between the two. " << i;
+			Trace << "1234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890";
 		}
 	};
 
@@ -91,7 +92,7 @@ void test_easylog() {
 			v.push_back(new std::thread([i, times](){
 				int j = 0;
 				for (; j < times; ++j) {
-					Trace << "[" << i << "] For the average case, it is not always a big difference between the two. " << j;
+					Trace << "1234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890";
 				}
 			}));
 		}
@@ -103,7 +104,6 @@ void test_easylog() {
 	};
 
 	if (true) {
-		Easylog::syslog()->set_tofile(GLOBAL, "tests-single");
 		u64 t1 = currentMillisecond();
 		performance_single_thread(1000000);
 		u64 t2 = currentMillisecond();
@@ -111,7 +111,6 @@ void test_easylog() {
 	}
 
 	if (true) {
-		Easylog::syslog()->set_tofile(GLOBAL, "tests-multi");
 		u64 t1 = currentMillisecond();
 		performance_multi_thread(8, 500000);
 		u64 t2 = currentMillisecond();

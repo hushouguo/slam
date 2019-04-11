@@ -86,7 +86,7 @@ void test_easynet() {
 						content += "\0"; len++;
 						//Debug.cout("Server send: %s(%ld) to (%d)", content.c_str(), content.length(), fd);
 						fprintf(stderr, "Server send: %s(%ld) to (%d)\n", content.c_str(), content.length(), fd);
-						void* newmsg = easynet->allocateMessage(content.length());
+						const void* newmsg = easynet->allocateMessage(content.length());
 						easynet->setMessageContent(newmsg, content.data(), content.length());
 						easynet->sendMessage(fd, newmsg);
 					}
@@ -121,7 +121,7 @@ void test_easynet() {
 						content += "\0"; len++;
 						//Debug.cout("Client send: %s(%ld) to (%d)", content.c_str(), content.length(), s);
 						fprintf(stderr, "Client send: %s(%ld) to (%d)\n", content.c_str(), content.length(), s);
-						void* newmsg = easynet->allocateMessage(content.length());
+						const void* newmsg = easynet->allocateMessage(content.length());
 						easynet->setMessageContent(newmsg, content.data(), content.length());
 						easynet->sendMessage(s, newmsg);
 					}
