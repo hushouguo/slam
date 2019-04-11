@@ -40,7 +40,7 @@ namespace net {
 			virtual SOCKET createClient(const char*, int) = 0;
 			//
 			// `msg` MUST be allocated by allocateMessage function
-			virtual bool sendMessage(SOCKET s, void* msg) = 0;
+			virtual bool sendMessage(SOCKET s, const void* msg) = 0;
 			//
 			// return nullptr when no more Message
 			virtual const void* getMessage(SOCKET*) = 0;
@@ -52,9 +52,9 @@ namespace net {
 			virtual bool isActive(SOCKET) = 0;
 
 		public:
-			virtual void* allocateMessage(size_t payload_len) = 0;
+			virtual const void* allocateMessage(size_t payload_len) = 0;
 			virtual void releaseMessage(const void* msg) = 0;
-			virtual void setMessageContent(void* msg, const void* data, size_t len) = 0;
+			virtual void setMessageContent(const void* msg, const void* data, size_t len) = 0;
 			virtual const void* getMessageContent(const void* msg, size_t* len) = 0;
 			virtual SOCKET getMessageSocket(const void* msg) = 0;
 		

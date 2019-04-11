@@ -19,6 +19,7 @@
 #include "lua/MessageParser.h"
 #include "service/Service.h"
 #include "service/ServiceManager.h"
+#include "net/NetworkManager.h"
 
 BEGIN_NAMESPACE_TNODE {
 	//

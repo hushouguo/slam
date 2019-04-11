@@ -34,7 +34,7 @@ namespace net {
 		return socketClient->fd();
 	}
 	
-	bool EasynetInternal::sendMessage(SOCKET s, void* msg) {
+	bool EasynetInternal::sendMessage(SOCKET s, const void* msg) {
 		assert(s < MAX_SOCKET);
 		assert(isValidNetMessage(msg));
 		Socket* socket = this->_sockets[s];
@@ -138,7 +138,7 @@ namespace net {
 		}
 	}
 
-	void* EasynetInternal::allocateMessage(size_t payload_len) {
+	const void* EasynetInternal::allocateMessage(size_t payload_len) {
 		NetMessage* msg = allocateNetMessage(payload_len);
 		msg->payload_len = payload_len;
 		return msg;
@@ -149,7 +149,7 @@ namespace net {
 		releaseNetMessage((const NetMessage*) msg);
 	}
 	
-	void EasynetInternal::setMessageContent(void* msg, const void* data, size_t len) {
+	void EasynetInternal::setMessageContent(const void* msg, const void* data, size_t len) {
 		assert(isValidNetMessage(msg));
 		NetMessage* netmsg = (NetMessage*) msg;
 		assert(netmsg->size >= len);

@@ -17,16 +17,16 @@ namespace net {
 		public:
 			SOCKET createServer(const char*, int) override;
 			SOCKET createClient(const char*, int) override;
-			bool sendMessage(SOCKET s, void* msg) override;
+			bool sendMessage(SOCKET s, const void* msg) override;
 			const void* getMessage(SOCKET*) override;
 			void closeSocket(SOCKET) override;
 			bool isActive(SOCKET) override;
 			void stop() override;
 
 		public:
-			void* allocateMessage(size_t payload_len) override;
+			const void* allocateMessage(size_t payload_len) override;
 			void releaseMessage(const void* msg) override;
-			void setMessageContent(void* msg, const void* data, size_t len) override;
+			void setMessageContent(const void* msg, const void* data, size_t len) override;
 			const void* getMessageContent(const void* msg, size_t* len) override;
 			SOCKET getMessageSocket(const void* msg) override;
 		

@@ -20,7 +20,7 @@ BEGIN_NAMESPACE_TNODE {
 	
 	void NetworkManager::stop() {
 		this->_easynet->stop();
-		SafeDelete(this->_easynet);
+		//SafeDelete(this->_easynet);
 	}
 
 	void NetworkManager::run() {

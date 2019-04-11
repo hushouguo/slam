@@ -9,6 +9,7 @@
 #include "lua/luaT.h"
 #include "service/Service.h"
 #include "service/ServiceManager.h"
+#include "net/NetworkManager.h"
 
 BEGIN_NAMESPACE_TNODE {
 	bool ServiceManager::init(const char* entryfile) {

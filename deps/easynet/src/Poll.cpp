@@ -54,6 +54,7 @@ namespace net {
 		if (!this->_isstop) {
 			this->_isstop = true;
 			this->addSocket(STDOUT_FILENO);// try to wakeup epoll_wait
+			this->setSocketPollout(STDOUT_FILENO, true);
 		}
 	}
 

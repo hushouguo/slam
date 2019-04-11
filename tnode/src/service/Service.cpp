@@ -11,6 +11,8 @@
 #include "lua/MessageParser.h"
 #include "time/Time.h"
 #include "service/Service.h"
+#include "net/NetworkManager.h"
+
 
 BEGIN_NAMESPACE_TNODE {
 	bool Service::init(const char* entryfile) {

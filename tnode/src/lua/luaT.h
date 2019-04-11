@@ -6,6 +6,9 @@
 #ifndef __LUAT_H__
 #define __LUAT_H__
 
+#include "service/Service.h"
+#include "service/ServiceManager.h"
+
 #define	USE_LUAJIT							1
 #define LUA_STACK_SIZE						8192
 #define LUA_REGISTER_NAMESPACE				"cc"
