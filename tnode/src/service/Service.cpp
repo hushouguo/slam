@@ -38,9 +38,7 @@ BEGIN_NAMESPACE_TNODE {
 	}
 	
 	void Service::cleanup() {
-		if (!this->_isstop) {
-			this->_isstop = true;
-		}
+		this->stop();
 		
 		SafeDelete(this->_messageParser);
 		luaT_close(this->_L);

@@ -29,10 +29,11 @@ BEGIN_NAMESPACE_TNODE {
 	}
 	
 	void ServiceManager::stop() {
-		while (!this->_services.empty()) {
-			Service* service = this->_services.pop_front();
+		for (auto& i : this->_services) {
+			Service* service = i.second;
 			SafeDelete(service);
 		}
+		this->_services.clear();
 	}
 
 	bool ServiceManager::pushMessage(const void* netmsg) {	
@@ -101,7 +102,7 @@ BEGIN_NAMESPACE_TNODE {
 			for (auto& service : deprecated) {
 				assert(service->isstop());
 				assert(!service->isrunning());
-				this->removeService(service->sid);
+				this->removeService(service->id);
 				Debug << "destroy service: " << service->id;
 				SafeDelete(service);
 			}

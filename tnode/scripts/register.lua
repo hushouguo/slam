@@ -23,9 +23,9 @@ function msgParser(fd, entityid, msgid, o)
 			value_uint64 = o.value_uint64
 		})
 		total = total + 1
-		if (total >= 5) then
+		if (total >= 3) then
 			cc.closesocket(fd)
-			--cc.exitservice()
+			cc.exitservice()
 		end
 	end
 end
