@@ -12,5 +12,6 @@ set(LIBRARY_OUTPUT_PATH ../lib)
 add_definitions(-Wall -Werror -D_GNU_SOURCE -DLINUX -DX64 -fstack-protector-all -D_LARGEFILE64_SOURCE -DDEBUG -std=c++11)
 
 aux_source_directory(. src)
+aux_source_directory(mysql src)
 
 add_library(${target} ${src})
