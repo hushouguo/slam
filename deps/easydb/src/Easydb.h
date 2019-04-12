@@ -18,6 +18,8 @@
 #define EASYDB_VERSION_MINOR		1
 #define EASYDB_VERSION_PATCH		0
 
+#define EASYDB_ENABLE_DEBUG			1
+
 #if defined(__plusplus)
 #if __cplusplus <= 199711L
 #error "REQUIRE C++ 11 SUPPORT"
