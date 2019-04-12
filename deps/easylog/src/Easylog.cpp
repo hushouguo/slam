@@ -466,9 +466,6 @@ namespace logger {
 			
 #if EASYLOG_ENABLE_ASYNC_SEND
 			easylogMessage->log()->levelNode = levelNode;
-			///this->_locker.lock();
-			///this->_logQueue.push_back(easylogMessage->log());
-			///this->_locker.unlock();
 			this->pushNode(easylogMessage->log());
 			this->_logCondition.notify_all();
 #else

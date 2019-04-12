@@ -40,58 +40,58 @@ namespace db {
 			float value_float;
 			bool value_bool;
 			std::string value_string;
-			Value() : type(type_null) {}
-			Value(int8_t value) { this->Set(value); }
-			Value(uint8_t value) { this->Set(value); }
-			Value(int16_t value) { this->Set(value); }
-			Value(uint16_t value) { this->Set(value); }
-			Value(int32_t value) { this->Set(value); }
-			Value(uint32_t value) { this->Set(value); }
-			Value(int64_t value) { this->Set(value); }
-			Value(uint64_t value) { this->Set(value); }
-			Value(float value) { this->Set(value); }
-			Value(double value) { this->Set(value); }
-			Value(bool value) { this->Set(value); }
-			Value(char* value) { this->Set(value); }
-			Value(const char* value) { this->Set(value); }
-			Value(std::string value) { this->Set(value); }
-			Value(const std::string& value) { this->Set(value); }
-			inline void Set(int8_t value) { this->type = type_integer; this->value_integer = value; dirty = true; }
-			inline void Set(uint8_t value) { this->type = type_integer; this->value_integer = value; dirty = true; }
-			inline void Set(int16_t value) { this->type = type_integer; this->value_integer = value; dirty = true; }
-			inline void Set(uint16_t value) { this->type = type_integer; this->value_integer = value; dirty = true; }
-			inline void Set(int32_t value) { this->type = type_integer; this->value_integer = value; dirty = true; }
-			inline void Set(uint32_t value) { this->type = type_integer; this->value_integer = value; dirty = true; }
-			inline void Set(int64_t value) { this->type = type_integer; this->value_integer = value; dirty = true; }
-			inline void Set(uint64_t value) { this->type = type_integer; this->value_integer = value; dirty = true; }
-			inline void Set(float value) { this->type = type_float; this->value_float = value; dirty = true; }
-			inline void Set(double value) { this->type = type_float; this->value_float = (float)value; dirty = true; }
-			inline void Set(bool value) { this->type = type_bool; this->value_bool = value; dirty = true; }
-			inline void Set(char* value) { this->type = type_string; this->value_string = value; dirty = true; }
-			inline void Set(const char* value) { this->type = type_string; this->value_string = value; dirty = true; }
-			inline void Set(std::string value) { this->type = type_string; this->value_string = value; dirty = true; }
-			inline void Set(const std::string& value) { this->type = type_string; this->value_string = value; dirty = true; }
+			Value();
+			Value(int8_t value);
+			Value(uint8_t value);
+			Value(int16_t value);
+			Value(uint16_t value);
+			Value(int32_t value);
+			Value(uint32_t value);
+			Value(int64_t value);
+			Value(uint64_t value);
+			Value(float value);
+			Value(double value);
+			Value(bool value);
+			Value(char* value);
+			Value(const char* value);
+			Value(std::string value);
+			Value(const std::string& value);
+			void Set(int8_t value);
+			void Set(uint8_t value);
+			void Set(int16_t value);
+			void Set(uint16_t value);
+			void Set(int32_t value);
+			void Set(uint32_t value);
+			void Set(int64_t value);
+			void Set(uint64_t value);
+			void Set(float value);
+			void Set(double value);
+			void Set(bool value);
+			void Set(char* value);
+			void Set(const char* value);
+			void Set(std::string value);
+			void Set(const std::string& value);
 			template <typename T> void operator = (T value) { this->Set(value); }
+			bool dirty = false;
 		};
-		bool dirty = false;
 		std::unordered_map<std::string, Value> values;
 
-		int64_t GetInteger(const char*);
-		bool GetBool(const char*);
-		float GetFloat(const char*);
-		const std::string& GetString(const char*);
+		int64_t GetInteger(const char* key);
+		bool GetBool(const char* key);
+		float GetFloat(const char* key);
+		const std::string& GetString(const char* key);
 
-		Value& GetValue(const char*);
-		Value& operator [](const char*);
+		Value& GetValue(const char* key);
+		Value& operator [](const char* key);
 
-		bool HasMember(const char*);
+		bool HasMember(const char* key);
 
-		bool IsNull(const char*);
-		bool IsNumber(const char*);	// IsInteger() || IsFloat()
-		bool IsInteger(const char*);
-		bool IsFloat(const char*);
-		bool IsBool(const char*);
-		bool IsString(const char*);
+		bool IsNull(const char* key);
+		bool IsNumber(const char* key);	// IsInteger() || IsFloat()
+		bool IsInteger(const char* key);
+		bool IsFloat(const char* key);
+		bool IsBool(const char* key);
+		bool IsString(const char* key);
 
 		void Dump();
 		void Clear();
@@ -103,7 +103,7 @@ namespace db {
 			virtual ~Easydb() = 0;
 
 		public:
-			virtual int localServer(const char* host, const char* user, const char* passwd, int port) = 0;
+			virtual int connectServer(const char* host, const char* user, const char* passwd, int port) = 0;
 			virtual int connectServer(const char* address, int port) = 0;
 
 		public:
@@ -126,6 +126,9 @@ namespace db {
 			// UNSIGNED
 			virtual bool addUnsigned(int handle, std::string table, std::string field) = 0;
 			virtual bool removeUnsigned(int handle, std::string table, std::string field) = 0;
+
+		public:
+			static Easydb* createInstance();
 	};
 }
 
