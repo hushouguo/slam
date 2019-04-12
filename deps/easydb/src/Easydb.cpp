@@ -3,10 +3,13 @@
  * \brief: Created by hushouguo at 11:25:15 Apr 12 2019
  */
 
-#include "Easydb.h"
-#include "EasydbInternal.h"
+#include "Database.h"
 
 namespace db {
+	Entity::Entity(uint64_t entityid) {
+		this->id = entityid;
+	}
+	
 	Entity::Value::Value() : type(type_null) {}
 	Entity::Value::Value(int8_t value) { this->Set(value); }
 	Entity::Value::Value(uint8_t value) { this->Set(value); }

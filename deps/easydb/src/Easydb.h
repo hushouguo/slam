@@ -29,6 +29,7 @@
 namespace db {
 	struct Entity {
 		uint64_t id;
+		Entity(uint64_t entityid);
 		struct Value {
 			enum Type {
 				type_null			=	0,	// null
@@ -105,29 +106,29 @@ namespace db {
 			virtual ~Easydb() = 0;
 
 		public:
-			virtual int connectServer(const char* host, const char* user, const char* passwd, int port) = 0;
-			virtual int connectServer(const char* address, int port) = 0;
+			virtual bool connectServer(const char* host, const char* user, const char* passwd, int port) = 0;
+			virtual bool connectServer(const char* address, int port) = 0;
 
 		public:
+			virtual bool createDatabase(std::string) = 0;
 			virtual bool selectDatabase(std::string) = 0;
 
 		public:
-			virtual bool addEntity(int handle, std::string table, const Entity* entity) = 0;
-			virtual bool modifyEntity(int handle, std::string table, const Entity* entity) = 0;
-			virtual bool loadEntity(int handle, std::string table, uint64_t entityid, Entity* entity) = 0;
-			virtual bool removeEntity(int handle, uint64_t entityid) = 0;
-			virtual bool runQuery(int handle, std::string where, std::vector<Entity*>& entities) = 0;
+			virtual bool serialize(std::string table, const Entity* entity) = 0;
+			virtual Entity* unserialize(std::string table, uint64_t entityid) = 0;
+			virtual bool removeEntity(std::string table, uint64_t entityid) = 0;
+			virtual bool runQuery(std::string where, std::vector<Entity*>& entities) = 0;
 
 		public:
 			// MUL KEY
-			virtual bool addKey(int handle, std::string table, std::string field) = 0;
-			virtual bool removeKey(int handle, std::string table, std::string field) = 0;
+			virtual bool addKey(std::string table, std::string field) = 0;
+			virtual bool removeKey(std::string table, std::string field) = 0;
 			// UNI KEY
-			virtual bool addUnique(int handle, std::string table, std::string field) = 0;
-			virtual bool removeUnique(int handle, std::string table, std::string field) = 0;
+			virtual bool addUnique(std::string table, std::string field) = 0;
+			virtual bool removeUnique(std::string table, std::string field) = 0;
 			// UNSIGNED
-			virtual bool addUnsigned(int handle, std::string table, std::string field) = 0;
-			virtual bool removeUnsigned(int handle, std::string table, std::string field) = 0;
+			virtual bool addUnsigned(std::string table, std::string field) = 0;
+			virtual bool removeUnsigned(std::string table, std::string field) = 0;
 
 		public:
 			static Easydb* createInstance();

@@ -97,7 +97,6 @@ using Byte	=	unsigned char;
 			Error(MESSAGE, ##__VA_ARGS__);\
 		}
 
-
 #include "mysql/MySQLResult.h"
 #include "mysql/MySQLStatement.h"
 #include "mysql/MySQL.h"

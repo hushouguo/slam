@@ -26,6 +26,10 @@ namespace db {
 		assert(i != m2v.end());
 		return m2v[type];
 	}
+	
+	bool valid_type(enum_field_types type) {
+		return m2v.find(type) != m2v.end();
+	}
 
 
 	//
@@ -65,6 +69,10 @@ namespace db {
 		auto i = v2m.find(value.type);
 		assert(i != v2m.end());
 		return v2m[value.type](value);
+	}
+	
+	bool valid_type(Entity::Value::Type type) {
+		return v2m.find(type) != v2m.end();
 	}
 
 

@@ -13,32 +13,50 @@ namespace db {
 			~EasydbInternal();
 
 		public:
-			int connectServer(const char* host, const char* user, const char* passwd, int port) override;
-			int connectServer(const char* address, int port) override;
+			bool connectServer(const char* host, const char* user, const char* passwd, int port) override;
+			bool connectServer(const char* address, int port) override;
 
 		public:
+			bool createDatabase(std::string) override;
 			bool selectDatabase(std::string) override;
 
 		public:
-			bool addEntity(int handle, std::string table, const Entity* entity) override;
-			bool modifyEntity(int handle, std::string table, const Entity* entity) override;
-			bool loadEntity(int handle, std::string table, uint64_t entityid, Entity* entity) override;
-			bool removeEntity(int handle, uint64_t entityid) override;
-			bool runQuery(int handle, std::string where, std::vector<Entity*>& entities) override;
+			bool serialize(std::string table, const Entity* entity) override;
+			Entity* unserialize(std::string table, uint64_t entityid) override;
+			bool removeEntity(std::string table, uint64_t entityid) override;
+			bool runQuery(std::string where, std::vector<Entity*>& entities) override;
 
 		public:
 			// MUL KEY
-			bool addKey(int handle, std::string table, std::string field) override;
-			bool removeKey(int handle, std::string table, std::string field) override;
+			bool addKey(std::string table, std::string field) override;
+			bool removeKey(std::string table, std::string field) override;
 			// UNI KEY
-			bool addUnique(int handle, std::string table, std::string field) override;
-			bool removeUnique(int handle, std::string table, std::string field) override;
+			bool addUnique(std::string table, std::string field) override;
+			bool removeUnique(std::string table, std::string field) override;
 			// UNSIGNED
-			bool addUnsigned(int handle, std::string table, std::string field) override;
-			bool removeUnsigned(int handle, std::string table, std::string field) override;
+			bool addUnsigned(std::string table, std::string field) override;
+			bool removeUnsigned(std::string table, std::string field) override;
 
 		private:
+			std::string _database;
 			MySQL* _dbhandler = nullptr;
+		    std::unordered_map<std::string, std::unordered_map<u64, Entity*>> _entities;
+
+		private:
+		    struct FieldDescriptor {
+		        enum_field_types type;
+		        u32 flags;
+		        u64 length; /* Width of column (create length) */
+		    };
+		    std::unordered_map<std::string, std::unordered_map<std::string, FieldDescriptor>> _tables;
+
+			bool insertOrUpdate(std::string table, const Entity* entity);
+			bool retrieve(std::string table, uint64_t entityid, Entity* entity);
+			bool loadFieldDescriptor(std::string table);
+		    bool loadFieldDescriptor();
+		    bool createTable(std::string table);
+		    bool addField(std::string table, const std::string& field_name, enum_field_types field_type);
+		    bool deleteEntity(std::string table, uint64_t entityid);
 	};
 }
 

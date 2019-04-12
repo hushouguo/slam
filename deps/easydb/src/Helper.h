@@ -23,6 +23,13 @@ namespace db {
 	// fetch row to Entity::Value
 	void fieldvalue(enum_field_types type, Entity::Value& value, char* row, bool is_unsigned);
 
+	//
+	// check type if valid
+	bool valid_type(enum_field_types type);
+	
+	//
+	// check type if valid
+	bool valid_type(Entity::Value::Type type);
 }
 
 #endif
