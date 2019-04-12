@@ -21,7 +21,7 @@ namespace db {
 			bool selectDatabase(std::string) override;
 
 		public:
-			bool serialize(std::string table, const Entity* entity) override;
+			bool serialize(std::string table, Entity* entity) override;
 			Entity* unserialize(std::string table, uint64_t entityid) override;
 			bool removeEntity(std::string table, uint64_t entityid) override;
 			bool runQuery(std::string where, std::vector<Entity*>& entities) override;

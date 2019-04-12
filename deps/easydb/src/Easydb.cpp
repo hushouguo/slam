@@ -25,7 +25,7 @@ namespace db {
 	Entity::Value::Value(char* value) { this->Set(value); }
 	Entity::Value::Value(const char* value) { this->Set(value); }
 	Entity::Value::Value(std::string value) { this->Set(value); }
-	Entity::Value::Value(const std::string& value) { this->Set(value); }
+	//Entity::Value::Value(const std::string& value) { this->Set(value); }
 	
 	void Entity::Value::Set(int8_t value) { type = type_integer; value_integer = value; dirty = true; }
 	void Entity::Value::Set(uint8_t value) { type = type_integer; value_integer = value; dirty = true; }
@@ -41,42 +41,42 @@ namespace db {
 	void Entity::Value::Set(char* value) { type = type_string; value_string = value; dirty = true; }
 	void Entity::Value::Set(const char* value) { type = type_string; value_string = value; dirty = true; }
 	void Entity::Value::Set(std::string value) { type = type_string; value_string = value; dirty = true; }
-	void Entity::Value::Set(const std::string& value) { type = type_string; value_string = value; dirty = true; }
+	//void Entity::Value::Set(const std::string& value) { type = type_string; value_string = value; dirty = true; }
 
 #define GET_VALUE(NAME, TYPE)\
 		({\
 			auto __i = this->values.find(NAME);\
 			assert(__i != this->values.end());\
 			const Entity::Value& __value = __i->second;\
-			assert(__value.type == type_##TYPE);\
+			assert(__value.type == Entity::Value::type_##TYPE);\
 			return __value.value_##TYPE;\
 		})
 
-	int64_t Entity::Value::GetInteger(const char* key) {
+	int64_t Entity::GetInteger(const char* key) {
 		GET_VALUE(key, integer);
 	}
 	
-	bool Entity::Value::GetBool(const char* key) {
+	bool Entity::GetBool(const char* key) {
 		GET_VALUE(key, bool);
 	}
 	
-	float Entity::Value::GetFloat(const char* key) {
+	float Entity::GetFloat(const char* key) {
 		GET_VALUE(key, float);
 	}
 	
-	const std::string& Entity::Value::GetString(const char* key) {
+	const std::string& Entity::GetString(const char* key) {
 		GET_VALUE(key, string);
 	}
 
-	Value& Entity::Value::GetValue(const char* key) {
+	Entity::Value& Entity::GetValue(const char* key) {
 		return this->values[key];
 	}
 	
-	Value& Entity::Value::operator [](const char* key) {
+	Entity::Value& Entity::operator [](const char* key) {
 		return this->values[key];
 	}
 
-	bool Entity::Value::HasMember(const char* key) {
+	bool Entity::HasMember(const char* key) {
 		return this->values.find(key) != this->values.end();
 	}
 
@@ -94,49 +94,49 @@ namespace db {
 			__rc;\
 		})
 
-	bool Entity::Value::IsNull(const char* key) {
-		return CHECK_VALUE_TYPE(key, type_null);
+	bool Entity::IsNull(const char* key) {
+		return CHECK_VALUE_TYPE(key, Entity::Value::type_null);
 	}
 	
-	bool Entity::Value::IsNumber(const char* key) {
+	bool Entity::IsNumber(const char* key) {
 		return this->IsInteger(key) || this->IsFloat(key);
 	}
 	
-	bool Entity::Value::IsInteger(const char* key) {
-		return CHECK_VALUE_TYPE(key, type_integer);
+	bool Entity::IsInteger(const char* key) {
+		return CHECK_VALUE_TYPE(key, Entity::Value::type_integer);
 	}
 	
-	bool Entity::Value::IsFloat(const char* key) {
-		return CHECK_VALUE_TYPE(key, type_float);
+	bool Entity::IsFloat(const char* key) {
+		return CHECK_VALUE_TYPE(key, Entity::Value::type_float);
 	}
 	
-	bool Entity::Value::IsBool(const char* key) {
-		return CHECK_VALUE_TYPE(key, type_bool);
+	bool Entity::IsBool(const char* key) {
+		return CHECK_VALUE_TYPE(key, Entity::Value::type_bool);
 	}
 	
-	bool Entity::Value::IsString(const char* key) {
-		return CHECK_VALUE_TYPE(key, type_string);
+	bool Entity::IsString(const char* key) {
+		return CHECK_VALUE_TYPE(key, Entity::Value::type_string);
 	}
 
-	void Entity::Value::Dump() {
+	void Entity::Dump() {
 		fprintf(stderr, "Entity: 0x%lx, attributes size: %ld\n", this->id, this->values.size());
 		for (auto& i : this->values) {
-			const Value& value = i.second;
+			const Entity::Value& value = i.second;
 			switch (value.type) {
-				case type_null: fprintf(stderr, "%s: null\n", i.first.c_str()); break;
-				case type_integer: 
+				case Entity::Value::type_null: fprintf(stderr, "%s: null\n", i.first.c_str()); break;
+				case Entity::Value::type_integer: 
 					fprintf(stderr, "%s: %ld(int)%s\n", i.first.c_str(), value.value_integer, (value.dirty ? "*" : ""));
 					break;
 
-				case type_float:
+				case Entity::Value::type_float:
 					fprintf(stderr, "%s: %.2f(float)%s\n", i.first.c_str(), value.value_float, (value.dirty ? "*" : ""));
 					break;
 				
-				case type_bool:
+				case Entity::Value::type_bool:
 					fprintf(stderr, "%s: %s(bool)%s\n", i.first.c_str(), (value.value_bool ? "true" : "false"), (value.dirty ? "*" : ""));
 					break;
 					
-				case type_string:
+				case Entity::Value::type_string:
 					fprintf(stderr, "%s: %s(string)%s\n", i.first.c_str(), value.value_string.c_str(), (value.dirty ? "*" : ""));
 					break;
 					
@@ -145,11 +145,11 @@ namespace db {
 		}
 	}
 	
-	void Entity::Value::Clear() {
+	void Entity::Clear() {
 		this->values.clear();
 	}
 	
-	void Entity::Value::ClearDirty() {
+	void Entity::ClearDirty() {
 		for (auto& i : this->values) {
 			i.second.dirty = false;
 		}		

@@ -6,7 +6,7 @@
 #ifndef __MYSQLRESULT_H__
 #define __MYSQLRESULT_H__
 
-BEGIN_NAMESPACE_TNODE {
+namespace db {
 	class MySQLResult {
 		public:
 			MySQLResult(MYSQL_RES* res);

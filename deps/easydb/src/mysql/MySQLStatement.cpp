@@ -3,22 +3,20 @@
  * \brief: Created by hushouguo at 17:24:57 Apr 11 2019
  */
 
-#include "tnode.h"
-#include "mysql/MySQLStatement.h"
-#include "mysql/MySQL.h"
+#include "Database.h"
 
-BEGIN_NAMESPACE_TNODE {
+namespace db {	
 	MySQLStatement::MySQLStatement(MySQL* owner) : _owner(owner) {
 		this->_stmt = mysql_stmt_init(&this->_owner->_mysqlhandle);
 		if (!this->_stmt) {
-			Error << "mysql_stmt_init failure, out of memory";
+			Error("mysql_stmt_init failure, out of memory");
 		}
 	}
 
 	MySQLStatement::~MySQLStatement() {
 		int rc = mysql_stmt_close(this->_stmt);
 		if (rc != 0) {
-			Error.cout("error: %s", mysql_stmt_error(this->_stmt));
+			Error("error: %s", mysql_stmt_error(this->_stmt));
 		}
 	}
 

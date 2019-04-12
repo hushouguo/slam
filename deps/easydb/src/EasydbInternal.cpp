@@ -47,14 +47,14 @@ namespace db {
 	bool EasydbInternal::createDatabase(std::string database) {
 		CHECK_RETURN(this->_dbhandler, false, "not connectServer");
 		bool rc = this->_dbhandler->createDatabase(database);
-		CHECK_RETURN(rc, false, "create database: %s error", database);
+		CHECK_RETURN(rc, false, "create database: %s error", database.c_str());
 		return true;
 	}
 	
 	bool EasydbInternal::selectDatabase(std::string database) {
 		CHECK_RETURN(this->_dbhandler, false, "not connectServer");
 		bool rc = this->_dbhandler->selectDatabase(database);
-		CHECK_RETURN(rc, false, "select database: %s error", database);
+		CHECK_RETURN(rc, false, "select database: %s error", database.c_str());
 		rc = this->loadFieldDescriptor(); // load all of tables for field descriptor
 		if (!rc) {
 			this->_dbhandler->closeDatabase();
@@ -64,7 +64,7 @@ namespace db {
 		return true;
 	}
 
-	bool EasydbInternal::serialize(std::string table, const Entity* entity) {
+	bool EasydbInternal::serialize(std::string table, Entity* entity) {
 		CHECK_RETURN(this->_dbhandler, false, "not connectServer");
 		CHECK_RETURN(this->_entities.find(table) != this->_entities.end(), false, "table: %s not exist", table.c_str());
 		bool rc = this->insertOrUpdate(table, entity);
@@ -145,11 +145,11 @@ namespace db {
 	// insert or update entity to db
 	bool EasydbInternal::insertOrUpdate(std::string table, const Entity* entity) {
 		CHECK_RETURN(this->_dbhandler, false, "not connectServer");
-		if (!ContainsKey(this->_tables, table)) {
-			bool rc = this->createTable(table, entity);
-			CHECK_RETURN(rc, false, "create table: %s error", table);
+		if (this->_tables.find(table) == this->_tables.end()) { 
+			bool rc = this->createTable(table);
+			CHECK_RETURN(rc, false, "create table: %s error", table.c_str());
 			rc = this->loadFieldDescriptor(table);
-			CHECK_RETURN(rc, false, "load field from table: %s error", table);
+			CHECK_RETURN(rc, false, "load field from table: %s error", table.c_str());
 		}
 		
 		std::unordered_map<std::string, FieldDescriptor>& desc_fields = this->_tables[table];
@@ -161,7 +161,7 @@ namespace db {
 			enum_field_types field_type = convert(value);
 		
 			// add new field
-			if (!ContainsKey(desc_fields, iterator.first)) {
+			if (desc_fields.find(iterator.first) == desc_fields.end()) {
 				bool rc = this->addField(table, iterator.first, field_type);
 				CHECK_RETURN(rc, false, "add new field: %s, type: %d error", iterator.first.c_str(), value.type);
 				this->loadFieldDescriptor(table);//NOTE: dont reload field descriptor
@@ -177,22 +177,22 @@ namespace db {
 			sql_fields << "`" << iterator.first << "`";
 		
 			switch (value.type) {
-				case Entity::type_integer: 
+				case Entity::Value::type_integer: 
 					sql_insert << value.value_integer;
 					sql_update << "`" << iterator.first << "`=" << value.value_integer;
 					break;
 		
-				case Entity::type_float:
+				case Entity::Value::type_float:
 					sql_insert << value.value_float;
 					sql_update << "`" << iterator.first << "`=" << value.value_float;
 					break;
 		
-				case Entity::type_bool:
+				case Entity::Value::type_bool:
 					sql_insert << value.value_bool;
 					sql_update << "`" << iterator.first << "`=" << value.value_bool;
 					break;
 		
-				case Entity::type_string:
+				case Entity::Value::type_string:
 					sql_insert << "'" << value.value_string << "'";
 					sql_update << "`" << iterator.first << "`=" << "'" << value.value_string << "'";
 					break;
@@ -238,7 +238,7 @@ namespace db {
 				
 		for (u32 i = 0; i < fieldNumber; ++i) {
 			const MYSQL_FIELD& field = fields[i];
-			CHECK_RETURN(desc_fields.find(field.org_name) != desc_fields.end(), false, "org_name: %s not exist, table: %s", field.org_name, table);
+			CHECK_RETURN(desc_fields.find(field.org_name) != desc_fields.end(), false, "org_name: %s not exist, table: %s", field.org_name, table.c_str());
 			CHECK_RETURN(valid_type(field.type), false, "illegal field.type: %d", field.type);
 			bool is_unsigned = IS_UNSIGNED(field.flags);
 			try {

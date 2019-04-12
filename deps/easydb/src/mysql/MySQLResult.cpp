@@ -3,10 +3,9 @@
  * \brief: Created by hushouguo at 17:26:45 Apr 11 2019
  */
 
-#include "tnode.h"
-#include "mysql/MySQLResult.h"
+#include "Database.h"
 
-BEGIN_NAMESPACE_TNODE {
+namespace db {
 	MySQLResult::MySQLResult(MYSQL_RES* res) : _res(res) {
 	}
 

@@ -20,6 +20,7 @@
 #include <signal.h>
 #include <pthread.h>
 
+#include <set>
 #include <map>
 #include <string>
 #include <list>
@@ -31,6 +32,10 @@
 #include <condition_variable>
 #include <atomic>
 #include <exception>
+
+// mysql 5.6.37
+#include "mysql.h"
+#include "errmsg.h"
 
 using u8 	=	uint8_t;
 using u16 	=	uint16_t;
@@ -101,6 +106,7 @@ using Byte	=	unsigned char;
 #include "mysql/MySQLStatement.h"
 #include "mysql/MySQL.h"
 #include "Easydb.h"
+#include "Helper.h"
 #include "EasydbInternal.h"
 
 #endif

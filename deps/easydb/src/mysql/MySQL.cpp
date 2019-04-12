@@ -3,17 +3,13 @@
  * \brief: Created by hushouguo at 17:28:18 Apr 11 2019
  */
 
-#include "tnode.h"
-#include "tools/Tools.h"
-#include "mysql/MySQLResult.h"
-#include "mysql/MySQLStatement.h"
-#include "mysql/MySQL.h"
+#include "Database.h"
 
 #define MYSQL_CONNECT_TIMEOUT		10
 #define MYSQL_WAIT_TIMEOUT			604800
 #define MYSQL_INTERACTIVE_TIMEOUT	604800
 
-BEGIN_NAMESPACE_TNODE {
+namespace db {
 	MySQL::MySQL() {
 		mysql_init(&this->_mysqlhandle);
 	}
@@ -27,7 +23,9 @@ BEGIN_NAMESPACE_TNODE {
 		this->_mysqlconf.port = port;
 		this->_mysqlconf.user = user;
 		this->_mysqlconf.passwd = passwd;
-		this->_mysqlconf.database = db;
+		if (db) {
+			this->_mysqlconf.database = db;
+		}
 		return this->openDatabase();
 	}
 
@@ -126,6 +124,7 @@ BEGIN_NAMESPACE_TNODE {
 		return mysql_insert_id(&this->_mysqlhandle);
 	}
 
+#if 0
 	bool MySQL::openDatabase(std::string conf) {
 		if (!this->_mysqlconf.parsefrom(conf)) {
 			return false;
@@ -154,6 +153,7 @@ BEGIN_NAMESPACE_TNODE {
 		this->database = v[4];
 		return true;
 	}
+#endif
 
 	bool MySQL::openDatabase() {
 		if (true) { // connect timeout
