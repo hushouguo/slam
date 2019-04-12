@@ -66,7 +66,12 @@ namespace db {
 
 	bool EasydbInternal::serialize(std::string table, Entity* entity) {
 		CHECK_RETURN(this->_dbhandler, false, "not connectServer");
-		CHECK_RETURN(this->_entities.find(table) != this->_entities.end(), false, "table: %s not exist", table.c_str());
+		if (this->_tables.find(table) == this->_tables.end()) { 
+			bool rc = this->createTable(table);
+			CHECK_RETURN(rc, false, "create table: %s error", table.c_str());
+			rc = this->loadFieldDescriptor(table);
+			CHECK_RETURN(rc, false, "load field from table: %s error", table.c_str());
+		}
 		bool rc = this->insertOrUpdate(table, entity);
 		CHECK_RETURN(rc, false, "InsertOrUpdate entity: 0x%lx error", entity->id);
 		std::unordered_map<u64, Entity*>& entities = this->_entities[table];
@@ -145,16 +150,13 @@ namespace db {
 	// insert or update entity to db
 	bool EasydbInternal::insertOrUpdate(std::string table, const Entity* entity) {
 		CHECK_RETURN(this->_dbhandler, false, "not connectServer");
-		if (this->_tables.find(table) == this->_tables.end()) { 
-			bool rc = this->createTable(table);
-			CHECK_RETURN(rc, false, "create table: %s error", table.c_str());
-			rc = this->loadFieldDescriptor(table);
-			CHECK_RETURN(rc, false, "load field from table: %s error", table.c_str());
-		}
-		
+		CHECK_RETURN(this->_tables.find(table) != this->_tables.end(), false, "table: %s not exist", table.c_str());
 		std::unordered_map<std::string, FieldDescriptor>& desc_fields = this->_tables[table];
 		
 		std::ostringstream sql_fields, sql_insert, sql_update;
+		sql_fields << "id";
+		sql_insert << entity->id;
+		sql_update << "`id`=" << entity->id;
 		for (auto& iterator : entity->values) {
 			const Entity::Value& value = iterator.second;
 			CHECK_RETURN(valid_type(value.type), false, "illegal ValueType: %d", value.type);		
@@ -170,11 +172,8 @@ namespace db {
 			const FieldDescriptor& fieldDescriptor = desc_fields[iterator.first];
 			CHECK_RETURN(fieldDescriptor.type == field_type, false, "fieldDescriptor.type: %d, field_type: %d", fieldDescriptor.type, field_type);
 					
-			if (sql_fields.tellp() > 0) { sql_fields << ","; }
-			if (sql_insert.tellp() > 0) { sql_insert << ","; }
-			if (sql_update.tellp() > 0) { sql_update << ","; }
-		
-			sql_fields << "`" << iterator.first << "`";
+			sql_fields << ",`" << iterator.first << "`";
+			sql_insert << ","; sql_update << ",";
 		
 			switch (value.type) {
 				case Entity::Value::type_integer: 
@@ -204,7 +203,7 @@ namespace db {
 		std::ostringstream sql;
 		sql << "INSERT INTO `" << table << "` (" << sql_fields.str() << ") VALUES (" << sql_insert.str();
 		sql << ") ON DUPLICATE KEY UPDATE " << sql_update.str();
-		//Trace << "serialize sql: " << sql.str();
+		Debug("serialize sql: %s", sql.str().c_str());
 		return this->_dbhandler->runCommand(sql.str());	
 	}
 

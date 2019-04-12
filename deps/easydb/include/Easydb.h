@@ -59,7 +59,6 @@ namespace db {
 			Value(char* value);
 			Value(const char* value);
 			Value(std::string value);
-			//Value(const std::string& value);
 			void Set(int8_t value);
 			void Set(uint8_t value);
 			void Set(int16_t value);
@@ -74,18 +73,28 @@ namespace db {
 			void Set(char* value);
 			void Set(const char* value);
 			void Set(std::string value);
-			//void Set(const std::string& value);
 			template <typename T> void operator = (T value) { this->Set(value); }
 			bool dirty = false;
 		};
 		std::unordered_map<std::string, Value> values;
 
+		//
+		// SetValue
+		template <typename T> void SetValue(const char* key, T value) {
+			this->GetValue(key) = value;
+		}
+
+		//
+		// GetValue
+		Value& GetValue(const char* key);
+
+		//
+		// GetValue by special type
 		int64_t GetInteger(const char* key);
 		bool GetBool(const char* key);
 		float GetFloat(const char* key);
 		const std::string& GetString(const char* key);
 
-		Value& GetValue(const char* key);
 		Value& operator [](const char* key);
 
 		bool HasMember(const char* key);

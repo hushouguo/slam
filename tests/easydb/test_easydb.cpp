@@ -16,6 +16,12 @@ void test_easydb() {
 	CHECK_RETURN(rc, void(0), "createDatabase error");
 	rc = easydb->selectDatabase("easydb");
 	CHECK_RETURN(rc, void(0), "selectDatabase error");
+	Entity* entity = new Entity(100);
+	entity->SetValue("name", "hushouguo+");
+	entity->SetValue("age", 23);
+	entity->Dump();
+	rc = easydb->serialize("player", entity);
+
 	delete easydb;
 	Debug << "easydb test OK";
 }
