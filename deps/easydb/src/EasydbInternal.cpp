@@ -31,17 +31,21 @@ namespace db {
 		}
 	}
 
-	bool EasydbInternal::connectServer(const char* host, const char* user, const char* passwd, int port) {
+	bool EasydbInternal::connectServer(EasydbConfig* conf) {
+		CHECK_RETURN(conf, false, "invalid `conf`");
 		this->_dbhandler = new MySQL();
-		bool rc = this->_dbhandler->openDatabase(host, user, passwd, nullptr, port);
-		CHECK_RETURN(rc, false, "connectServer(%s:%s:%s:%d) error", host, user, passwd, port);
+		bool rc = this->_dbhandler->openDatabase(
+			conf->host.c_str(), 
+			conf->user.c_str(), 
+			conf->passwd.c_str(), 
+			conf->database.length() > 0 ? conf->database.c_str() : nullptr, 
+			conf->port);
+		CHECK_RETURN(rc, false, "connectServer(%s:%s:%s:%d) error", 
+			conf->host.c_str(), 
+			conf->user.c_str(), 
+			conf->passwd.c_str(), 
+			conf->port);
 		return true;
-	}
-
-	bool EasydbInternal::connectServer(const char* address, int port) {
-		Error("connectServer not implement!");
-		//TODO: fix it
-		return false;
 	}
 	
 	bool EasydbInternal::createDatabase(std::string database) {
@@ -50,7 +54,9 @@ namespace db {
 		CHECK_RETURN(rc, false, "create database: %s error", database.c_str());
 		return true;
 	}
-	
+
+	//
+	// selectDatabase & reload all of tables
 	bool EasydbInternal::selectDatabase(std::string database) {
 		CHECK_RETURN(this->_dbhandler, false, "not connectServer");
 		bool rc = this->_dbhandler->selectDatabase(database);
@@ -64,40 +70,85 @@ namespace db {
 		return true;
 	}
 
-	bool EasydbInternal::serialize(std::string table, Entity* entity) {
+	bool EasydbInternal::deleteDatabase(std::string database) {
 		CHECK_RETURN(this->_dbhandler, false, "not connectServer");
+		return this->_dbhandler->deleteDatabase(database);
+	}
+
+	bool EasydbInternal::findDatabase(std::string database) {
+		CHECK_RETURN(this->_dbhandler, false, "not connectServer");
+		return this->_dbhandler->findDatabase(database);
+	}
+
+
+	uint64_t EasydbInternal::createEntity(std::string table, Entity* entity) {
+		CHECK_RETURN(this->_dbhandler, 0, "not connectServer");
+		//
+		// create table if not exists
 		if (this->_tables.find(table) == this->_tables.end()) { 
 			bool rc = this->createTable(table);
-			CHECK_RETURN(rc, false, "create table: %s error", table.c_str());
+			CHECK_RETURN(rc, 0, "create table: %s error", table.c_str());
 			rc = this->loadFieldDescriptor(table);
-			CHECK_RETURN(rc, false, "load field from table: %s error", table.c_str());
+			CHECK_RETURN(rc, 0, "load field from table: %s error", table.c_str());
 		}
-		bool rc = this->insertOrUpdate(table, entity);
-		CHECK_RETURN(rc, false, "InsertOrUpdate entity: 0x%lx error", entity->id);
+
 		std::unordered_map<u64, Entity*>& entities = this->_entities[table];
-		auto i = entities.find(entity->id);
-		if (i == entities.end()) {
-			// this is a new entity
-			entities.insert(std::make_pair(entity->id, entity));
-		}
-		return true;
-	}
 		
-	Entity* EasydbInternal::unserialize(std::string table, uint64_t entityid) {
-		CHECK_RETURN(this->_dbhandler, false, "not connectServer");
-		CHECK_RETURN(this->_entities.find(table) != this->_entities.end(), false, "table: %s not exist", table.c_str());
+		//
+		// insert entity to table
+		u64 entityid = this->insertTable(table, entity);
+		CHECK_RETURN(entityid != 0, 0, "createEntity: %s error", table.c_str());
+		CHECK_RETURN(entities.find(entityid) == entities.end(), 0, "duplicate entityid: 0x%lx", entityid);
+
+		if (entity->ID() == 0) {
+			//
+			// reset entity->id
+			entity->ID(entityid);
+		}
+		else {
+			assert(entity->ID() == entityid);
+		}
+
+		//
+		// reset dirty flags
+		entity->clearDirty();
+		
+		//
+		// add new entity to cache
+		entities.insert(std::make_pair(entity->id, entity));
+
+		return entityid;
+	}
+
+	Entity* EasydbInternal::getEntity(std::string table, uint64_t entityid) {
+		CHECK_RETURN(this->_dbhandler, nullptr, "not connectServer");
+		//
+		// check table if exists
+		CHECK_RETURN(this->_tables.find(table) != this->_tables.end(), nullptr, "table: %s not exist", table.c_str());
+		
+		//
+		// check cache
 		std::unordered_map<u64, Entity*>& entities = this->_entities[table];
 		auto i = entities.find(entityid);
-		if (i != entities.end()) {
-			return i->second;
-		}
-		Entity* entity = new Entity(entityid);
+		if (i != entities.end()) {	return i->second; }
+
+		//
+		// create new entity
+		Entity* entity = new Entity();
 		bool rc = this->retrieve(table, entityid, entity);
 		if (!rc) {
 			SafeDelete(entity);
 			CHECK_RETURN(false, nullptr, "retrieve entity: 0x%lx error", entityid);
 		}
+
+		//
+		// reset dirty flags
+		entity->clearDirty();
+
+		//
+		// cache entity
 		entities.insert(std::make_pair(entityid, entity));
+		
 		return entity;
 	}
 	
@@ -146,6 +197,107 @@ namespace db {
 	}
 
 
+	//
+	// extend field of table by entity
+	bool EasydbInternal::extendField(std::string table, Entity* entity) {
+		CHECK_RETURN(this->_dbhandler, false, "not connectServer");
+		//
+		// check table
+		CHECK_RETURN(this->_tables.find(table) != this->_tables.end(), false, "table: %s not exist", table.c_str());
+		std::unordered_map<std::string, FieldDescriptor>& desc_fields = this->_tables[table];
+
+		//
+		// iterator all of values
+		for (auto& iterator : entity->values()) {
+			const Entity::Value& value = iterator.second;
+			CHECK_RETURN(valid_type(value.type), false, "extendField found illegal ValueType: %d", value.type); 	
+			enum_field_types field_type = convert(value);
+			// add new field
+			if (desc_fields.find(iterator.first) == desc_fields.end()) {
+				bool rc = this->addField(table, iterator.first, field_type);
+				CHECK_RETURN(rc, false, "add new field: %s, type: %d error", iterator.first.c_str(), value.type);
+				this->loadFieldDescriptor(table);//NOTE: dont reload field descriptor
+			}
+			// extend old field
+			else {
+				const FieldDescriptor& fieldDescriptor = desc_fields[iterator.first];
+				if (field_type != fieldDescriptor.type) {
+					bool rc = this->alterField(table, iterator.first, field_type);
+					CHECK_RETURN(rc, false, "alter table: %s error", table.c_str());
+				}
+			}
+		}
+
+		return true;
+	}
+
+	//
+	// insert entity to table
+	u64 EasydbInternal::insertTable(std::string table, Entity* entity) {
+		CHECK_RETURN(this->_dbhandler, 0, "not connectServer");
+		//
+		// check table
+		CHECK_RETURN(this->_tables.find(table) != this->_tables.end(), 0, "table: %s not exist", table.c_str());
+
+		//
+		// check entity if empty
+		size_t n = 0, size = entity->ValueSize();
+		CHECK_RETURN(size > 0, 0, "entity is a empty object");
+
+		//
+		// extend fields of table
+		bool rc = this->extendField(table, entity);
+		CHECK_RETURN(rc, 0, "extend field table: %s error", table.c_str());
+		
+		std::unordered_map<std::string, FieldDescriptor>& desc_fields = this->_tables[table];
+		const std::unordered_map<std::string, Entity::Value>& values = entity->values();
+
+		std::ostringstream sql_fields, sql_values;
+		
+		//
+		// sql statement
+		MySQLStatement stmt(this->_dbhandler);
+		unsigned long lengths[size];
+		MYSQL_BIND params[size];
+		memset(params, 0, sizeof(params));
+		for (auto& iterator : values) {
+			assert(n < size);
+			CHECK_RETURN(desc_fields.find(iterator.first) != desc_fields.end(), 0, "table: %s not exist field: %s", table.c_str(), iterator.first.c_str());
+			const FieldDescriptor& fieldDescriptor = desc_fields[iterator.first];
+			const Entity::Value& value = iterator.second;
+
+			if (sql_fields.tellp() > 0) { sql_fields << ","; }
+			sql_fields << "`" << iterator.first << "`";
+
+			if (sql_values.tellp() > 0) { sql_values << ","; }
+			sql_values << "?";
+			
+			lengths[n] = value.Size();
+			params[n].buffer_type = fieldDescriptor.type;
+			params[n].buffer = value.Buffer();
+			params[n].is_unsigned = false;
+			params[n].length = &lengths[n];
+			++n;
+		}
+
+		//
+		// insert ID
+		if (entity->ID() != 0) {
+			sql_fields << ", ID";
+			sql_values << ", " << entity->ID();
+		}
+		
+		std::ostringstream o;
+		o << "INSERT INTO `" << table << "` (" << sql_fields.str() << ") VALUES (" << sql_values.str() << ")";
+		const std::string sql = o.str();	
+		rc = stmt.prepare(sql.c_str(), sql.length()) && stmt.bindParam(params) && stmt.exec();
+		CHECK_RETURN(rc, 0, "execute sql: %s error", sql.c_str());
+		Debug("insertTable: %s, sql: %s", table.c_str(), sql.c_str());
+
+		return this->_dbhandler->insertId();
+	}
+
+#if 0	
 	//
 	// insert or update entity to db
 	bool EasydbInternal::insertOrUpdate(std::string table, const Entity* entity) {
@@ -206,15 +358,21 @@ namespace db {
 		Debug("serialize sql: %s", sql.str().c_str());
 		return this->_dbhandler->runCommand(sql.str());	
 	}
+#endif	
 
 	//
 	// load entity from db
 	bool EasydbInternal::retrieve(std::string table, uint64_t entityid, Entity* entity) {
 		CHECK_RETURN(this->_dbhandler, false, "not connectServer");
+		//
+		// check table
+		CHECK_RETURN(this->_tables.find(table) != this->_tables.end(), false, "table: %s not exist", table.c_str());
 		std::unordered_map<std::string, FieldDescriptor>& desc_fields = this->_tables[table];
-		
+
+		//
+		// NOTE: include `ID` field
 		std::ostringstream sql;
-		sql << "SELECT * FROM `" << table << "` WHERE id = " << entityid;
+		sql << "SELECT * FROM `" << table << "` WHERE ID = " << entityid;
 		
 		MySQLResult* result = this->_dbhandler->runQuery(sql.str());
 		CHECK_RETURN(result, false, "Query: %s error", sql.str().c_str());
@@ -241,7 +399,7 @@ namespace db {
 			CHECK_RETURN(valid_type(field.type), false, "illegal field.type: %d", field.type);
 			bool is_unsigned = IS_UNSIGNED(field.flags);
 			try {
-				fieldvalue(field.type, entity->GetValue(field.org_name), row[i], is_unsigned);
+				fieldvalue(field.type, field.org_name, entity, row[i], is_unsigned);
 			} 
 			catch(std::exception& e) {
 				Error("field: %s, type: %d, convert except: %s", field.org_name, field.type, e.what());
@@ -250,6 +408,20 @@ namespace db {
 		SafeDelete(result);
 		
 		return true;
+	}
+
+	//
+	// dump all of tables
+	void EasydbInternal::dumpTables() {
+		Debug("current database: %s", this->_database.c_str());
+		for (auto& i : this->_tables) {
+			Debug("    table: %s", i.first.c_str());
+			std::unordered_map<std::string, FieldDescriptor>& desc_fields = i.second;
+			for (auto& iterator : desc_fields) {
+				FieldDescriptor& descriptor = iterator.second;
+				Debug("        %s(%d):%s\n", iterator.first.c_str(), descriptor.length, fieldstring(descriptor.type));
+			}
+		}
 	}
 
 	//
@@ -271,6 +443,7 @@ namespace db {
 			CHECK_RETURN(rc, false, "load field: %s error", table.c_str());
 		}
 
+		this->dumpTables();
 		return true;
 	}
 
@@ -280,7 +453,9 @@ namespace db {
 		CHECK_RETURN(this->_dbhandler, false, "not connectServer");
 		std::unordered_map<std::string, FieldDescriptor>& desc_fields = this->_tables[table];
 		desc_fields.clear();
-		
+
+		//
+		// NOTE: include `ID` field
 		std::ostringstream sql;
 		sql << "SELECT * FROM `" << table.c_str() << "` LIMIT 1";
 		
@@ -306,7 +481,7 @@ namespace db {
 	bool EasydbInternal::createTable(std::string table) {
 		CHECK_RETURN(this->_dbhandler, false, "not connectServer");
 		std::ostringstream sql;
-		sql << "CREATE TABLE `" << table << "` (`id` BIGINT UNSIGNED NOT NULL PRIMARY KEY ";
+		sql << "CREATE TABLE `" << table << "` (`ID` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY ";
 		sql << ") ENGINE=InnoDB DEFAULT CHARSET=utf8";
 		return this->_dbhandler->runCommand(sql.str());
 	}
@@ -321,11 +496,25 @@ namespace db {
 	}
 
 	//
+	// alter old field
+	bool EasydbInternal::alterField(std::string table, const std::string& field_name, enum_field_types field_type) {
+		CHECK_RETURN(this->_dbhandler, false, "not connectServer");
+		CHECK_RETURN(m2string.find(field_type) != m2string.end(), false, "illegal field type: %d", field_type); 	
+		std::ostringstream sql;
+		sql << "ALTER TABLE `" << table << "` MODIFY `" << field_name << "` " << m2string[field_type] << " NOT NULL";
+		Debug("alter table: %s, field: %s, to type: %s", table.c_str(), field_name.c_str(), m2string[field_type]);
+		return this->dbhandler->runCommand(sql.str());
+	}
+
+	//
 	// delete entity
 	bool EasydbInternal::deleteEntity(std::string table, uint64_t entityid) {
 		CHECK_RETURN(this->_dbhandler, false, "not connectServer");
+		//
+		// remove cache
+		
 		std::ostringstream sql;
-		sql << "DELETE FROM `" << table << "` WHERE `id` = " << entityid;
+		sql << "DELETE FROM `" << table << "` WHERE `ID` = " << entityid;
 		return this->_dbhandler->runCommand(sql.str());
 	}
 }

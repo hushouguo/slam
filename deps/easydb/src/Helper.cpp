@@ -98,32 +98,32 @@ namespace db {
 	//
 	// fetch row to Entity::Value
 	//
-	static std::map<enum_field_types, std::function<void(Entity::Value&, std::string, bool)>> m2value = {
-		{ MYSQL_TYPE_TINY, [](Entity::Value& value, std::string s, bool is_unsigned) {	// bool
-			value = std::stoi(s) != 0;
+	static std::map<enum_field_types, std::function<void(const char* org_name, Entity*, std::string, bool)>> m2value = {
+		{ MYSQL_TYPE_TINY, [](const char* org_name, Entity* entity, std::string s, bool is_unsigned) {	// bool
+			entity->setValue(org_name, std::stoi(s) != 0);
 		}},
-		{ MYSQL_TYPE_LONG, [](Entity::Value& value, std::string s, bool is_unsigned) { 	// integer
-			value = is_unsigned ? std::stoul(s) : std::stol(s);
+		{ MYSQL_TYPE_LONG, [](const char* org_name, Entity* entity, std::string s, bool is_unsigned) { 	// integer
+			entity->setValue(org_name, std::stol(s));
 		}},
-		{ MYSQL_TYPE_LONGLONG, [](Entity::Value& value, std::string s, bool is_unsigned) { // integer
-			value = is_unsigned ? (u64)std::stoull(s) : (s64)std::stoll(s);
+		{ MYSQL_TYPE_LONGLONG, [](const char* org_name, Entity* entity, std::string s, bool is_unsigned) { // integer
+			entity->setValue(org_name, std::stoll(s));
 		}},
-		{ MYSQL_TYPE_FLOAT, [](Entity::Value& value, std::string s, bool is_unsigned) { // float
-			value = std::stof(s);
+		{ MYSQL_TYPE_FLOAT, [](const char* org_name, Entity* entity, std::string s, bool is_unsigned) { // float
+			entity->setValue(org_name, std::stof(s));
 		}},
-		{ MYSQL_TYPE_VAR_STRING, [](Entity::Value& value, std::string s, bool is_unsigned) { // string
-			value = s;
+		{ MYSQL_TYPE_VAR_STRING, [](const char* org_name, Entity* entity, std::string s, bool is_unsigned) { // string
+			entity->setValue(org_name, s.c_str());
 		}},
-		{ MYSQL_TYPE_BLOB, [](Entity::Value& value, std::string s, bool is_unsigned) { // string
-			value = s;
+		{ MYSQL_TYPE_BLOB, [](const char* org_name, Entity* entity, std::string s, bool is_unsigned) { // string
+			entity->setValue(org_name, s.c_str());
 		}},
-		{ MYSQL_TYPE_LONG_BLOB, [](Entity::Value& value, std::string s, bool is_unsigned) { // string
-			value = s;
+		{ MYSQL_TYPE_LONG_BLOB, [](const char* org_name, Entity* entity, std::string s, bool is_unsigned) { // string
+			entity->setValue(org_name, s.c_str());
 		}},
 	};
-	void fieldvalue(enum_field_types type, Entity::Value& value, char* row, bool is_unsigned) {
+	void fieldvalue(enum_field_types type, const char* org_name, Entity* entity, char* row, bool is_unsigned) {
 		auto i = m2value.find(type);
 		assert(i != m2value.end());
-		m2value[type](value, row, is_unsigned);
+		m2value[type](org_name, entity, row, is_unsigned);
 	}
 }

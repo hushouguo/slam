@@ -68,6 +68,20 @@ namespace db {
 		return this->runCommand(sql.str());
 	}
 
+	bool MySQL::deleteDatabase(std::string database) {
+		std::ostringstream sql;
+		sql << "DROP DATABASE IF EXISTS `" << database << "`";
+		return this->runCommand(sql.str());
+	}
+
+	bool MySQL::findDatabase(std::string database) {
+		std::string s = "SHOW DATABASES LIKE '" + database + "'";
+		MySQLResult* result = this->runQuery(s);
+		bool exist = result->rowNumber() > 0;
+		SafeDelete(result);
+		return exist;
+	}
+
 	bool MySQL::loadDatabase(std::string where, std::set<std::string>& results) {
 		MySQLStatement stmt(this);
 		std::string s = "SHOW DATABASES LIKE '" + where + "'";

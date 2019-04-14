@@ -21,7 +21,7 @@ namespace db {
 
 	//
 	// fetch row to Entity::Value
-	void fieldvalue(enum_field_types type, Entity::Value& value, char* row, bool is_unsigned);
+	void fieldvalue(enum_field_types type, const char* org_name, Entity* entity, char* row, bool is_unsigned);
 
 	//
 	// check type if valid
