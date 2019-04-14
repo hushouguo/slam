@@ -26,6 +26,12 @@ namespace db {
 		return true;
 	}
 
+	bool MySQLStatement::prepare(const char* s, size_t len) {
+		int rc = mysql_stmt_prepare(this->_stmt, s, len);
+		CHECK_RETURN(rc == 0, false, "prepare: %s", mysql_stmt_error(this->_stmt));
+		return true;
+	}
+
 	bool MySQLStatement::bindParam(MYSQL_BIND* b) {
 		int rc = mysql_stmt_bind_param(this->_stmt, b);
 		CHECK_RETURN(rc == 0, false, "bindParam: %s", mysql_stmt_error(this->_stmt));

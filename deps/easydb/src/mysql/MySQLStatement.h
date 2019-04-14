@@ -15,6 +15,7 @@ namespace db {
 
 		public:
 			bool prepare(std::string s);
+			bool prepare(const char* s, size_t len);
 			bool bindParam(MYSQL_BIND* b);
 			bool exec();
 			int  rowCount();

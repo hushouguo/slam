@@ -23,7 +23,7 @@ namespace db {
 			~MySQL();
 
 		public:
-			//bool openDatabase(std::string conf);
+			bool openDatabase();
 			bool openDatabase(const char *host, const char *user, const char *passwd, const char *db, int port = 3306);
 			void closeDatabase();
 
@@ -35,6 +35,8 @@ namespace db {
 			bool resetDatabase();
 			bool selectDatabase(std::string database);
 			bool createDatabase(std::string database);
+			bool deleteDatabase(std::string database);
+			bool findDatabase(std::string database);
 			bool loadDatabase(std::string where, std::set<std::string>& results);
 			bool loadTable(std::string where, std::set<std::string>& results);
 

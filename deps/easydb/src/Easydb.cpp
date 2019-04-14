@@ -6,84 +6,145 @@
 #include "Database.h"
 
 namespace db {
-	Entity::Entity(uint64_t entityid) {
-		this->id = entityid;
+	Entity::Entity() {
 	}
 	
-	Entity::Value::Value() : type(type_null) {}
-	Entity::Value::Value(int8_t value) { this->Set(value); }
-	Entity::Value::Value(uint8_t value) { this->Set(value); }
-	Entity::Value::Value(int16_t value) { this->Set(value); }
-	Entity::Value::Value(uint16_t value) { this->Set(value); }
-	Entity::Value::Value(int32_t value) { this->Set(value); }
-	Entity::Value::Value(uint32_t value) { this->Set(value); }
-	Entity::Value::Value(int64_t value) { this->Set(value); }
-	Entity::Value::Value(uint64_t value) { this->Set(value); }
-	Entity::Value::Value(float value) { this->Set(value); }
-	Entity::Value::Value(double value) { this->Set(value); }
-	Entity::Value::Value(bool value) { this->Set(value); }
-	Entity::Value::Value(char* value) { this->Set(value); }
-	Entity::Value::Value(const char* value) { this->Set(value); }
-	Entity::Value::Value(std::string value) { this->Set(value); }
-	//Entity::Value::Value(const std::string& value) { this->Set(value); }
+	Entity::Entity(uint64_t entityid) {
+		this->_id = entityid;
+	}
+
+	//
+	// setValue
+	//
 	
-	void Entity::Value::Set(int8_t value) { type = type_integer; value_integer = value; dirty = true; }
-	void Entity::Value::Set(uint8_t value) { type = type_integer; value_integer = value; dirty = true; }
-	void Entity::Value::Set(int16_t value) { type = type_integer; value_integer = value; dirty = true; }
-	void Entity::Value::Set(uint16_t value) { type = type_integer; value_integer = value; dirty = true; }
-	void Entity::Value::Set(int32_t value) { type = type_integer; value_integer = value; dirty = true; }
-	void Entity::Value::Set(uint32_t value) { type = type_integer; value_integer = value; dirty = true; }
-	void Entity::Value::Set(int64_t value) { type = type_integer; value_integer = value; dirty = true; }
-	void Entity::Value::Set(uint64_t value) { type = type_integer; value_integer = value; dirty = true; }
-	void Entity::Value::Set(float value) { type = type_float; value_float = value; dirty = true; }
-	void Entity::Value::Set(double value) { type = type_float; value_float = (float)value; dirty = true; }
-	void Entity::Value::Set(bool value) { type = type_bool; value_bool = value; dirty = true; }
-	void Entity::Value::Set(char* value) { type = type_string; value_string = value; dirty = true; }
-	void Entity::Value::Set(const char* value) { type = type_string; value_string = value; dirty = true; }
-	void Entity::Value::Set(std::string value) { type = type_string; value_string = value; dirty = true; }
-	//void Entity::Value::Set(const std::string& value) { type = type_string; value_string = value; dirty = true; }
+	// boolean
+	template <> void Entity::setValue(const char* key, bool value) {
+		const Entity::Value& __value = this->_values[key];
+		__value.type = Entity::Value::type_bool;
+		__value.value_bool = value;
+		__value.dirty = true;
+	}
+	
+	// integer
+	template <> void Entity::setValue(const char* key, s8 value) {
+		this->setValue(static_cast<int64_t>(value));
+	}
+	
+	template <> void Entity::setValue(const char* key, s16 value) {
+		this->setValue(static_cast<int64_t>(value));
+	}
+		
+	template <> void Entity::setValue(const char* key, s32 value) {
+		this->setValue(static_cast<int64_t>(value));
+	}
+	
+	template <> void Entity::setValue(const char* key, s64 value) {
+		const Entity::Value& __value = this->_values[key];
+		__value.type = Entity::Value::type_integer;
+		__value.value_integer = value;
+		__value.dirty = true;
+	}
+	
+	template <> void Entity::setValue(const char* key, u8 value) {
+		this->setValue(static_cast<int64_t>(value));
+	}
+	
+	template <> void Entity::setValue(const char* key, u16 value) {
+		this->setValue(static_cast<int64_t>(value));
+	}
+	
+	template <> void Entity::setValue(const char* key, u32 value) {
+		this->setValue(static_cast<int64_t>(value));
+	}
+	
+	template <> void Entity::setValue(const char* key, u64 value) {
+		this->setValue(static_cast<int64_t>(value));
+	}
+	
+	template <> void Entity::setValue(const char* key, long long value) {
+		this->setValue(static_cast<int64_t>(value));
+	}
+	
+	template <> void Entity::setValue(const char* key, unsigned long long value) {
+		this->setValue(static_cast<int64_t>(value));
+	}
+	
+	
+	// float
+	template <> void Entity::setValue(const char* key, float value) {
+		const Entity::Value& __value = this->_values[key];
+		__value.type = Entity::Value::type_float;
+		__value.value_float = value;
+		__value.dirty = true;
+	}
+	
+	template <> void Entity::setValue(const char* key, double value) {
+		this->setValue(static_cast<float>(value));
+	}
+	
+	
+	// string
+	template <> void Entity::setValue(const char* key, char* value) {
+		this->setValue(static_cast<const char*>(value));
+	}
+	
+	template <> void Entity::setValue(const char* key, const char* value) {
+		const Entity::Value& __value = this->_values[key];
+		__value.type = Entity::Value::type_string;
+		__value.value_string = value;
+		__value.dirty = true;
+	}
+	
+	template <> void Entity::setValue(const char* key, std::string value) {
+		this->setValue(static_cast<const char*>(value));
+	}
+
 
 #define GET_VALUE(NAME, TYPE)\
-		({\
-			auto __i = this->values.find(NAME);\
-			assert(__i != this->values.end());\
-			const Entity::Value& __value = __i->second;\
-			assert(__value.type == Entity::Value::type_##TYPE);\
-			return __value.value_##TYPE;\
-		})
+			({\
+				auto __i = this->_values.find(NAME);\
+				assert(__i != this->_values.end());\
+				const Entity::Value& __value = __i->second;\
+				assert(__value.type == Entity::Value::type_##TYPE);\
+				return __value.value_##TYPE;\
+			})
 
-	int64_t Entity::GetInteger(const char* key) {
+	//
+	// getValue
+	//
+	int64_t Entity::getValueInteger(const char* key) {		
 		GET_VALUE(key, integer);
 	}
 	
-	bool Entity::GetBool(const char* key) {
+	bool Entity::getValueBool(const char* key) {
 		GET_VALUE(key, bool);
 	}
 	
-	float Entity::GetFloat(const char* key) {
+	float Entity::getValueFloat(const char* key) {
 		GET_VALUE(key, float);
 	}
 	
-	const std::string& Entity::GetString(const char* key) {
+	const std::string& Entity::getValueString(const char* key) {
 		GET_VALUE(key, string);
 	}
-
-	Entity::Value& Entity::GetValue(const char* key) {
-		return this->values[key];
-	}
 	
-	Entity::Value& Entity::operator [](const char* key) {
-		return this->values[key];
-	}
 
-	bool Entity::HasMember(const char* key) {
-		return this->values.find(key) != this->values.end();
+//	Entity::Value& Entity::GetValue(const char* key) {
+//		return this->_values[key];
+//	}
+	
+//	Entity::Value& Entity::operator [](const char* key) {
+//		return this->_values[key];
+//	}
+
+	bool Entity::hasMember(const char* key) {
+		return this->_values.find(key) != this->_values.end();
 	}
 
 #define CHECK_VALUE_TYPE(name, value_type)\
 		({\
-			auto __i = this->values.find(name);\
-			bool __rc = __i != this->values.end();\
+			auto __i = this->_values.find(name);\
+			bool __rc = __i != this->_values.end();\
 			if (__rc) {\
 				const Entity::Value& __value = __i->second;\
 				__rc = __value.type == value_type;\
@@ -94,33 +155,33 @@ namespace db {
 			__rc;\
 		})
 
-	bool Entity::IsNull(const char* key) {
+	bool Entity::isNull(const char* key) {
 		return CHECK_VALUE_TYPE(key, Entity::Value::type_null);
 	}
 	
-	bool Entity::IsNumber(const char* key) {
-		return this->IsInteger(key) || this->IsFloat(key);
+	bool Entity::isNumber(const char* key) {
+		return this->isInteger(key) || this->isFloat(key);
 	}
 	
-	bool Entity::IsInteger(const char* key) {
+	bool Entity::isInteger(const char* key) {
 		return CHECK_VALUE_TYPE(key, Entity::Value::type_integer);
 	}
 	
-	bool Entity::IsFloat(const char* key) {
+	bool Entity::isFloat(const char* key) {
 		return CHECK_VALUE_TYPE(key, Entity::Value::type_float);
 	}
 	
-	bool Entity::IsBool(const char* key) {
+	bool Entity::isBool(const char* key) {
 		return CHECK_VALUE_TYPE(key, Entity::Value::type_bool);
 	}
 	
-	bool Entity::IsString(const char* key) {
+	bool Entity::isString(const char* key) {
 		return CHECK_VALUE_TYPE(key, Entity::Value::type_string);
 	}
 
-	void Entity::Dump() {
-		fprintf(stderr, "Entity: 0x%lx, attributes size: %ld\n", this->id, this->values.size());
-		for (auto& i : this->values) {
+	void Entity::dump() {
+		fprintf(stderr, "Entity: 0x%lx, attributes size: %ld\n", this->id, this->_values.size());
+		for (auto& i : this->_values) {
 			const Entity::Value& value = i.second;
 			switch (value.type) {
 				case Entity::Value::type_null: fprintf(stderr, "%s: null\n", i.first.c_str()); break;
@@ -145,14 +206,28 @@ namespace db {
 		}
 	}
 	
-	void Entity::Clear() {
-		this->values.clear();
+	void Entity::clear() {
+		this->_values.clear();
 	}
 	
-	void Entity::ClearDirty() {
-		for (auto& i : this->values) {
+	void Entity::clearDirty() {
+		for (auto& i : this->_values) {
 			i.second.dirty = false;
 		}		
+	}
+
+	size_t Entity::valueSize() {
+		return this->_values.size();
+	}
+	
+	size_t Entity::dirtyValueSize() {
+		size_t size = 0;
+		for (auto& i : this->_values) {
+			if (i.second.dirty) {
+				++size;
+			}
+		}
+		return size;
 	}
 	
 	Easydb* Easydb::createInstance() {
