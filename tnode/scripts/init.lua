@@ -1,5 +1,5 @@
 cc.newservice("scripts/register.lua")
-cc.newservice("scripts/register.lua")
+--cc.newservice("scripts/register.lua")
 --cc.newservice("scripts/client.lua")
 --cc.newservice("scripts/benchmark.lua")
 --cc.newserivce("scripts/client.lua")
@@ -10,6 +10,8 @@ if fd ~= -1 then
 else
 	cc.log_alarm("newserver error")
 end
+
+
 
 
 --local fd = cc.newclient("127.0.0.1", 12306)

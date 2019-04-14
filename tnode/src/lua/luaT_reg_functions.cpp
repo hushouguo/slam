@@ -142,7 +142,9 @@ BEGIN_NAMESPACE_TNODE {
 		std::string outstring;
 		bool retval = sServiceManager.getService(L)->messageParser()->encode(L, msgid, outstring);
 		CHECK_RETURN(retval, 0, "encode message: %d error", msgid);
-		lua_pushstring(L, outstring.c_str());
+		Debug << "str: " << outstring.c_str() << ", len: " << outstring.length();
+		//lua_pushstring(L, outstring.c_str());
+		lua_pushlstring(L, outstring.data(), outstring.length());
 		return 1;
 	}
 
@@ -154,8 +156,12 @@ BEGIN_NAMESPACE_TNODE {
 		CHECK_RETURN(lua_isnumber(L, -args), 0, "[%s]", lua_typename(L, lua_type(L, -args)));			
 		CHECK_RETURN(lua_isstring(L, -(args - 1)), 0, "[%s]", lua_typename(L, lua_type(L, -(args - 1))));			
 		u32 msgid = lua_tointeger(L, -args);
-		std::string instring = lua_tostring(L, -(args - 1));
-		bool retval = sServiceManager.getService(L)->messageParser()->decode(L, msgid, instring);
+		//std::string instring = lua_tostring(L, -(args - 1));
+		size_t len = 0;
+		const char* instring = lua_tolstring(L, -(args - 1), &len);
+		Debug << "instring len: " << len;
+		//bool retval = sServiceManager.getService(L)->messageParser()->decode(L, msgid, instring);
+		bool retval = sServiceManager.getService(L)->messageParser()->decode(L, msgid, instring, len);
 		CHECK_RETURN(retval, 0, "decode message: %d error", msgid);
 		// table is in the top of stack
 		return 1;

@@ -8,6 +8,7 @@
 
 using namespace db;
 
+
 void test_easydb() {
 	Easydb* easydb = Easydb::createInstance();
 	bool rc = easydb->connectServer("127.0.0.1", "root", "", 3306);
