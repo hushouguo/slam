@@ -31,20 +31,20 @@ namespace db {
 		}
 	}
 
-	bool EasydbInternal::connectServer(EasydbConfig* conf) {
+	bool EasydbInternal::connectServer(std::string host, std::string user, std::string passwd, int port) {
 		CHECK_RETURN(conf, false, "invalid `conf`");
 		this->_dbhandler = new MySQL();
 		bool rc = this->_dbhandler->openDatabase(
-			conf->host.c_str(), 
-			conf->user.c_str(), 
-			conf->passwd.c_str(), 
-			conf->database.length() > 0 ? conf->database.c_str() : nullptr, 
-			conf->port);
+			host.c_str(), 
+			user.c_str(), 
+			passwd.c_str(), 
+			nullptr, 
+			port);
 		CHECK_RETURN(rc, false, "connectServer(%s:%s:%s:%d) error", 
-			conf->host.c_str(), 
-			conf->user.c_str(), 
-			conf->passwd.c_str(), 
-			conf->port);
+			host.c_str(), 
+			user.c_str(), 
+			passwd.c_str(), 
+			port);
 		return true;
 	}
 	
@@ -61,11 +61,6 @@ namespace db {
 		CHECK_RETURN(this->_dbhandler, false, "not connectServer");
 		bool rc = this->_dbhandler->selectDatabase(database);
 		CHECK_RETURN(rc, false, "select database: %s error", database.c_str());
-		rc = this->loadFieldDescriptor(); // load all of tables for field descriptor
-		if (!rc) {
-			this->_dbhandler->closeDatabase();
-			CHECK_RETURN(rc, false, "load all of tables error");
-		}
 		this->_database = database;
 		return true;
 	}
@@ -79,6 +74,34 @@ namespace db {
 		CHECK_RETURN(this->_dbhandler, false, "not connectServer");
 		return this->_dbhandler->findDatabase(database);
 	}
+
+	bool EasydbInternal::loadDescriptor(std::string table, std::string filename, std::string name) {
+	}
+	
+	bool EasydbInternal::createObject(std::string table, uint64_t id, const std::string& data) {
+	}
+	
+	bool EasydbInternal::retrieveObject(std::string table, uint64_t id, std::string& data) {
+	}
+	
+	bool EasydbInternal::updateObject(std::string table, uint64_t id, const std::string& data) {
+	}
+	
+	bool EasydbInternal::deleteObject(std::string table, uint64_t id) {
+	}
+	
+	bool EasydbInternal::batchQuery(std::string where, std::unordered_map<uint64_t, std::string>& objects) {
+	}
+
+
+
+
+
+
+
+
+
+
 
 
 	uint64_t EasydbInternal::createEntity(std::string table, Entity* entity) {

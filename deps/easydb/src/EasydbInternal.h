@@ -13,7 +13,8 @@ namespace db {
 			~EasydbInternal();
 
 		public:
-			bool connectServer(EasydbConfig* conf) override;
+			void stop() override;
+			bool connectServer(std::string host, std::string user, std::string passwd, int port) override;
 
 		public:
 			bool createDatabase(std::string) override;
@@ -22,23 +23,12 @@ namespace db {
 			bool findDatabase(std::string) override;
 			
 		public:
-			uint64_t createEntity(std::string table, Entity* entity) override;
-			Entity* getEntity(std::string table, uint64_t entityid) override;
-			bool deleteEntity(std::string table, uint64_t entityid) override;
-			bool runQuery(std::string where, std::vector<Entity*>& entities) override;
-
-		public:
-			// MUL KEY
-			bool addKey(std::string table, std::string field) override;
-			bool removeKey(std::string table, std::string field) override;
-			
-			// UNI KEY
-			bool addUnique(std::string table, std::string field) override;
-			bool removeUnique(std::string table, std::string field) override;
-			
-			// UNSIGNED
-			bool addUnsigned(std::string table, std::string field) override;
-			bool removeUnsigned(std::string table, std::string field) override;
+			bool loadDescriptor(std::string table, std::string filename, std::string name) override;
+			bool createObject(std::string table, uint64_t id, const std::string& data) override;
+			bool retrieveObject(std::string table, uint64_t id, std::string& data) override;
+			bool updateObject(std::string table, uint64_t id, const std::string& data) override;
+			bool deleteObject(std::string table, uint64_t id) override;
+			bool batchQuery(std::string where, std::unordered_map<uint64_t, std::string>& objects) override;
 
 		private:
 			std::string _database;
@@ -51,24 +41,8 @@ namespace db {
 			//std::function<int(const void*, size_t)> _spliter;
 
 		private:
-		    struct FieldDescriptor {
-		        enum_field_types type;
-		        u32 flags;
-		        u64 length; /* Width of column (create length) */
-		    };
-		    std::unordered_map<std::string, std::unordered_map<std::string, FieldDescriptor>> _tables;
-		    void dumpTables();
-
-			bool extendField(std::string table, Entity* entity);
-			//bool insertOrUpdate(std::string table, const Entity* entity);
-			bool retrieve(std::string table, uint64_t entityid, Entity* entity);
-			bool loadFieldDescriptor(std::string table);
-		    bool loadFieldDescriptor();
 		    bool createTable(std::string table);
 		    u64  insertTable(std::string table, Entity* entity);
-		    bool addField(std::string table, const std::string& field_name, enum_field_types field_type);
-		    bool alterField(std::string table, const std::string& field_name, enum_field_types field_type);
-		    bool deleteEntity(std::string table, uint64_t entityid);
 	};
 }
 

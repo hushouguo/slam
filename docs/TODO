@@ -11,3 +11,220 @@ load static table and convert excel to lua, json
 onSocketAccept, onClientConnected, onSocketShutdown
 1.buildinfo.h
 config macro in config.h
+
+google::protocol::Message <=> SQL
+google::protocol::Message <=> lua
+
+Net:
+sendMessage
+lua table => MessageEncode => Buffer => sendMessage
+recvMessage
+getMessage => MessageDecode => lua table
+
+DB:
+serialize
+lua table => MessageEncode => Buffer(String) => easydb Backend
+unserialize
+easydb Backend => Buffer(String) => MessageDecode => lua table
+
+easydb Backend:
+Buffer(String) => RecordEncode(RecordDecode) => fields of table
+fields of table => RecordDecode(RecordEncode) => Buffer(String)
+
+MessageParser和RecordParser封装成库
+
+local object = db.load("player", 0x123456)
+object.id
+object.name
+
+local mod = {
+	level = object.level + 1,
+	hp = object.hp + 100
+}
+local rc = db.serialize("player", object.id, mod)
+
+
+[client]
+default-character-set=utf8
+[mysql]
+default-character-set=utf8
+[mysqld]
+collation-server = utf8_unicode_ci
+init-connect='SET NAMES utf8'
+character-set-server = utf8
+
+--------------------------------------------------------------------------
+
+wget http://repo.mysql.com/mysql-community-release-el7-5.noarch.rpm
+rpm -ivh mysql-community-release-el7-5.noarch.rpm
+yum update
+yum install mysql-server
+
+--------------------------------------------------------------------------
+
+grant all privileges on GProject.* to admin@192.168.100.1 identified by 'vgk2s4tn';
+grant all privileges on *.*  to root@'%' identified by 'vgk2s4tn';
+
+GRANT ALL PRIVILEGES ON *.* TO 'root'@'%' IDENTIFIED BY 'lxh' WITH GRANT OPTION; # 所有的地址都可以使用root用户，密码为lxh远程访问所有的数据库
+flush privileges;
+GRANT ALL PRIVILEGES ON testdb.* TO 'lxh'@'172.16.52.225'  IDENTIFIED BY 'lxh' WITH GRANT OPTION; # IP为172.16.52.225的电脑可以使用lxh用户，密码为lxh远程访问数据库testdb的所有表
+
+-----------------------------------------------------------------------------
+
+backupdir=/home/hushouguo/backup/data
+time=` date +%Y%m%d%H `
+mysqldump -u root --single-transaction GProject | gzip > $backupdir/GProject$time.sql.gz
+
+-----------------------------------------------------------------------------
+
+cmake CMakeList.txt -DCMAKE_INSTALL_PREFIX=dir
+
+------------------------------------------------------------------------------
+
+netstat -n | awk '/^tcp/ {++S[$NF]} END {for(a in S) print a, S[a]}'
+
+---------------------------------------------------------------------------------
+
+要解决这个问题的可以修改系统的参数，系统默认超时时间的是7200秒，也就是2小时。
+
+tcp_keepalive_time = 7200 seconds (2 hours)
+tcp_keepalive_probes = 9
+tcp_keepalive_intvl = 75 seconds
+
+意思是如果某个TCP连接在idle 2个小时后,内核才发起probe.如果probe 9次(每次75秒)不成功,内核才彻底放弃,认为该连接已失效
+
+sysctl -w net.ipv4.tcp_keepalive_time=30
+sysctl -w net.ipv4.tcp_keepalive_probes=2
+sysctl -w net.ipv4.tcp_keepalive_intvl=2
+									
+--------------------------------------------------------------------------------------
+
+小怪兽编译安装指南:
+1. libprotobuf.2.6.1, configure : 2517， 增加 CXXFLAGS="-fPIC" // protobuf-2.4.1
+2. 修改CMakeLists.txt: 226,227, /usr/local/lib/libprotobuf.a
+3. 按照liblsan
+	yum install centos-release-scl-rh
+	yum --enablerepo=centos-sclo-rh-testing install liblsan
+4. 升级gcc, gcc.7.3, 
+	./contrib/download_prerequisites
+	./configure --prefix=/usr --libdir=/usr/lib --libexecdir=/usr/lib --mandir=/usr/share/man --infodir=/usr/share/info --with-bugurl=https://bugs.archlinux.org/ --enable-languages=c,c++ --enable-shared --enable-threads=posix --enable-libmpx --with-system-zlib --with-isl --enable-__cxa_atexit --disable-libunwind-exceptions --enable-clocale=gnu --disable-libstdcxx-pch --disable-libssp --enable-gnu-unique-object --enable-linker-build-id --enable-lto --enable-plugin --enable-install-libiberty --with-linker-hash-style=gnu --enable-gnu-indirect-function --disable-multilib --disable-werror --enable-checking=release
+5. CMakeLists.txt : -D_GLIBCXX_USE_CXX11_ABI=0	
+5. cmake -DCMAKE_BUILD_TYPE=Debug . 
+
+--------------------------------------------------------------------------------------
+
+port: 443
+openssl genrsa -des3 -out server.key 2048
+openssl rsa -in server.key -out server.key
+openssl req -new -key server.key -out server.csr
+openssl req -new -x509 -key server.key -out ca.crt -days 3650
+openssl x509 -req -days 3650 -in server.csr -CA ca.crt -CAkey server.key -CAcreateserial -out server.crt
+
+
+要考虑玩家中途掉线的情况，所以在玩家启动的时候处理下订单情况
+
+
+todo: bundle 库， 底层是一些基础组件，再往上是log库,net 库等，一个松散的库，利用这个库可以快速搭建服务器
+动态库还是静态库 ??
+
+ 73     MSGID_ORDER_CREATE          = 91;   //´´½¨¶©µ¥
+ 74     MSGID_ORDER_CANCEL          = 92;   //È¡Ïû¶©µ¥
+ 75     MSGID_ORDER_VERIFY          = 93;   //ÑéÖ¤¶©µ¥
+
+104     MSGID_SERVER_ORDER_CREATE   = 60010;//·þÎñÆ÷´´½¨¶©µ¥
+105     MSGID_SERVER_ORDER_CANCEL   = 60011;//·þÎñÆ÷È¡Ïû¶©µ¥
+106     MSGID_SERVER_ORDER_VERIFY   = 60012;//·þÎñÆ÷ÑéÖ¤¶©µ¥
+
+380 //¹ºÂòÇëÇó
+381 message OrderCreateRequest
+382 {
+383     optional OrderBase orderbase    =   1;  //¶©µ¥
+384     optional bool debugging         =   2;  //ÊÇ·ñÔÚµ÷ÊÔ
+385 }
+386 
+387 //È¡Ïû¶©µ¥ÇëÇó
+388 message OrderCancelRequest
+389 {
+390     optional uint64 playerid        =   1;  //Íæ¼ÒID
+391     optional uint64 orderid         =   2;  //±¾µØ¶©µ¥ºÅ
+392     optional string reason          =   3;  //Ô­Òò
+393 }
+394 
+395 //ÑéÖ¤½»Ò×»ØÖ´ÇëÇó
+396 message OrderVerifyRequest
+397 {
+398     optional uint64 playerid        =   1;  //Íæ¼ÒID
+399     optional uint64 orderid         =   2;  //±¾µØ¶©µ¥ºÅ
+400     optional string transactioninfo =   3;  //½»Ò×»ØÖ´  
+401 }
+
+854 //·µ»Ø±¾µØ¶©µ¥
+855 message OrderCreateResponse
+856 {
+857     optional uint64 playerid        =   1;  //Íæ¼ÒID
+858     optional string productid       =   2;  //ÉÌÆ·id
+859     optional uint64 orderid         =   3;  //±¾µØ¶©µ¥ºÅ,0:Ê§°ÜµÄ¶©µ¥
+860 }
+861 
+862 //¹ºÂò½á¹ûÍ¨Öª
+863 message OrderVerifyResponse
+864 {
+865     optional uint64 playerid        =   1;  //Íæ¼ÒID
+866     optional uint64 orderid         =   2;  //±¾µØ¶©µ¥ºÅ
+867     optional bool result            =   3;  //¹ºÂò½á¹û
+868 }
+
+200 //´´½¨¶©µ¥ÇëÇó
+201 message ServerOrderCreateRequest
+202 {
+203     optional int32 centralserver            =   1;  //ÉÏÏÂÎÄ
+204     optional OrderCreateRequest request     =   2;  //Ô­Ê¼ÇëÇó
+205 }
+206 
+207 //´´½¨¶©µ¥·µ»Ø
+208 message ServerOrderCreateResponse
+209 {
+210     optional int32 centralserver            =   1;  //ÉÏÏÂÎÄ
+211     optional OrderCreateResponse response   =   2;  //»Ø¸´
+212 }
+213 
+214 //È¡Ïû¶©µ¥ÇëÇó
+215 message ServerOrderCancelRequest
+216 {
+217     optional int32 centralserver            =   1;  //ÉÏÏÂÎÄ
+218     optional OrderCancelRequest request     =   2;  //Ô­Ê¼ÇëÇó
+219 }
+220 
+221 //È¡Ïû¶©µ¥·µ»Ø
+222 message ServerOrderCancelResponse
+223 {
+224     optional int32 centralserver            =   1;  //ÉÏÏÂÎÄ
+225     optional bool result                    =   2;  //½á¹û
+226 }
+
+228 //ÑéÖ¤¶©µ¥ÇëÇó
+229 message ServerOrderVerifyRequest
+230 {
+231     optional int32 centralserver            =   1;  //ÉÏÏÂÎÄ
+232     optional OrderVerifyRequest request     =   2;  //Ô­Ê¼ÇëÇó
+233 }
+234 
+235 //ÑéÖ¤¶©µ¥·µ»Ø
+236 message ServerOrderVerifyResponse
+237 {
+238     optional int32 centralserver            =   1;  //ÉÏÏÂÎÄ
+239     optional OrderVerifyResponse response   =   2;  //Ô­Ê¼ÇëÇó
+240 }
+
+
+
+/*
+	Order* order = sOrderManager.createOrder(msg->orderbase(), msg->debugging());
+
+	OrderCreateResponse res;
+	res.set_playerid(msg->orderbase().playerid());
+	res.set_productid(msg->orderbase().productid());
+	res.set_orderid(order ? order->id : 0);
+	task->sendMessage(fd, MSGID_ORDER_CREATE, &res, 0);
+*/	
+
