@@ -6,7 +6,7 @@
 #ifndef __MYSQL_H__
 #define __MYSQL_H__
 
-namespace db {
+BEGIN_NAMESPACE_TNODE {
 	struct MySQLConfig {
 		std::string host;
 		std::string user;

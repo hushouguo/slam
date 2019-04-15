@@ -3,9 +3,9 @@
  * \brief: Created by hushouguo at 17:24:57 Apr 11 2019
  */
 
-#include "Database.h"
+#include "tnode.h"
 
-namespace db {	
+BEGIN_NAMESPACE_TNODE {	
 	MySQLStatement::MySQLStatement(MySQL* owner) : _owner(owner) {
 		this->_stmt = mysql_stmt_init(&this->_owner->_mysqlhandle);
 		if (!this->_stmt) {

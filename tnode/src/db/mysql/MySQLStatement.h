@@ -6,7 +6,7 @@
 #ifndef __MYSQLSTATEMENT_H__
 #define __MYSQLSTATEMENT_H__
 
-namespace db {	
+BEGIN_NAMESPACE_TNODE {	
 	class MySQL;
 	class MySQLStatement {
 		public:

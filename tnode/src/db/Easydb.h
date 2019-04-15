@@ -7,6 +7,11 @@
 #define __EASYDB_H__
 
 BEGIN_NAMESPACE_TNODE {
+	struct Object {
+		uint64_t id;
+		ByteBuffer data;
+		Object(uint64_t _id) : id(_id) {}
+	};
 	class Easydb {
 		public:
 			virtual ~Easydb() = 0;
@@ -22,12 +27,8 @@ BEGIN_NAMESPACE_TNODE {
 			virtual bool findDatabase(std::string) = 0;
 
 		public:
-			virtual bool loadDescriptor(std::string table, std::string filename, std::string name) = 0;
-			virtual bool createObject(std::string table, uint64_t id, const std::string& data) = 0;
-			virtual bool retrieveObject(std::string table, uint64_t id, std::string& data) = 0;
-			virtual bool updateObject(std::string table, uint64_t id, const std::string& data) = 0;
-			virtual bool deleteObject(std::string table, uint64_t id) = 0;
-			virtual bool batchQuery(std::string where, std::unordered_map<uint64_t, std::string>& objects) = 0;
+			virtual bool createObject(std::string table, Object* object) = 0;
+			virtual Object* retrieveObject(std::string table, uint64_t id) = 0;
 
 		public:
 			static Easydb* createInstance();

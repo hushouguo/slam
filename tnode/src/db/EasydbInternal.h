@@ -23,26 +23,19 @@ BEGIN_NAMESPACE_TNODE {
 			bool findDatabase(std::string) override;
 			
 		public:
-			bool loadDescriptor(std::string table, std::string filename, std::string name) override;
-			bool createObject(std::string table, uint64_t id, const std::string& data) override;
-			bool retrieveObject(std::string table, uint64_t id, std::string& data) override;
-			bool updateObject(std::string table, uint64_t id, const std::string& data) override;
-			bool deleteObject(std::string table, uint64_t id) override;
-			bool batchQuery(std::string where, std::unordered_map<uint64_t, std::string>& objects) override;
+			bool createObject(std::string table, Object* object) override;
+			Object* retrieveObject(std::string table, uint64_t id) override;
 
 		private:
+			bool _isstop = true;
 			std::string _database;
 			MySQL* _dbhandler = nullptr;
-		    std::unordered_map<std::string, std::unordered_map<u64, Entity*>> _entities;
-
-		private:
-			//bool _isstop = false;
-			//std::thread* _threadWorker = nullptr;
-			//std::function<int(const void*, size_t)> _spliter;
-
+		    std::unordered_map<std::string, std::unordered_map<u64, Object*>> _objects;
+            			
 		private:
 		    bool createTable(std::string table);
-		    u64  insertTable(std::string table, Entity* entity);
+		    bool insertObject(std::string table, Object* object);
+		    bool retrieveObject(std::string table, Object* object);
 	};
 }
 

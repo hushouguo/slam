@@ -3,13 +3,13 @@
  * \brief: Created by hushouguo at 17:28:18 Apr 11 2019
  */
 
-#include "Database.h"
+#include "tnode.h"
 
 #define MYSQL_CONNECT_TIMEOUT		10
 #define MYSQL_WAIT_TIMEOUT			604800
 #define MYSQL_INTERACTIVE_TIMEOUT	604800
 
-namespace db {
+BEGIN_NAMESPACE_TNODE {
 	MySQL::MySQL() {
 		mysql_init(&this->_mysqlhandle);
 	}
