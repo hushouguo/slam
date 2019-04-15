@@ -1,11 +1,11 @@
 /*
- * \file: MessageParser.cpp
+ * \file: luaT_message_parser.cpp
  * \brief: Created by hushouguo at 17:06:00 Aug 09 2017
  */
 
 #include "tnode.h"
 #include "tools/Tools.h"
-#include "lua/MessageParser.h"
+#include "lua/luaT_message_parser.h"
 
 #define DEF_NIL_VALUE		1
 
@@ -13,10 +13,10 @@ using namespace google::protobuf;
 using namespace google::protobuf::compiler;
 
 BEGIN_NAMESPACE_TNODE {	
-	class MessageParserInternal : public MessageParser {
+	class luaT_message_parser_internal : public luaT_message_parser {
 		public:
-			MessageParserInternal();
-			~MessageParserInternal();
+			luaT_message_parser_internal();
+			~luaT_message_parser_internal();
 
 		public:
 			bool loadmsg(const char* filename) override;/* filename also is directory */
@@ -65,32 +65,32 @@ BEGIN_NAMESPACE_TNODE {
 			void decodeFieldDefaultValue(lua_State* L, const Message& message, const FieldDescriptor* field);
 	};
 
-	bool MessageParserInternal::loadmsg(const char* filename) {
+	bool luaT_message_parser_internal::loadmsg(const char* filename) {
 		std::function<bool(const char*)> func = [this](const char* fullname)->bool {
 			return this->parseProtoFile(fullname);
 		};
 		return traverseDirectory(filename, ".proto", std::ref(func));
 	}
 
-	bool MessageParserInternal::parseProtoFile(const char* filename) {
+	bool luaT_message_parser_internal::parseProtoFile(const char* filename) {
 		const FileDescriptor* fileDescriptor = this->_in->Import(filename);
 		CHECK_RETURN(fileDescriptor, false, "import file: %s failure", filename);
 		//Debug << "import file: " << filename;
 		return true;
 	}
 
-	bool MessageParserInternal::regmsg(u32 msgid, const char* name) {
+	bool luaT_message_parser_internal::regmsg(u32 msgid, const char* name) {
 		Message* message = FindOrNull(this->_messages, msgid);
 		CHECK_RETURN(message == nullptr, false, "duplicate regmsg: %d, name: %s", msgid, name);
 		message = this->NewMessage(msgid, name);
 		return message != nullptr;
 	}
 	
-	Message* MessageParserInternal::FindMessage(u32 msgid) {
+	Message* luaT_message_parser_internal::FindMessage(u32 msgid) {
 		return FindOrNull(this->_messages, msgid);
 	}
 	
-	Message* MessageParserInternal::NewMessage(u32 msgid, const char* name) {
+	Message* luaT_message_parser_internal::NewMessage(u32 msgid, const char* name) {
 		Message* message = this->FindMessage(msgid);
 		if (message) {
 			return message;
@@ -112,7 +112,7 @@ BEGIN_NAMESPACE_TNODE {
 
 	//-----------------------------------------------------------------------------------------------------------------------
 
-	bool MessageParserInternal::encodeFieldRepeated(lua_State* L, Message* message, const FieldDescriptor* field, const Reflection* ref)
+	bool luaT_message_parser_internal::encodeFieldRepeated(lua_State* L, Message* message, const FieldDescriptor* field, const Reflection* ref)
 	{
 		assert(field->is_repeated());
 		bool rc = true;
@@ -146,7 +146,7 @@ BEGIN_NAMESPACE_TNODE {
 	}
 
 
-	bool MessageParserInternal::encodeFieldSimple(lua_State* L, Message* message, const FieldDescriptor* field, const Reflection* ref) {
+	bool luaT_message_parser_internal::encodeFieldSimple(lua_State* L, Message* message, const FieldDescriptor* field, const Reflection* ref) {
 		assert(!field->is_repeated());
 		bool rc = true;
 		if (!lua_isnoneornil(L, -1)) {
@@ -178,7 +178,7 @@ BEGIN_NAMESPACE_TNODE {
 		return rc;
 	}
 
-	bool MessageParserInternal::encodeField(lua_State* L, Message* message, const FieldDescriptor* field, const Reflection* ref) {
+	bool luaT_message_parser_internal::encodeField(lua_State* L, Message* message, const FieldDescriptor* field, const Reflection* ref) {
 		bool rc = true;
 		if (field->is_repeated()) {
 			lua_pushstring(L, field->name().c_str());/* push key */
@@ -214,7 +214,7 @@ BEGIN_NAMESPACE_TNODE {
 		return rc;
 	}
 
-	bool MessageParserInternal::encodeDescriptor(lua_State* L, Message* message, const Descriptor* descriptor, const Reflection* ref) {
+	bool luaT_message_parser_internal::encodeDescriptor(lua_State* L, Message* message, const Descriptor* descriptor, const Reflection* ref) {
 		CHECK_RETURN(lua_istable(L, -1), false, "stack top not table for message: %s", message->GetTypeName().c_str());
 		int field_count = descriptor->field_count();
 		for (int i = 0; i < field_count; ++i) {
@@ -227,7 +227,7 @@ BEGIN_NAMESPACE_TNODE {
 		return true;
 	}
 
-	google::protobuf::Message* MessageParserInternal::encode(lua_State* L, u32 msgid) {
+	google::protobuf::Message* luaT_message_parser_internal::encode(lua_State* L, u32 msgid) {
 		Message* message = this->FindMessage(msgid);
 		CHECK_RETURN(message, nullptr, "Not found message: %d", msgid);
 		message->Clear();
@@ -248,7 +248,7 @@ BEGIN_NAMESPACE_TNODE {
 		return message;
 	}
 
-	bool MessageParserInternal::encode(lua_State* L, u32 msgid, void* buf, size_t& bufsize) {
+	bool luaT_message_parser_internal::encode(lua_State* L, u32 msgid, void* buf, size_t& bufsize) {
 		Message* message = this->FindMessage(msgid);
 		CHECK_RETURN(message, false, "Not found message: %d", msgid);
 		message->Clear();
@@ -278,7 +278,7 @@ BEGIN_NAMESPACE_TNODE {
 		return true;
 	}
 
-	bool MessageParserInternal::encode(lua_State* L, u32 msgid, std::string& out) {
+	bool luaT_message_parser_internal::encode(lua_State* L, u32 msgid, std::string& out) {
 		Message* message = this->FindMessage(msgid);
 		CHECK_RETURN(message, false, "Not found message: %d", msgid);
 		message->Clear();
@@ -310,7 +310,7 @@ BEGIN_NAMESPACE_TNODE {
 
 	//-------------------------------------------------------------------------------------------------------
 
-	void MessageParserInternal::decodeFieldDefaultValue(lua_State* L, const Message& message, const FieldDescriptor* field) {
+	void luaT_message_parser_internal::decodeFieldDefaultValue(lua_State* L, const Message& message, const FieldDescriptor* field) {
 		if (field->is_repeated()) {
 			lua_pushstring(L, field->name().c_str());
 #ifdef DEF_NIL_VALUE
@@ -366,7 +366,7 @@ BEGIN_NAMESPACE_TNODE {
 		}
 	}
 
-	bool MessageParserInternal::decodeFieldRepeated(lua_State* L, const Message& message, const FieldDescriptor* field, const Reflection* ref, int index)
+	bool luaT_message_parser_internal::decodeFieldRepeated(lua_State* L, const Message& message, const FieldDescriptor* field, const Reflection* ref, int index)
 	{
 		assert(field->is_repeated());
 		bool rc = true;
@@ -413,7 +413,7 @@ BEGIN_NAMESPACE_TNODE {
 		return rc;
 	}
 
-	bool MessageParserInternal::decodeFieldSimple(lua_State* L, const Message& message, const FieldDescriptor* field, const Reflection* ref)
+	bool luaT_message_parser_internal::decodeFieldSimple(lua_State* L, const Message& message, const FieldDescriptor* field, const Reflection* ref)
 	{
 		assert(!field->is_repeated());
 		bool rc = true;
@@ -464,7 +464,7 @@ BEGIN_NAMESPACE_TNODE {
 		return rc;
 	}
 
-	bool MessageParserInternal::decodeField(lua_State* L, const Message& message, const FieldDescriptor* field, const Reflection* ref) {
+	bool luaT_message_parser_internal::decodeField(lua_State* L, const Message& message, const FieldDescriptor* field, const Reflection* ref) {
 		bool rc = true;
 		if (field->is_repeated()) {
 			lua_pushstring(L, field->name().c_str());
@@ -485,7 +485,7 @@ BEGIN_NAMESPACE_TNODE {
 		return rc;
 	}
 
-	bool MessageParserInternal::decodeDescriptor(lua_State* L, const Message& message, const Descriptor* descriptor, const Reflection* ref)
+	bool luaT_message_parser_internal::decodeDescriptor(lua_State* L, const Message& message, const Descriptor* descriptor, const Reflection* ref)
 	{
 		int field_count = descriptor->field_count();
 		for (int i = 0; i < field_count; ++i) {
@@ -504,7 +504,7 @@ BEGIN_NAMESPACE_TNODE {
 		return true;
 	}
 
-	bool MessageParserInternal::decode(lua_State* L, u32 msgid, const void* buf, size_t bufsize) {
+	bool luaT_message_parser_internal::decode(lua_State* L, u32 msgid, const void* buf, size_t bufsize) {
 		Message* message = this->FindMessage(msgid);
 		CHECK_RETURN(message, false, "Not found message: %d", msgid);
 		message->Clear();
@@ -533,7 +533,7 @@ BEGIN_NAMESPACE_TNODE {
 		return true;
 	}
 
-	bool MessageParserInternal::decode(lua_State* L, u32 msgid, const std::string& in) {
+	bool luaT_message_parser_internal::decode(lua_State* L, u32 msgid, const std::string& in) {
 		Message* message = this->FindMessage(msgid);
 		CHECK_RETURN(message, false, "Not found message: %d", msgid);
 		message->Clear();
@@ -563,12 +563,12 @@ BEGIN_NAMESPACE_TNODE {
 	}
 
 
-	MessageParser::~MessageParser() {}
-	MessageParserInternal::MessageParserInternal() {
+	luaT_message_parser::~luaT_message_parser() {}
+	luaT_message_parser_internal::luaT_message_parser_internal() {
 		this->_tree.MapPath("", "./");
 		this->_in = new Importer(&this->_tree, &this->_errorCollector);
 	}
-	MessageParserInternal::~MessageParserInternal() {
+	luaT_message_parser_internal::~luaT_message_parser_internal() {
 		for (auto& i : this->_messages) {
 			delete i.second;
 		}
@@ -576,8 +576,8 @@ BEGIN_NAMESPACE_TNODE {
 		SafeDelete(this->_in);
 	}
 	
-	MessageParser* MessageParserCreator::create() {
-		return new MessageParserInternal();
+	luaT_message_parser* luaT_message_parser_creator::create() {
+		return new luaT_message_parser_internal();
 	}	
 }
 

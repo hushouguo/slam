@@ -16,7 +16,7 @@
 #include "config/Config.h"
 #include "time/Time.h"
 #include "lua/luaT.h"
-#include "lua/MessageParser.h"
+#include "lua/luaT_message_parser.h"
 #include "message/ServiceMessage.h"
 #include "service/Service.h"
 #include "service/ServiceManager.h"

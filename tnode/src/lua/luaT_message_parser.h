@@ -1,15 +1,15 @@
 /*
- * \file: MessageParser.h
+ * \file: luaT_message_parser.h
  * \brief: Created by hushouguo at 17:01:33 Aug 09 2017
  */
  
-#ifndef __MESSAGE_PARSER_H__
-#define __MESSAGE_PARSER_H__
+#ifndef __LUAT_MESSAGE_PARSER_H__
+#define __LUAT_MESSAGE_PARSER_H__
 
 BEGIN_NAMESPACE_TNODE {
-	class MessageParser {
+	class luaT_message_parser {
 		public:
-			virtual ~MessageParser() = 0;
+			virtual ~luaT_message_parser() = 0;
 
 		public:
 			virtual bool loadmsg(const char* filename) = 0; // filename also is directory
@@ -21,8 +21,8 @@ BEGIN_NAMESPACE_TNODE {
 			virtual google::protobuf::Message* encode(lua_State* L, u32 msgid) = 0;
 	};
 
-	struct MessageParserCreator {
-		static MessageParser* create();
+	struct luaT_message_parser_creator {
+		static luaT_message_parser* create();
 	};
 }
 

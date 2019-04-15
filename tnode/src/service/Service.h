@@ -17,7 +17,7 @@ BEGIN_NAMESPACE_TNODE {
 		public:
 			inline bool isstop() { return this->_isstop; }
 			inline lua_State* luaState() { return this->_L; }
-			inline MessageParser* messageParser() { return this->_messageParser; }
+			inline luaT_message_parser* messageParser() { return this->_messageParser; }
 			inline const std::string& entryfile() { return this->_entryfile; }
 			inline void pushMessage(const void* netmsg) {
 				this->_msgQueue.push_back(netmsg);
@@ -33,7 +33,7 @@ BEGIN_NAMESPACE_TNODE {
 			bool _isstop = false;
 			std::string _entryfile;
 			lua_State* _L = nullptr;
-			MessageParser* _messageParser = nullptr;
+			luaT_message_parser* _messageParser = nullptr;
 			void cleanup();
 
 		private:

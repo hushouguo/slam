@@ -15,7 +15,7 @@
 #include "message/ServiceMessage.h"
 #include "config/Config.h"
 #include "lua/luaT.h"
-#include "lua/MessageParser.h"
+#include "lua/luaT_message_parser.h"
 #include "lua/luaT_entry.h"
 #include "time/Time.h"
 #include "service/Service.h"

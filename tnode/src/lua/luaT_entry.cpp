@@ -7,7 +7,7 @@
 #include "tools/Singleton.h"
 #include "message/ServiceMessage.h"
 #include "lua/luaT.h"
-#include "lua/MessageParser.h"
+#include "lua/luaT_message_parser.h"
 #include "lua/luaT_entry.h"
 #include "net/NetworkManager.h"
 
@@ -35,7 +35,7 @@ BEGIN_NAMESPACE_TNODE {
 
 	//
 	// void function msgParser(fd, entityid, msgid, o)
-	bool luaT_entry_msgParser(lua_State* L, const void* netmsg, MessageParser* msgParser) {
+	bool luaT_entry_msgParser(lua_State* L, const void* netmsg, luaT_message_parser* msgParser) {
 		size_t len = 0;
 		const void* payload = sNetworkManager.easynet()->getMessageContent(netmsg, &len);
 		CHECK_RETURN(len >= sizeof(ServiceMessage), false, "illegal netmsg.len: %ld, ServiceMessage: %ld", len, sizeof(ServiceMessage));
