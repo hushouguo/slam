@@ -3,13 +3,9 @@
  * \brief: Created by hushouguo at Nov 06 2014 18:20:14
  */
 
-#include "tnode.h"
-#include "tools/ByteBuffer.h"
-#include "lua/luaT.h"
-#include "json/json_parser.h"
-#include "lua/luaT_json_parser.h"
+#include "define.h"
 
-BEGIN_NAMESPACE_TNODE {
+namespace luaT {
 
 #define UTF8_ERROR 	-2
 	typedef enum {
@@ -118,7 +114,7 @@ BEGIN_NAMESPACE_TNODE {
 					}
 					else {
 						ret = 0;
-						Error << "json object value without key";
+						Error("json object value without key");
 					}
 				}
 				else if (jpctx->cur_state == JPS_IN_ARRAY) {
@@ -152,7 +148,7 @@ BEGIN_NAMESPACE_TNODE {
 					}
 					else {
 						ret = 0;
-						Error << "json object value without key";
+						Error("json object value without key");
 					}
 				}
 				else if (jpctx->cur_state == JPS_IN_ARRAY) {
@@ -175,7 +171,7 @@ BEGIN_NAMESPACE_TNODE {
 					}
 					else {
 						ret = 0;
-						Error << "json object value without key";
+						Error("json object value without key");
 					}
 				}
 				else if (jpctx->cur_state == JPS_IN_ARRAY) {
@@ -185,7 +181,7 @@ BEGIN_NAMESPACE_TNODE {
 				}
 				else {
 					ret = 0;
-					Error << "json no root object: " << __LINE__;
+					Error("json no root object: %d", __LINE__);
 				}
 				break;
 
@@ -198,7 +194,7 @@ BEGIN_NAMESPACE_TNODE {
 					}
 					else {
 						ret = 0;
-						Error << "json object value without key";
+						Error("json object value without key");
 					}
 				}
 				else if (jpctx->cur_state == JPS_IN_ARRAY) {
@@ -208,7 +204,7 @@ BEGIN_NAMESPACE_TNODE {
 				}
 				else {
 					ret = 0;
-					Error << "json no root object: " << __LINE__;
+					Error("json no root object: %d", __LINE__);
 				}
 				break;
 
@@ -221,7 +217,7 @@ BEGIN_NAMESPACE_TNODE {
 					}
 					else {
 						ret = 0;
-						Error << "json object value without key";
+						Error("json object value without key");
 					}
 				}
 				else if (jpctx->cur_state == JPS_IN_ARRAY) {
@@ -231,7 +227,7 @@ BEGIN_NAMESPACE_TNODE {
 				}
 				else {
 					ret = 0;
-					Error << "json no root object:" << __LINE__;
+					Error("json no root object: %d", __LINE__);
 				}
 				break;
 
@@ -244,7 +240,7 @@ BEGIN_NAMESPACE_TNODE {
 					}
 					else {
 						ret = 0;
-						Error << "json object value without key";
+						Error("json object value without key");
 					}
 				}
 				else if (jpctx->cur_state == JPS_IN_ARRAY) {
@@ -254,7 +250,7 @@ BEGIN_NAMESPACE_TNODE {
 				}
 				else {
 					ret = 0;
-					Error << "json no root object: " << __LINE__;
+					Error("json no root object: %d", __LINE__);
 				}
 				break;
 
@@ -267,7 +263,7 @@ BEGIN_NAMESPACE_TNODE {
 					}
 					else {
 						ret = 0;
-						Error << "json object value without key";
+						Error("json object value without key");
 					}
 				}
 				else if (jpctx->cur_state == JPS_IN_ARRAY) {
@@ -277,7 +273,7 @@ BEGIN_NAMESPACE_TNODE {
 				}
 				else {
 					ret = 0;
-					Error << "json no root object: " << __LINE__;
+					Error("json no root object: %d", __LINE__);
 				}
 				break;
 
@@ -292,7 +288,7 @@ BEGIN_NAMESPACE_TNODE {
 					}
 					else {
 						ret = 0;
-						Error << "json object value without key";
+						Error("json object value without key");
 					}
 				}
 				else if (jpctx->cur_state == JPS_IN_ARRAY) {
@@ -304,7 +300,7 @@ BEGIN_NAMESPACE_TNODE {
 				}
 				else {
 					ret = 0;
-					Error << "json no root object: " << __LINE__;
+					Error("json no root object: %d", __LINE__);
 				}
 				break;
 
@@ -341,7 +337,7 @@ BEGIN_NAMESPACE_TNODE {
 			}
 
 			if (!JSON_parser_char(jc, jsonstr[i])) {
-				Error.cout("JSON_parser_char: syntax error, byte: %d, %s", i, jsonstr);
+				Error("JSON_parser_char: syntax error, byte: %d, %s", i, jsonstr);
 				delete_JSON_parser(jc);
 				luaT_json_parser_ctx_delete(ctx);
 				lua_settop(L, oldtop);
@@ -350,7 +346,7 @@ BEGIN_NAMESPACE_TNODE {
 		}
 
 		if (!JSON_parser_done(jc)) {
-			Error << "JSON_parser_end: syntax error: " << jsonstr;
+			Error("JSON_parser_end: syntax error: %s", jsonstr);
 			delete_JSON_parser(jc);
 			luaT_json_parser_ctx_delete(ctx);
 			lua_settop(L, oldtop);
@@ -588,7 +584,7 @@ BEGIN_NAMESPACE_TNODE {
 			case LUA_TTHREAD:
 			case LUA_TLIGHTUSERDATA:
 			default: 
-				Error << "Unable dump object type: " << lua_typename(L, lua_type(L, -1));
+				Error("Unable dump object type: %s", lua_typename(L, lua_type(L, -1)));
 				return false;
 		}
 		return true;

@@ -192,33 +192,6 @@ namespace db {
 		return false;
 	}
 
-	// MUL KEY
-	bool EasydbInternal::addKey(std::string table, std::string field) {
-		return false;
-	}
-	
-	bool EasydbInternal::removeKey(std::string table, std::string field) {
-		return false;
-	}
-	
-	// UNI KEY
-	bool EasydbInternal::addUnique(std::string table, std::string field) {
-		return false;
-	}
-	
-	bool EasydbInternal::removeUnique(std::string table, std::string field) {
-		return false;
-	}
-	
-	// UNSIGNED
-	bool EasydbInternal::addUnsigned(std::string table, std::string field) {
-		return false;
-	}
-	
-	bool EasydbInternal::removeUnsigned(std::string table, std::string field) {
-		return false;
-	}
-
 
 	//
 	// extend field of table by entity

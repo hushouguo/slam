@@ -3,12 +3,10 @@
  * \brief: Created by hushouguo at Nov 06 2014 17:52:21
  */
 
-#include "tnode.h"
-#include "tools/Registry.h"
-#include "xml/XmlParser.h"
-#include "lua/luaT.h"
+#include "define.h"
 
-BEGIN_NAMESPACE_TNODE {
+namespace luaT {
+
 	void luaT_xml_parser(lua_State* L, XmlParser& xmlParser, XmlParser::XML_NODE xmlNode) {
 		if (!xmlNode) { return; }
 		if (xmlNode != xmlParser.getRootNode()) {
