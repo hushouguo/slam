@@ -24,7 +24,7 @@
 
 BEGIN_NAMESPACE_TNODE {
 	bool Service::init(const char* entryfile) {
-		this->_messageParser = MessageParserCreator::create();
+		this->_messageParser = luaT_message_parser_creator::create();
 		this->_L = luaT_newstate();
 		luaT_setOwner(this->_L, this->id);
 		this->_entryfile = entryfile;

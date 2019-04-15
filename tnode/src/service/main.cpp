@@ -80,7 +80,7 @@ bool verify_limits() {
 		setOpenFilesLimit(max_files);
 	}
 
-	Trace.cout("stack size: %u (limit.stack_size), max files: %u (limit.max_files)", getStackSizeLimit(), getOpenFilesLimit());
+	Trace("stack size: %u (limit.stack_size), max files: %u (limit.max_files)", getStackSizeLimit(), getOpenFilesLimit());
 
 	//
 	// verify lua version
@@ -95,9 +95,9 @@ void dump_library_version() {
 	// tnode
 	//
 #ifdef DEBUG		
-	Trace.cout("tnode: %d.%d.%d, threads: %d, run as %s, %s, debug", TNODE_VERSION_MAJOR, TNODE_VERSION_MINOR, TNODE_VERSION_PATCH, sConfig.threads, sConfig.runasdaemon ? "daemon" : "console", sConfig.guard ? "with guard" : "no guard");
+	Trace("tnode: %d.%d.%d, threads: %d, run as %s, %s, debug", TNODE_VERSION_MAJOR, TNODE_VERSION_MINOR, TNODE_VERSION_PATCH, sConfig.threads, sConfig.runasdaemon ? "daemon" : "console", sConfig.guard ? "with guard" : "no guard");
 #else		
-	Trace.cout("tnode: %d.%d.%d, threads: %d, run as %s, %s, release", TNODE_VERSION_MAJOR, TNODE_VERSION_MINOR, TNODE_VERSION_PATCH, sConfig.threads, sConfig.runasdaemon ? "daemon" : "console", sConfig.guard ? "with guard" : "no guard");
+	Trace("tnode: %d.%d.%d, threads: %d, run as %s, %s, release", TNODE_VERSION_MAJOR, TNODE_VERSION_MINOR, TNODE_VERSION_PATCH, sConfig.threads, sConfig.runasdaemon ? "daemon" : "console", sConfig.guard ? "with guard" : "no guard");
 #endif
 
 	//
@@ -116,49 +116,49 @@ void dump_library_version() {
 	// Easylog configure information
 	//
 	extern const char* tnode::level_string(EasylogSeverityLevel);
-	Trace.cout("Easylog:");
-	Trace.cout("    log.level: %s", level_string(Easylog::syslog()->level()));
-	Trace.cout("    log.autosplit_day: %s, log.autosplit_hour: %s", 
+	Trace("Easylog:");
+	Trace("    log.level: %s", level_string(Easylog::syslog()->level()));
+	Trace("    log.autosplit_day: %s, log.autosplit_hour: %s", 
 			Easylog::syslog()->autosplit_day() ? "yes" : "no", 
 			Easylog::syslog()->autosplit_hour() ? "yes" : "no");
-	Trace.cout("    log.dir: %s", Easylog::syslog()->destination());
+	Trace("    log.dir: %s", Easylog::syslog()->destination());
 #endif
 
 	
 	//
 	// output 3rd libraries
 	//
-	Trace.cout("all 3rd libraries:");
+	Trace("all 3rd libraries:");
 
 #ifdef TC_VERSION_MAJOR		
-	Trace.cout("    tcmalloc: %d.%d%s", TC_VERSION_MAJOR, TC_VERSION_MINOR, TC_VERSION_PATCH);
+	Trace("    tcmalloc: %d.%d%s", TC_VERSION_MAJOR, TC_VERSION_MINOR, TC_VERSION_PATCH);
 #else
-	Trace.cout("    not link tcmalloc");
+	Trace("    not link tcmalloc");
 #endif
 
 #ifdef LIBEVENT_VERSION
-	Trace.cout("    libevent: %s", LIBEVENT_VERSION);
+	Trace("    libevent: %s", LIBEVENT_VERSION);
 #endif
 
 #ifdef ZMQ_VERSION_MAJOR
-	Trace.cout("    libzmq: %d.%d.%d", ZMQ_VERSION_MAJOR, ZMQ_VERSION_MINOR, ZMQ_VERSION_PATCH);
+	Trace("    libzmq: %d.%d.%d", ZMQ_VERSION_MAJOR, ZMQ_VERSION_MINOR, ZMQ_VERSION_PATCH);
 #endif
 
 #ifdef LUAJIT_VERSION
-	Trace.cout("    luaJIT: %s -- %s", LUAJIT_VERSION, LUAJIT_COPYRIGHT);
+	Trace("    luaJIT: %s -- %s", LUAJIT_VERSION, LUAJIT_COPYRIGHT);
 #endif
 
 #ifdef GOOGLE_PROTOBUF_VERSION
-	Trace.cout("    protobuf: %d, library: %d", GOOGLE_PROTOBUF_VERSION, GOOGLE_PROTOBUF_MIN_LIBRARY_VERSION);
+	Trace("    protobuf: %d, library: %d", GOOGLE_PROTOBUF_VERSION, GOOGLE_PROTOBUF_MIN_LIBRARY_VERSION);
 #endif
 
-	Trace.cout("    rapidxml: 1.13");
+	Trace("    rapidxml: 1.13");
 
 #ifdef MYSQL_SERVER_VERSION		
-	Trace.cout("    mysql: %s", MYSQL_SERVER_VERSION);
+	Trace("    mysql: %s", MYSQL_SERVER_VERSION);
 #endif
 
-	Trace.cout("    gcc version: %d.%d.%d", __GNUC__, __GNUC_MINOR__, __GNUC_PATCHLEVEL__);
+	Trace("    gcc version: %d.%d.%d", __GNUC__, __GNUC_MINOR__, __GNUC_PATCHLEVEL__);
 
 }
 
@@ -222,7 +222,7 @@ exit_failure:
 	sServiceManager.stop();
 	sNetworkManager.stop();
 	sThreadPool.stop();
-	Trace.cout("shutdown system with terminate reason: %d", sConfig.terminate_reason);
+	Trace("shutdown system with terminate reason: %d", sConfig.terminate_reason);
 	Easylog::syslog()->stop();
 	// Optional:  Delete all global objects allocated by libprotobuf.
 	google::protobuf::ShutdownProtobufLibrary();

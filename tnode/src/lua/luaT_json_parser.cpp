@@ -89,7 +89,7 @@ BEGIN_NAMESPACE_TNODE {
 		int ret = 1;
 		luaT_json_parser_ctx_t* jpctx = (luaT_json_parser_ctx_t*)ctx;
 
-		//Trace.cout("begin state_stack size:%ld, array_stack size:%ld, type:%d", jpctx->state_stack->size(), jpctx->array_stack->size(), type);
+		//Trace("begin state_stack size:%ld, array_stack size:%ld, type:%d", jpctx->state_stack->size(), jpctx->array_stack->size(), type);
 
 		switch(type) {
 			case JSON_T_ARRAY_BEGIN:
@@ -313,7 +313,7 @@ BEGIN_NAMESPACE_TNODE {
 				++jpctx->key_lvl;
 				break;
 		}
-		//Debug.cout("end state_stack size:%ld, array_stack size:%ld, ret:%d", jpctx->state_stack->size(), jpctx->array_stack->size(), ret);
+		//Debug("end state_stack size:%ld, array_stack size:%ld, ret:%d", jpctx->state_stack->size(), jpctx->array_stack->size(), ret);
 		return ret;
 	}
 
@@ -341,7 +341,7 @@ BEGIN_NAMESPACE_TNODE {
 			}
 
 			if (!JSON_parser_char(jc, jsonstr[i])) {
-				Error.cout("JSON_parser_char: syntax error, byte: %d, %s", i, jsonstr);
+				Error("JSON_parser_char: syntax error, byte: %d, %s", i, jsonstr);
 				delete_JSON_parser(jc);
 				luaT_json_parser_ctx_delete(ctx);
 				lua_settop(L, oldtop);

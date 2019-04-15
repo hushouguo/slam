@@ -24,7 +24,7 @@ BEGIN_NAMESPACE_TNODE {
 			doc.parse<0>(fileDoc.data());
 		}
 		catch (std::exception& e) {
-			Error.cout("xmlParser exception: %s, filename: %s", e.what(), xmlfile);
+			Error("xmlParser exception: %s, filename: %s", e.what(), xmlfile);
 			return false;
 		}
 
@@ -135,29 +135,29 @@ BEGIN_NAMESPACE_TNODE {
 		}
 
 		for (int i = 0; i < depth; ++i) {
-			Trace.cout("\t");
+			Trace("\t");
 		}
 
-		Trace.cout("<%s", xmlNode->name());
+		Trace("<%s", xmlNode->name());
 
 		for (rapidxml::xml_attribute<char> * attr = xmlNode->first_attribute(); attr != nullptr; attr = attr->next_attribute()) {
-			Trace.cout(" %s=\"%s\"", attr->name(), attr->value());
+			Trace(" %s=\"%s\"", attr->name(), attr->value());
 		}
 
 		if (!getChildNode(xmlNode)) {
-			Trace.cout(" />\n");
+			Trace(" />\n");
 		}
 		else {
-			Trace.cout(">\n");
+			Trace(">\n");
 		}
 
 		dump(getChildNode(xmlNode), depth + 1);
 
 		if (getChildNode(xmlNode)) {
 			for (int i = 0; i < depth; ++i) {
-				Trace.cout("\t");
+				Trace("\t");
 			}
-			Trace.cout("</%s>\n", xmlNode->name());
+			Trace("</%s>\n", xmlNode->name());
 		}
 
 		dump(getNextNode(xmlNode), depth);

@@ -40,7 +40,7 @@ BEGIN_NAMESPACE_TNODE {
 
 	void luaT_showversion(lua_State* L) {
 #if defined(USE_LUAJIT)
-		Debug.cout("JIT: %s -- %s", LUAJIT_VERSION, LUAJIT_COPYRIGHT);		
+		Debug("JIT: %s -- %s", LUAJIT_VERSION, LUAJIT_COPYRIGHT);		
 		lua_getfield(L, LUA_REGISTRYINDEX, "_LOADED");
 		lua_getfield(L, -1, "jit");  /* Get jit.* module table. */
 		lua_remove(L, -2);
@@ -48,9 +48,9 @@ BEGIN_NAMESPACE_TNODE {
 		lua_remove(L, -2);
 		int n = lua_gettop(L);
 		lua_call(L, 0, LUA_MULTRET);
-		Debug.cout("JIT: %s", lua_toboolean(L, n) ? "ON" : "OFF");
+		Debug("JIT: %s", lua_toboolean(L, n) ? "ON" : "OFF");
 #else
-		Alarm.cout("JIT: not found");
+		Alarm("JIT: not found");
 #endif
 	}
 	
@@ -74,7 +74,7 @@ BEGIN_NAMESPACE_TNODE {
 	bool luaT_pcall(lua_State* L, int args, luaT_Value& ret) {
 		int func_idx = -(args + 1);
 		if (!lua_isfunction(L, func_idx)) {
-			Error.cout("value at stack [%d] is not function\n", func_idx);
+			Error("value at stack [%d] is not function\n", func_idx);
 			lua_pop(L, args + 1);/* remove function and args */
 			return false;
 		}
@@ -93,7 +93,7 @@ BEGIN_NAMESPACE_TNODE {
 
 		if (error) {
 			if (traceback == 0) {
-				Error.cout("%s\n", lua_tostring(L, -1));/* ... error */
+				Error("%s\n", lua_tostring(L, -1));/* ... error */
 				lua_pop(L, 1); /* remove error message from stack */
 			}
 			else {
@@ -182,14 +182,14 @@ BEGIN_NAMESPACE_TNODE {
 			const char* value = luaT_tostring(L, -2);
 			lua_pop(L, 1);
 
-			Debug.cout("%s%15s: %s", prefix, key, value);
+			Debug("%s%15s: %s", prefix, key, value);
 
 			if (lua_istable(L, -1) && strcasecmp(key, LUA_REGISTER_NAMESPACE) == 0) {
 				char buffer[960];
 				snprintf(buffer, sizeof(buffer), "%s\t\t", prefix);
-				Debug.cout("%15s{", prefix);
+				Debug("%15s{", prefix);
 				luaT_dumpTable(L, lua_gettop(L), buffer);
-				Debug.cout("%15s}", prefix);
+				Debug("%15s}", prefix);
 			}
 
 			lua_pop(L, 1);/* removes 'value'; keeps 'key' for next iteration */
@@ -198,19 +198,19 @@ BEGIN_NAMESPACE_TNODE {
 	
 	void luaT_dumpRootTable(lua_State* L) {
 		lua_getglobal(L, "_G");
-		Debug.cout("dump root table");
-		Debug.cout("{");
+		Debug("dump root table");
+		Debug("{");
 		luaT_dumpTable(L, lua_gettop(L), "\t");
-		Debug.cout("}");
+		Debug("}");
 		lua_pop(L, 1);/* remove `table` */
 	}
 	
 	void luaT_dumpRegistryTable(lua_State* L) {
 		lua_getregistry(L);
-		Debug.cout("dump registry table");
-		Debug.cout("{");
+		Debug("dump registry table");
+		Debug("{");
 		luaT_dumpTable(L, lua_gettop(L), "\t");
-		Debug.cout("}");
+		Debug("}");
 		lua_pop(L, 1);/* remove `table` */
 	}
 	

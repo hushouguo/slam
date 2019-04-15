@@ -39,11 +39,11 @@ BEGIN_NAMESPACE_TNODE {
 				public:
 					// implements ErrorCollector ---------------------------------------
 					void AddError(const std::string& filename, int line, int column,	const std::string& message) override {
-						Error.cout("file: %s:%d:%d, error: %s", filename.c_str(), line, column, message.c_str());
+						Error("file: %s:%d:%d, error: %s", filename.c_str(), line, column, message.c_str());
 					}
 
 					void AddWarning(const std::string& filename, int line, int column, const std::string& message) override {
-						Error.cout("file: %s:%d:%d, error: %s", filename.c_str(), line, column, message.c_str());
+						Error("file: %s:%d:%d, error: %s", filename.c_str(), line, column, message.c_str());
 					}
 			};
 			ImporterErrorCollector _errorCollector;
@@ -220,7 +220,7 @@ BEGIN_NAMESPACE_TNODE {
 		for (int i = 0; i < field_count; ++i) {
 			const FieldDescriptor* field = descriptor->field(i);
 			if (!this->encodeField(L, message, field, ref)) {
-				Error.cout("encodeField: %s for message:%s failure", field->name().c_str(), message->GetTypeName().c_str());
+				Error("encodeField: %s for message:%s failure", field->name().c_str(), message->GetTypeName().c_str());
 				return false;
 			}
 		}
@@ -270,7 +270,7 @@ BEGIN_NAMESPACE_TNODE {
 		CHECK_RETURN(byteSize <= bufsize, false, "bufsize: %ld(need: %ld) overflow for message: %s", bufsize, byteSize, message->GetTypeName().c_str());
 
 		if (!message->SerializeToArray(buf, byteSize)) {
-			Error.cout("Serialize message:%s failure, byteSize:%ld", message->GetTypeName().c_str(), byteSize);
+			Error("Serialize message:%s failure, byteSize:%ld", message->GetTypeName().c_str(), byteSize);
 			return false;
 		}
 
@@ -301,7 +301,7 @@ BEGIN_NAMESPACE_TNODE {
 		size_t byteSize = message->ByteSize();
 
 		if (!message->SerializeToString(&out)) {
-			Error.cout("Serialize message:%s failure, byteSize:%ld", message->GetTypeName().c_str(), byteSize);
+			Error("Serialize message:%s failure, byteSize:%ld", message->GetTypeName().c_str(), byteSize);
 			return false;
 		}
 
@@ -470,7 +470,7 @@ BEGIN_NAMESPACE_TNODE {
 			lua_pushstring(L, field->name().c_str());
 			lua_newtable(L);
 
-			//Debug.cout("message:%s, field:%s, fieldsize:%d", message.GetTypeName().c_str(), field->name().c_str(), ref->FieldSize(message, field));
+			//Debug("message:%s, field:%s, fieldsize:%d", message.GetTypeName().c_str(), field->name().c_str(), ref->FieldSize(message, field));
 
 			for (int i = 0; rc && i < ref->FieldSize(message, field); ++i) {
 				rc = this->decodeFieldRepeated(L, message, field, ref, i);
@@ -497,7 +497,7 @@ BEGIN_NAMESPACE_TNODE {
 			}/* fill default value to lua when a non-repeated field not set, for message field */
 
 			if (!this->decodeField(L, message, field, ref)) {
-				Error.cout("decodeField: %s for message:%s failure", field->name().c_str(), message.GetTypeName().c_str());
+				Error("decodeField: %s for message:%s failure", field->name().c_str(), message.GetTypeName().c_str());
 				return false;
 			}
 		}
@@ -515,7 +515,7 @@ BEGIN_NAMESPACE_TNODE {
 		assert(message->ByteSize() == 0);
 
 		if (!message->ParseFromArray(buf, bufsize)) {
-			Error.cout("Unserialize message:%s failure, byteSize:%ld", message->GetTypeName().c_str(), bufsize);
+			Error("Unserialize message:%s failure, byteSize:%ld", message->GetTypeName().c_str(), bufsize);
 			return false;
 		}
 
@@ -544,7 +544,7 @@ BEGIN_NAMESPACE_TNODE {
 		assert(message->ByteSize() == 0);
 
 		if (!message->ParseFromString(in)) {
-			Error.cout("Unserialize message:%s failure, byteSize:%ld", message->GetTypeName().c_str(), in.length());
+			Error("Unserialize message:%s failure, byteSize:%ld", message->GetTypeName().c_str(), in.length());
 			return false;
 		}
 

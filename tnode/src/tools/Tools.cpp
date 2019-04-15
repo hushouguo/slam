@@ -971,7 +971,7 @@ BEGIN_NAMESPACE_TNODE {
 		CURLcode rc = curl_easy_perform(easy_handle);
 		//CHECK_RETURN(rc == CURLE_OK, false, "perform curl error: %d, %s", rc, curl_easy_strerror(rc));
 		if (rc != CURLE_OK) {
-			Error.cout("perform curl error: %d, %s", rc, curl_easy_strerror(rc));
+			Error("perform curl error: %d, %s", rc, curl_easy_strerror(rc));
 			func(false, "error", curl_easy_strerror(rc), userdata);
 			SafeDelete(context);
 			return false;

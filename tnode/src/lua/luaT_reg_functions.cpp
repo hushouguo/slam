@@ -256,23 +256,23 @@ BEGIN_NAMESPACE_TNODE {
 				timestamp(buffer, sizeof(buffer), 0, lua_tostring(L, -1));
 			}
 			else {
-				Error.cout("`%s` parameter error:%s", __FUNCTION__, lua_typename(L, lua_type(L, -1)));
+				Error("`%s` parameter error:%s", __FUNCTION__, lua_typename(L, lua_type(L, -1)));
 				return 0;
 			}
 		}
 		else if (args == 2) {
 			if (!lua_isnumber(L, -args)) {
-				Error.cout("`%s` parameter error:%s", __FUNCTION__, lua_typename(L, lua_type(L, -args)));
+				Error("`%s` parameter error:%s", __FUNCTION__, lua_typename(L, lua_type(L, -args)));
 				return 0;
 			}
 			if (!lua_isstring(L, -(args - 1))) {
-				Error.cout("`%s` parameter error:%s", __FUNCTION__, lua_typename(L, lua_type(L, -(args - 1))));
+				Error("`%s` parameter error:%s", __FUNCTION__, lua_typename(L, lua_type(L, -(args - 1))));
 				return 0;
 			}
 			timestamp(buffer, sizeof(buffer), lua_tointeger(L, -args), lua_tostring(L, -(args - 1)));
 		}
 		else {
-			Error.cout("`%s` parameter error:%d", __FUNCTION__, args);
+			Error("`%s` parameter error:%d", __FUNCTION__, args);
 		}
 	
 		lua_pushstring(L, buffer);
@@ -419,7 +419,7 @@ BEGIN_NAMESPACE_TNODE {
 		bool rc = message->SerializeToArray(msg->payload, byteSize);
 		if (!rc) {
 			sNetworkManager.easynet()->releaseMessage(netmsg);
-			Error.cout("Serialize message:%s failure, byteSize:%ld", message->GetTypeName().c_str(), byteSize);
+			Error("Serialize message:%s failure, byteSize:%ld", message->GetTypeName().c_str(), byteSize);
 			return 0;
 		}
 		
