@@ -69,7 +69,7 @@
 #define assert(condition)	\
 		do {\
 			if (!(condition)) {\
-				Panic.cout("Assert: %s", #condition);\
+				Panic("Assert: %s", #condition);\
 			}\
 		} while(0)
 	
@@ -79,7 +79,7 @@
 #define Assert(condition, format, ...)	\
 		do {\
 			if (!(condition)) {\
-				Panic.cout("Assert: %s, %s:%d\n"\
+				Panic("Assert: %s, %s:%d\n"\
 					"condition: %s, " format, __FILE__, __FUNCTION__, __LINE__, #condition, ##__VA_ARGS__);\
 			}\
 		} while(0)
@@ -87,7 +87,7 @@
 #define CHECK_RETURN(RC, RESULT, MESSAGE, ...)	\
 		do {\
 			if (!(RC)) {\
-				Error.cout(MESSAGE, ##__VA_ARGS__);\
+				Error(MESSAGE, ##__VA_ARGS__);\
 				return RESULT;\
 			}\
 		} while(false)
@@ -95,41 +95,41 @@
 #define CHECK_GOTO(RC, SYMBOL, MESSAGE, ...)	\
 		do {\
 			if (!(RC)) {\
-				Error.cout(MESSAGE, ##__VA_ARGS__);\
+				Error(MESSAGE, ##__VA_ARGS__);\
 				goto SYMBOL;\
 			}\
 		} while(false)
 	
 #define CHECK_BREAK(RC, MESSAGE, ...)	\
 		if (!(RC)) {\
-			Error.cout(MESSAGE, ##__VA_ARGS__);\
+			Error(MESSAGE, ##__VA_ARGS__);\
 			break;\
 		}
 	
 #define CHECK_CONTINUE(RC, MESSAGE, ...)	\
 		if (!(RC)) {\
-			Error.cout(MESSAGE, ##__VA_ARGS__);\
+			Error(MESSAGE, ##__VA_ARGS__);\
 			continue;\
 		}
 	
 #define CHECK_TRACE(RC, MESSAGE, ...)	\
 		if (!(RC)) {\
-			Trace.cout(MESSAGE, ##__VA_ARGS__);\
+			Trace(MESSAGE, ##__VA_ARGS__);\
 		}
 			
 #define CHECK_ALARM(RC, MESSAGE, ...)	\
 		if (!(RC)) {\
-			Alarm.cout(MESSAGE, ##__VA_ARGS__);\
+			Alarm(MESSAGE, ##__VA_ARGS__);\
 		}
 
 #define CHECK_ERROR(RC, MESSAGE, ...)	\
 		if (!(RC)) {\
-			Error.cout(MESSAGE, ##__VA_ARGS__);\
+			Error(MESSAGE, ##__VA_ARGS__);\
 		}
 
 #define CHECK_PANIC(RC, MESSAGE, ...)	\
 		if (!(RC)) {\
-			Panic.cout(MESSAGE, ##__VA_ARGS__);\
+			Panic(MESSAGE, ##__VA_ARGS__);\
 		}
 
 namespace logger {
@@ -171,7 +171,7 @@ namespace logger {
 			~EasylogMessage();
 
 		public:
-			void cout(const char* format, ...);
+			void operator()(const char* format, ...);
 
 		public:
 			inline EasylogSeverityLevel level() { return this->_level; }

@@ -238,7 +238,7 @@ namespace logger {
 		}
 	}
 
-	void EasylogMessage::cout(const char* format, ...) {
+	void EasylogMessage::operator()(const char* format, ...) {
 		char log[65536];
 		va_list va;
 		va_start(va, format);
