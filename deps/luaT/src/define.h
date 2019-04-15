@@ -25,6 +25,7 @@
 #include <sys/epoll.h>
 #include <netinet/tcp.h>
 
+#include <stack>
 #include <map>
 #include <string>
 #include <list>
@@ -34,6 +35,7 @@
 #include <condition_variable>
 #include <atomic>
 #include <exception>
+#include <unordered_map>
 
 // rapidxml-1.13
 #include "rapidxml.hpp"  
@@ -57,18 +59,18 @@ using Byte	=	unsigned char;
 #define SafeDelete(P)		do { if(P) { delete (P); (P) = nullptr; } } while(0)
 #define SafeClose(S)		do { if(S > 0) { ::close(S); S = -1; } } while(0)
 
-#include "ByteBuffer.h"
+#include "xml/XmlParser.h"
+#include "json/json_parser.h"
 #include "luaT.h"
-#include "luaT_json_parser.h"
-#include "luaT_xml_parser.h"
-#include "luaT_message_parser.h"
+#include "ByteBuffer.h"
 
 
-#if EASYNET_ENABLE_DEBUG
+#if LUAT_ENABLE_DEBUG
 #define Debug(MESSAGE, ...)	fprintf(stdout, "luaT-Debug:" MESSAGE "\n", ##__VA_ARGS__)
 #else
 #define Debug(MESSAGE, ...)
 #endif
+#define Trace(MESSAGE, ...)	fprintf(stderr, "luaT-Trace:" MESSAGE "\n", ##__VA_ARGS__)
 #define Alarm(MESSAGE, ...)	fprintf(stderr, "luaT-Alarm:" MESSAGE "\n", ##__VA_ARGS__)
 #define Error(MESSAGE, ...)	fprintf(stderr, "luaT-Error:" MESSAGE "\n", ##__VA_ARGS__)
 

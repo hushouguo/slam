@@ -70,6 +70,12 @@ namespace luaT {
 			}
 			return lua_typename(L, lua_type(L, idx));
 		}
+
+		//
+		// check that a floating point number is integer
+		static bool isInteger(double value) {
+			return value == (int64_t)value;
+		}
 		
 		bool luaT_pcall(lua_State* L, int args, luaT_Value& ret) {
 			int func_idx = -(args + 1);
@@ -183,9 +189,10 @@ namespace luaT {
 				const char* value = luaT_tostring(L, -2);
 				lua_pop(L, 1);
 	
-				Debug.cout("%s%15s: %s", prefix, key, value);
+				Debug("%s%15s: %s", prefix, key, value);
 	
-				if (lua_istable(L, -1) && strcasecmp(key, LUA_REGISTER_NAMESPACE) == 0) {
+				//if (lua_istable(L, -1) && strcasecmp(key, LUA_REGISTER_NAMESPACE) == 0) {
+				if (lua_istable(L, -1)) {
 					char buffer[960];
 					snprintf(buffer, sizeof(buffer), "%s\t\t", prefix);
 					Debug("%15s{", prefix);

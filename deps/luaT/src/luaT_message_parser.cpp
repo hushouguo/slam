@@ -11,6 +11,57 @@ using namespace google::protobuf;
 using namespace google::protobuf::compiler;
 
 namespace luaT {
+	//
+	// test for the file is a directory
+	static bool isDir(const char* file) {
+		struct stat buf;
+		if (stat(file, &buf) != 0) { return false; }
+		return S_ISDIR(buf.st_mode);
+	}
+	
+	//
+	// iterate specifying folder
+	static bool traverseDirectory(const char* folder, const char* filter_suffix, std::function<bool(const char*)>& callback) {
+		if (!isDir(folder)) {
+			return callback(folder);
+		}
+
+		DIR* dir = opendir(folder);
+
+		struct dirent* ent;
+		while ((ent = readdir(dir)) != nullptr) {
+			if (ent->d_name[0] == '.') { continue; } //filter hide file
+
+			if (filter_suffix != nullptr) {
+				char* suffix = strrchr(ent->d_name, '.');//filter not .proto suffix file 
+				if (!suffix || strcasecmp(suffix, filter_suffix) != 0) {
+					continue; 
+				}
+			}
+
+			char fullname[PATH_MAX];
+			snprintf(fullname, sizeof(fullname), "%s/%s", folder, ent->d_name);
+			if (ent->d_type & DT_DIR) {
+				return traverseDirectory(fullname, filter_suffix, callback);
+			}
+			else {
+				if (!callback(fullname)) { return false; }
+			}
+		}
+
+		return true;
+	}
+	
+	// This function does not distinguish between a missing key and a key mapped
+	// to a NULL value.
+	template <class Collection>
+		typename Collection::value_type::second_type
+		FindOrNull(const Collection& collection, const typename Collection::value_type::first_type& key) 
+		{
+			typename Collection::const_iterator i = collection.find(key);
+			return i == collection.end() ? typename Collection::value_type::second_type() : i->second;
+		}
+	
 	class luaT_message_parser_internal : public luaT_message_parser {
 		public:
 			luaT_message_parser_internal();
@@ -84,16 +135,6 @@ namespace luaT {
 		return message != nullptr;
 	}
 
-	// This function does not distinguish between a missing key and a key mapped
-	// to a NULL value.
-	template <class Collection>
-		typename Collection::value_type::second_type
-		FindOrNull(const Collection& collection, const typename Collection::value_type::first_type& key) 
-		{
-			typename Collection::const_iterator i = collection.find(key);
-			return i == collection.end() ? typename Collection::value_type::second_type() : i->second;
-		}
-	
 	Message* luaT_message_parser_internal::FindMessage(u32 msgid) {
 		return FindOrNull(this->_messages, msgid);
 	}
@@ -584,7 +625,7 @@ namespace luaT {
 		SafeDelete(this->_in);
 	}
 	
-	luaT_message_parser* luaT_message_parserCreator::create() {
+	luaT_message_parser* luaT_message_parser_creator::create() {
 		return new luaT_message_parser_internal();
 	}	
 }
