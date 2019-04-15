@@ -7,3 +7,4 @@ tnode/tnode
 tests/test_easylog
 tests/test_easynet
 tests/test_easydb
+tests/test_luaT

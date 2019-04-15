@@ -62,7 +62,7 @@ void test_easynet() {
 	SOCKET cs = easynetC->createClient("127.0.0.1", 12306);
 	assert(cs != -1);
 
-	Debug.cout("socketServer: %d, socketClient: %d", ss, cs);
+	Debug("socketServer: %d, socketClient: %d", ss, cs);
 
 	// server thread
 	std::thread* ts = new std::thread([](net::Easynet* easynet, SOCKET s) {

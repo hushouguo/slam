@@ -229,12 +229,12 @@ namespace luaT {
 
 		public:
 			virtual bool loadmsg(const char* filename) = 0; // filename also is directory
-			virtual bool regmsg(u32 msgid, const char* name) = 0;
-			virtual bool encode(lua_State* L, u32 msgid, void* buf, size_t& bufsize) = 0;
-			virtual bool encode(lua_State* L, u32 msgid, std::string& out) = 0;
-			virtual bool decode(lua_State* L, u32 msgid, const void* buf, size_t bufsize) = 0;
-			virtual bool decode(lua_State* L, u32 msgid, const std::string& in) = 0;
-			virtual google::protobuf::Message* encode(lua_State* L, u32 msgid) = 0;
+			virtual bool regmsg(uint32_t msgid, const char* name) = 0;
+			virtual bool encode(lua_State* L, uint32_t msgid, void* buf, size_t& bufsize) = 0;
+			virtual bool encode(lua_State* L, uint32_t msgid, std::string& out) = 0;
+			virtual bool decode(lua_State* L, uint32_t msgid, const void* buf, size_t bufsize) = 0;
+			virtual bool decode(lua_State* L, uint32_t msgid, const std::string& in) = 0;
+			virtual google::protobuf::Message* encode(lua_State* L, uint32_t msgid) = 0;
 	};
 
 	struct luaT_message_parser_creator {
