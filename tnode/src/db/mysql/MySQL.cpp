@@ -4,6 +4,9 @@
  */
 
 #include "tnode.h"
+#include "MySQL.h"
+#include "MySQLResult.h"
+#include "MySQLStatement.h"
 
 #define MYSQL_CONNECT_TIMEOUT		10
 #define MYSQL_WAIT_TIMEOUT			604800

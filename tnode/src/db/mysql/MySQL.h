@@ -23,7 +23,6 @@ BEGIN_NAMESPACE_TNODE {
 			~MySQL();
 
 		public:
-			bool openDatabase();
 			bool openDatabase(const char *host, const char *user, const char *passwd, const char *db, int port = 3306);
 			void closeDatabase();
 

@@ -4,6 +4,9 @@
  */
 
 #include "tnode.h"
+#include "mysql/MySQLResult.h"
+#include "mysql/MySQLStatement.h"
+#include "mysql/MySQL.h"
 #include "Easydb.h"
 #include "EasydbInternal.h"
 
@@ -38,7 +41,6 @@ BEGIN_NAMESPACE_TNODE {
 	}
 	
 	bool EasydbInternal::connectServer(std::string host, std::string user, std::string passwd, int port) {
-		CHECK_RETURN(conf, false, "invalid `conf`");
 		this->_dbhandler = new MySQL();
 		bool rc = this->_dbhandler->openDatabase(
 			host.c_str(), 
@@ -95,7 +97,7 @@ BEGIN_NAMESPACE_TNODE {
 
 		//
 		// insert object into table
-		bool rc = this->insertTable(table, object);
+		bool rc = this->insertObject(table, object);
 		CHECK_RETURN(rc, 0, "insert object to table: %s error", table.c_str());
 		CHECK_RETURN(objects.find(object->id) == objects.end(), 0, "duplicate entityid: 0x%lx", object->id);
 

@@ -4,6 +4,8 @@
  */
 
 #include "tnode.h"
+#include "MySQL.h"
+#include "MySQLResult.h"
 
 BEGIN_NAMESPACE_TNODE {
 	MySQLResult::MySQLResult(MYSQL_RES* res) : _res(res) {

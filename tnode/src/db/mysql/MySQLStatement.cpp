@@ -4,6 +4,9 @@
  */
 
 #include "tnode.h"
+#include "MySQL.h"
+#include "MySQLResult.h"
+#include "MySQLStatement.h"
 
 BEGIN_NAMESPACE_TNODE {	
 	MySQLStatement::MySQLStatement(MySQL* owner) : _owner(owner) {

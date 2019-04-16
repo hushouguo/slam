@@ -6,6 +6,8 @@
 #ifndef __EASYDB_H__
 #define __EASYDB_H__
 
+#include "tools/ByteBuffer.h"
+
 BEGIN_NAMESPACE_TNODE {
 	struct Object {
 		uint64_t id;
