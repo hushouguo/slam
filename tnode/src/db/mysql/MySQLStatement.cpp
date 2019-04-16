@@ -66,7 +66,10 @@ BEGIN_NAMESPACE_TNODE {
 			if (rc == MYSQL_NO_DATA) {
 				return false;
 			}
-			CHECK_RETURN(false, false, "fetch: %s", mysql_stmt_error(this->_stmt));			
+			if (this->lastError() != 0) {
+				CHECK_RETURN(false, false, "fetch: %s", mysql_stmt_error(this->_stmt));
+			}
+			return false;
 		}
 		return true;
 	}

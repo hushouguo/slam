@@ -112,7 +112,7 @@ BEGIN_NAMESPACE_TNODE {
 		size_t byteSize = message->ByteSize();
 		bool rc = message->SerializeToArray(buffer.wbuffer(byteSize), byteSize);
 		CHECK_RETURN(rc, 0, "Serialize message:%s failure, byteSize:%ld", message->GetTypeName().c_str(), byteSize);
-		buffer.append(byteSize);
+		buffer.wlength(byteSize);
 
 		//
 		// insert object into table
@@ -269,7 +269,7 @@ BEGIN_NAMESPACE_TNODE {
 		}
 		stmt.freeResult();
 		
-		buffer->append(lengths[0]);
+		buffer->wlength(lengths[0]);
 		return true;
     }
 }
