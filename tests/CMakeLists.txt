@@ -5,7 +5,6 @@ set(DEPS_DIR ${PROJECT_SOURCE_DIR}/../deps)
 
 set(EASYLOG_DIR ${DEPS_DIR}/easylog)
 set(EASYNET_DIR ${DEPS_DIR}/easynet)
-set(EASYDB_DIR ${DEPS_DIR}/easydb)
 set(LUAT_DIR ${DEPS_DIR}/luaT)
 set(LUA_DIR ${DEPS_DIR}/luajit-2.0.5)
 set(PROTOBUF_DIR ${DEPS_DIR}/protobuf-3.6.1)
@@ -20,5 +19,3 @@ set(MYSQL_DIR ${DEPS_DIR}/mysql-5.6.37)
 
 ADD_SUBDIRECTORY(easylog)
 ADD_SUBDIRECTORY(easynet)
-ADD_SUBDIRECTORY(easydb)
-ADD_SUBDIRECTORY(luaT)
