@@ -17,11 +17,7 @@ BEGIN_NAMESPACE_TNODE {
 		public:
 			inline bool isstop() { return this->_isstop; }
 			inline lua_State* luaState() { return this->_L; }
-			inline luaT_message_parser* messageParser() { return this->_messageParser; }
 			inline const std::string& entryfile() { return this->_entryfile; }
-			inline void pushMessage(const void* netmsg) {
-				this->_msgQueue.push_back(netmsg);
-			}
 
 		public:
 			bool init(const char* entryfile);
@@ -33,12 +29,29 @@ BEGIN_NAMESPACE_TNODE {
 			bool _isstop = false;
 			std::string _entryfile;
 			lua_State* _L = nullptr;
-			luaT_message_parser* _messageParser = nullptr;
 			void cleanup();
 
+		// db
+		private:
+			std::list<Easydb*> _dbs;
+
+		public:
+			inline void addEasydb(Easydb* easydb) {
+				this->_dbs.push_back(easydb);
+			}
+		
+		// network
 		private:
 			LockfreeQueue<const void*> _msgQueue;
-
+			luaT_message_parser* _msgParser = nullptr;
+			
+		public:
+			inline void pushMessage(const void* netmsg) {
+				this->_msgQueue.push_back(netmsg);
+			}
+			inline luaT_message_parser* msgParser() { return this->_msgParser; }
+			
+		
 		// timer handle
 		public:
 			u32 regtimer(u32 milliseconds, s32 times, int ref, const luaT_Value& ctx);

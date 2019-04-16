@@ -24,12 +24,17 @@
 
 BEGIN_NAMESPACE_TNODE {
 	bool Service::init(const char* entryfile) {
-		this->_messageParser = luaT_message_parser_creator::create();
+		//
+		// network init
+		this->_msgParser = luaT_message_parser_creator::create();
+
+		//
+		// lua state init & execute entryfile
 		this->_L = luaT_newstate();
 		luaT_setOwner(this->_L, this->id);
 		this->_entryfile = entryfile;
-		/* run entry script file */
-		if (!luaT_execFile(this->_L, this->_entryfile.c_str())) { return false; }		
+		if (!luaT_execFile(this->_L, this->_entryfile.c_str())) { return false; }
+		
 		return true;
 	}
 
@@ -39,20 +44,33 @@ BEGIN_NAMESPACE_TNODE {
 	
 	void Service::cleanup() {
 		this->stop();
-		
-		SafeDelete(this->_messageParser);
-		luaT_close(this->_L);
 
+		//
+		// db cleanup
+		for (auto& easydb : this->_dbs) {
+			SafeDelete(easydb);
+		}
+		this->_dbs.clear();
+		
+		//
+		// network cleanup
 		while (!this->_msgQueue.empty()) {
 			const void* netmsg = this->_msgQueue.pop_front();
 			sNetworkManager.easynet()->releaseMessage(netmsg);
 		}
-		this->_msgQueue.clear();
-
+		this->_msgQueue.clear();		
+		SafeDelete(this->_msgParser);
+		
+		//
+		// timer cleanup
 		for (auto& ts : this->_timerQueue) {
 			SafeDelete(ts);
 		}
 		this->_timerQueue.clear();
+
+		//
+		// close lua state
+		luaT_close(this->_L);
 	}
 
 	void Service::stop() {
@@ -67,7 +85,7 @@ BEGIN_NAMESPACE_TNODE {
 		while (!this->_msgQueue.empty()) {
 			const void* netmsg = this->_msgQueue.pop_front();
 			assert(netmsg);
-			luaT_entry_msgParser(this->luaState(), netmsg, this->messageParser());
+			luaT_entry_msgParser(this->luaState(), netmsg, this->msgParser());
 			sNetworkManager.easynet()->releaseMessage(netmsg);
 		}
 

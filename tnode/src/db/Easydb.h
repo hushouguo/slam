@@ -6,18 +6,13 @@
 #ifndef __EASYDB_H__
 #define __EASYDB_H__
 
+#include "tools/Spinlocker.h"
 #include "tools/ByteBuffer.h"
 
-BEGIN_NAMESPACE_TNODE {
-	struct Object {
-		uint64_t id;
-		ByteBuffer data;
-		Object(uint64_t _id) : id(_id) {}
-	};
+BEGIN_NAMESPACE_TNODE {	
 	class Easydb {
 		public:
 			virtual ~Easydb() = 0;
-			virtual void stop() = 0;
 
 		public:
 			virtual bool connectServer(std::string host, std::string user, std::string passwd, int port) = 0;
@@ -29,8 +24,13 @@ BEGIN_NAMESPACE_TNODE {
 			virtual bool findDatabase(std::string) = 0;
 
 		public:
-			virtual bool createObject(std::string table, Object* object) = 0;
-			virtual Object* retrieveObject(std::string table, uint64_t id) = 0;
+			virtual luaT_message_parser* tableParser() = 0;
+			
+		public:
+			virtual u64 createObject(std::string table, u64 id, google::protobuf::Message*) = 0;
+			virtual google::protobuf::Message* retrieveObject(std::string table, u64 id) = 0;
+			virtual bool deleteObject(std::string table, u64 id) = 0;
+			virtual bool updateObject(std::string table, u64 id, google::protobuf::Message*) = 0;
 
 		public:
 			static Easydb* createInstance();

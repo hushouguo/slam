@@ -10,6 +10,8 @@
 #define LUA_STACK_SIZE						8192
 #define LUA_REGISTER_NAMESPACE				"cc"
 #define LUA_REGISTER_SERVICE				"cc.service"
+#define LUA_METATABLE_DB_NAME				"cc.DB"
+#define LUA_METATABLE_TABLE_NAME			"cc.TABLE"
 
 #define LUA_TINTEGER						9
 

@@ -13,7 +13,6 @@ BEGIN_NAMESPACE_TNODE {
 			~EasydbInternal();
 
 		public:
-			void stop() override;
 			bool connectServer(std::string host, std::string user, std::string passwd, int port) override;
 
 		public:
@@ -23,19 +22,28 @@ BEGIN_NAMESPACE_TNODE {
 			bool findDatabase(std::string) override;
 			
 		public:
-			bool createObject(std::string table, Object* object) override;
-			Object* retrieveObject(std::string table, uint64_t id) override;
+			u64 createObject(std::string table, u64 id, google::protobuf::Message*) override;
+			google::protobuf::Message* retrieveObject(std::string table, u64 id) override;
+			bool deleteObject(std::string table, u64 id) override;
+			bool updateObject(std::string table, u64 id, google::protobuf::Message*) override;
+
+		public:
+			luaT_message_parser* tableParser() override { return this->_tableParser; }
 
 		private:
+			luaT_message_parser* _tableParser = nullptr;
+		
+		private:
 			bool _isstop = true;
+			void stop();
 			std::string _database;
 			MySQL* _dbhandler = nullptr;
-		    std::unordered_map<std::string, std::unordered_map<u64, Object*>> _objects;
+		    std::unordered_map<std::string, std::unordered_map<u64, google::protobuf::Message*>> _objects;
             			
 		private:
 		    bool createTable(std::string table);
-		    bool insertObject(std::string table, Object* object);
-		    bool retrieveObject(std::string table, Object* object);
+		    u64 addObject(std::string table, u64 id, const ByteBuffer* buffer);
+		    bool getObject(std::string table, u64 id, ByteBuffer* buffer);
 	};
 }
 

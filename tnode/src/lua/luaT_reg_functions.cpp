@@ -26,6 +26,7 @@
 #include "service/ServiceManager.h"
 #include "net/NetworkManager.h"
 
+
 BEGIN_NAMESPACE_TNODE {
 	//
 	// table json_decode(string)
@@ -140,10 +141,8 @@ BEGIN_NAMESPACE_TNODE {
 		CHECK_RETURN(lua_istable(L, -(args - 1)), 0, "[%s]", lua_typename(L, lua_type(L, -(args - 1))));
 		u32 msgid = lua_tointeger(L, -args);
 		std::string outstring;
-		bool retval = sServiceManager.getService(L)->messageParser()->encode(L, msgid, outstring);
+		bool retval = sServiceManager.getService(L)->msgParser()->encode(L, msgid, outstring);
 		CHECK_RETURN(retval, 0, "encode message: %d error", msgid);
-		Debug << "str: " << outstring.c_str() << ", len: " << outstring.length();
-		//lua_pushstring(L, outstring.c_str());
 		lua_pushlstring(L, outstring.data(), outstring.length());
 		return 1;
 	}
@@ -156,15 +155,11 @@ BEGIN_NAMESPACE_TNODE {
 		CHECK_RETURN(lua_isnumber(L, -args), 0, "[%s]", lua_typename(L, lua_type(L, -args)));			
 		CHECK_RETURN(lua_isstring(L, -(args - 1)), 0, "[%s]", lua_typename(L, lua_type(L, -(args - 1))));			
 		u32 msgid = lua_tointeger(L, -args);
-		//std::string instring = lua_tostring(L, -(args - 1));
 		size_t len = 0;
 		const char* instring = lua_tolstring(L, -(args - 1), &len);
-		Debug << "instring len: " << len;
-		//bool retval = sServiceManager.getService(L)->messageParser()->decode(L, msgid, instring);
-		bool retval = sServiceManager.getService(L)->messageParser()->decode(L, msgid, instring, len);
-		CHECK_RETURN(retval, 0, "decode message: %d error", msgid);
-		// table is in the top of stack
-		return 1;
+		bool retval = sServiceManager.getService(L)->msgParser()->decode(L, msgid, instring, len);
+		CHECK_RETURN(retval, 0, "decode message: %d error", msgid);		
+		return 1; // table is in the top of stack
 	}
 
 	//
@@ -407,22 +402,30 @@ BEGIN_NAMESPACE_TNODE {
 		u64 entityid = lua_tointeger(L, -(args - 1));
 		u32 msgid = lua_tointeger(L, -(args - 2));
 
-		google::protobuf::Message* message = sServiceManager.getService(L)->messageParser()->encode(L, msgid);
+		//
+		// encode table of lua to protobuf::Message
+		google::protobuf::Message* message = sServiceManager.getService(L)->msgParser()->encode(L, msgid);
 		CHECK_RETURN(message, 0, "encode message: %d error", msgid);
 
+		//
+		// allocate new ServiceMessage
 		size_t byteSize = message->ByteSize();
 		const void* netmsg = sNetworkManager.easynet()->allocateMessage(byteSize + sizeof(ServiceMessage));
 		size_t len = 0;
 		ServiceMessage* msg = (ServiceMessage*) sNetworkManager.easynet()->getMessageContent(netmsg, &len); 
 		assert(len == byteSize + sizeof(ServiceMessage));
 		
+		//
+		// serialize protobuf::Message to ServiceMessage
 		bool rc = message->SerializeToArray(msg->payload, byteSize);
 		if (!rc) {
 			sNetworkManager.easynet()->releaseMessage(netmsg);
 			Error("Serialize message:%s failure, byteSize:%ld", message->GetTypeName().c_str(), byteSize);
 			return 0;
 		}
-		
+
+		//
+		// send ServiceMessage to network
 		msg->len = byteSize + sizeof(ServiceMessage);
 		msg->entityid = entityid;
 		msg->msgid = msgid;
@@ -433,19 +436,19 @@ BEGIN_NAMESPACE_TNODE {
 	}
 
 	//
-	// void loadmsg(filename) // filename also is a directory
+	// bool loadmsg(filename) // filename also is a directory
 	static int cc_loadmsg(lua_State* L) {
 		int args = lua_gettop(L);
 		CHECK_RETURN(args == 1, 0, "`%s` lack args:%d", __FUNCTION__, args);
 		CHECK_RETURN(lua_isstring(L, -args), 0, "[%s]", lua_typename(L, lua_type(L, -args)));
 		const char* filename = lua_tostring(L, -args);
-		bool rc = sServiceManager.getService(L)->messageParser()->loadmsg(filename);
-		CHECK_RETURN(rc, 0, "loadmsg: %s failure", filename);
-		return 0;
+		bool rc = sServiceManager.getService(L)->msgParser()->loadmsg(filename);
+		lua_pushboolean(L, rc);
+		return 1;
 	}
 	
 	//
-	// void regmsg(msgid, name)
+	// bool regmsg(msgid, name)
 	static int cc_regmsg(lua_State* L) {
 		int args = lua_gettop(L);
 		CHECK_RETURN(args == 2, 0, "`%s` lack args:%d", __FUNCTION__, args);
@@ -453,9 +456,9 @@ BEGIN_NAMESPACE_TNODE {
 		CHECK_RETURN(lua_isstring(L, -(args - 1)), 0, "[%s]", lua_typename(L, lua_type(L, -(args - 1))));
 		u32 msgid = lua_tointeger(L, -args);
 		const char* name = lua_tostring(L, -(args - 1));
-		bool retval = sServiceManager.getService(L)->messageParser()->regmsg(msgid, name);
-		CHECK_RETURN(retval, 0, "regmsg: %d, %s failure", msgid, name);
-		return 0;
+		bool rc = sServiceManager.getService(L)->msgParser()->regmsg(msgid, name);
+		lua_pushboolean(L, rc);
+		return 1;
 	}
 
 	//
@@ -509,62 +512,375 @@ BEGIN_NAMESPACE_TNODE {
 		lua_pushinteger(L, timer_id);
 		return 1;
 	}
+
+	//
+	// db
+	//
+
+	//
+	// userdata newdb(host, user, passwd, port, [database])
+	static int cc_newdb(lua_State* L) {
+		int args = lua_gettop(L);
+		CHECK_RETURN(args >= 4, 0, "`%s` lack args:%d", __FUNCTION__, args);
+		CHECK_RETURN(lua_isstring(L, -args), 0, "[%s]", lua_typename(L, lua_type(L, -args)));
+		CHECK_RETURN(lua_isstring(L, -(args - 1)), 0, "[%s]", lua_typename(L, lua_type(L, -(args - 1))));
+		CHECK_RETURN(lua_isstring(L, -(args - 2)), 0, "[%s]", lua_typename(L, lua_type(L, -(args - 2))));
+		CHECK_RETURN(lua_isnumber(L, -(args - 3)), 0, "[%s]", lua_typename(L, lua_type(L, -(args - 3))));
+		const char* database = nullptr;
+		if (args > 4) {
+			CHECK_RETURN(lua_isstring(L, -(args - 4)), 0, "[%s]", lua_typename(L, lua_type(L, -(args - 4))));
+			database = lua_tostring(L, -(args - 4));
+		}
+		
+		const char* host = lua_tostring(L, -args);
+		const char* user = lua_tostring(L, -(args - 1));
+		const char* passwd = lua_tostring(L, -(args - 2));
+		int port = lua_tointeger(L, -(args - 3));
+
+		//
+		// create new Easydb
+		Easydb* easydb = Easydb::createInstance();
+		assert(easydb);
+		bool rc = easydb->connectServer(host, user, passwd, port);
+		if (!rc) {
+			SafeDelete(easydb);
+			CHECK_RETURN(rc, 0, "`newdb` failure, connectServer");
+		}
+
+		//
+		// connect database if user special database
+		if (database) {
+			rc = easydb->selectDatabase(database);
+			if (!rc) {
+				SafeDelete(easydb);
+				CHECK_RETURN(rc, 0, "`newdb` failure, selectDatabase");
+			}
+		}
+
+		//
+		// create userdata and setup metatable into userdata
+		Easydb** s = (Easydb**) lua_newuserdata(L, sizeof(Easydb*));
+		*s = easydb;
+		luaL_getmetatable(L, LUA_METATABLE_DB_NAME);
+		lua_setmetatable(L, -2);
+
+		//
+		// add Easydb to Service
+		sServiceManager.getService(L)->addEasydb(*s);
+		
+		return 1;
+	}
+
+	//----------------------------------------------------------------------------------------------------
+
+	//
+	// bool db:create_database(database)
+	static int cc_db_create_database(lua_State* L) {	
+		Easydb** s = (Easydb**) luaL_checkudata(L, 1, LUA_METATABLE_DB_NAME);
+		luaL_argcheck(L, s != NULL, 1, "invalid `db` userdata");
+	
+		int args = lua_gettop(L);// this:userdata in stack bottom
+		CHECK_RETURN(args == 2, 0, "`%s` lack args:%d", __FUNCTION__, args);
+		CHECK_RETURN(lua_isstring(L, -(args - 1)), 0, "[%s]", lua_typename(L, lua_type(L, -(args - 1))));
+		const char* database = lua_tostring(L, -(args - 1));
+		bool rc = (*s)->createDatabase(database);
+		
+		lua_pushboolean(L, rc);
+		return 1;
+	}
+	
+	//
+	// bool db:select_database(database)
+	static int cc_db_select_database(lua_State* L) {	
+		Easydb** s = (Easydb**) luaL_checkudata(L, 1, LUA_METATABLE_DB_NAME);
+		luaL_argcheck(L, s != NULL, 1, "invalid `db` userdata");
+	
+		int args = lua_gettop(L);// this:userdata in stack bottom
+		CHECK_RETURN(args == 2, 0, "`%s` lack args:%d", __FUNCTION__, args);
+		CHECK_RETURN(lua_isstring(L, -(args - 1)), 0, "[%s]", lua_typename(L, lua_type(L, -(args - 1))));
+		const char* database = lua_tostring(L, -(args - 1));
+		bool rc = (*s)->selectDatabase(database);
+		
+		lua_pushboolean(L, rc);
+		return 1;
+	}
+
+	//
+	// bool db:loadmsg(filename) // filename also is a directory
+	static int cc_db_loadmsg(lua_State* L) {
+		Easydb** s = (Easydb**) luaL_checkudata(L, 1, LUA_METATABLE_DB_NAME);
+		luaL_argcheck(L, s != NULL, 1, "invalid `db` userdata");
+		
+		int args = lua_gettop(L);// this:userdata in stack bottom
+		CHECK_RETURN(args == 2, 0, "`%s` lack args:%d", __FUNCTION__, args);
+		CHECK_RETURN(lua_isstring(L, -(args - 1)), 0, "[%s]", lua_typename(L, lua_type(L, -(args - 1))));
+		const char* filename = lua_tostring(L, -(args - 1));
+		bool rc = (*s)->tableParser()->loadmsg(filename);
+		lua_pushboolean(L, rc);
+		return 1;
+	}
+	
+	//
+	// bool db:regtable(table, name) // table => name of protobuf::Message
+	static int cc_db_regtable(lua_State* L) {
+		Easydb** s = (Easydb**) luaL_checkudata(L, 1, LUA_METATABLE_DB_NAME);
+		luaL_argcheck(L, s != NULL, 1, "invalid `db` userdata");
+		
+		int args = lua_gettop(L);// this:userdata in stack bottom
+		CHECK_RETURN(args == 3, 0, "`%s` lack args:%d", __FUNCTION__, args);
+		CHECK_RETURN(lua_isstring(L, -(args - 1)), 0, "[%s]", lua_typename(L, lua_type(L, -(args - 1))));
+		CHECK_RETURN(lua_isstring(L, -(args - 2)), 0, "[%s]", lua_typename(L, lua_type(L, -(args - 2))));
+		size_t len = 0;
+		const char* table = lua_tolstring(L, -(args - 1), &len);
+		const char* name = lua_tostring(L, -(args - 2));
+		u32 msgid = hashString(table, len);
+		bool rc = (*s)->tableParser()->regmsg(msgid, name);
+		lua_pushboolean(L, rc);
+		return 1;
+	}
+	
+	//
+	// o db:list_table()
+	static int cc_db_list_table(lua_State* L) {
+		Easydb** s = (Easydb**) luaL_checkudata(L, 1, LUA_METATABLE_DB_NAME);
+		luaL_argcheck(L, s != NULL, 1, "invalid `db` userdata");
+		//TODO:
+		return 0;
+	}
+	
+	//
+	// u64 db:create_object(table, [u64], o)
+	static int cc_db_create_object(lua_State* L) {
+		Easydb** s = (Easydb**) luaL_checkudata(L, 1, LUA_METATABLE_DB_NAME);		
+		luaL_argcheck(L, s != NULL, 1, "invalid `db` userdata");
+	
+		int args = lua_gettop(L);// this:userdata in stack bottom
+		CHECK_RETURN(args >= 3, 0, "`%s` lack args:%d", __FUNCTION__, args);
+		CHECK_RETURN(lua_isstring(L, -(args - 1)), 0, "[%s]", lua_typename(L, lua_type(L, -(args - 1))));
+		size_t len = 0;
+		const char* table = lua_tolstring(L, -(args - 1), &len);
+		u32 msgid = hashString(table, len);
+		u64 id = 0;
+		if (args > 3) {
+			CHECK_RETURN(lua_isnumber(L, -(args - 2)), 0, "[%s]", lua_typename(L, lua_type(L, -(args - 2))));
+			id = lua_tointeger(L, -(args - 2));
+			CHECK_RETURN(lua_istable(L, -(args - 3)), 0, "[%s]", lua_typename(L, lua_type(L, -(args - 3))));
+		}
+		else {
+			CHECK_RETURN(lua_istable(L, -(args - 2)), 0, "[%s]", lua_typename(L, lua_type(L, -(args - 2))));
+		}
+		
+		//
+		// encode table of lua to new protobuf::Message
+		google::protobuf::Message* message = (*s)->tableParser()->encode_newmsg(L, msgid);
+		CHECK_RETURN(message, 0, "encode message: %d, %s error", msgid, table);
+
+		//
+		// insert object to db
+		u64 autoid = (*s)->createObject(table, id, message);
+		if (autoid == 0) {
+			SafeDelete(message);
+			CHECK_RETURN(false, 0, "createObject failure, id: 0x%lx, msgid:%d, table:%s", id, msgid, table);
+		}
+
+		lua_pushinteger(L, autoid);
+		return 1;
+	}
+	
+	//
+	// bool db:delete_object(table, uint64_t)
+	static int cc_db_delete_object(lua_State* L) {
+		Easydb** s = (Easydb**) luaL_checkudata(L, 1, LUA_METATABLE_DB_NAME);		
+		luaL_argcheck(L, s != NULL, 1, "invalid `db` userdata");
+	
+		int args = lua_gettop(L);// this:userdata in stack bottom
+		CHECK_RETURN(args == 3, 0, "`%s` lack args:%d", __FUNCTION__, args);
+		CHECK_RETURN(lua_isstring(L, -(args - 1)), 0, "[%s]", lua_typename(L, lua_type(L, -(args - 1))));
+		CHECK_RETURN(lua_isnumber(L, -(args - 2)), 0, "[%s]", lua_typename(L, lua_type(L, -(args - 2))));
+		const char* table = lua_tostring(L, -(args - 1));
+		u64 id = lua_tointeger(L, -(args - 2));
+
+		//
+		// delete object from db
+		bool rc = (*s)->deleteObject(table, id);		
+		lua_pushboolean(L, rc);
+		return 1;
+	}
+
+	//
+	// bool db:serialize(table, uint64_t, o)
+	static int cc_db_serialize(lua_State* L) {
+		Easydb** s = (Easydb**) luaL_checkudata(L, 1, LUA_METATABLE_DB_NAME);		
+		luaL_argcheck(L, s != NULL, 1, "invalid `db` userdata");
+	
+		int args = lua_gettop(L);// this:userdata in stack bottom
+		CHECK_RETURN(args == 4, 0, "`%s` lack args:%d", __FUNCTION__, args);
+		CHECK_RETURN(lua_isstring(L, -(args - 1)), 0, "[%s]", lua_typename(L, lua_type(L, -(args - 1))));
+		CHECK_RETURN(lua_isnumber(L, -(args - 2)), 0, "[%s]", lua_typename(L, lua_type(L, -(args - 2))));
+		CHECK_RETURN(lua_istable(L, -(args - 3)), 0, "[%s]", lua_typename(L, lua_type(L, -(args - 3))));
+		size_t len = 0;
+		const char* table = lua_tolstring(L, -(args - 1), &len);
+		u32 msgid = hashString(table, len);
+		u64 id = lua_tointeger(L, -(args - 2));
+
+		//
+		// encode table of lua to new protobuf::Message
+		google::protobuf::Message* message = (*s)->tableParser()->encode_newmsg(L, msgid);
+		CHECK_RETURN(message, 0, "encode message: %d, %s error", msgid, table);
+
+		//
+		// update object to db
+		bool rc = (*s)->updateObject(table, id, message);
+		if (!rc) {
+			SafeDelete(message);
+			CHECK_RETURN(false, 0, "createObject failure, id: 0x%lx, msgid:%d, table:%s", id, msgid, table);
+		}
+		
+		lua_pushboolean(L, rc);
+		return 1;
+	}
+
+
+	//
+	// o db:unserialize(table, uint64_t)
+	static int cc_db_unserialize(lua_State* L) {
+		Easydb** s = (Easydb**) luaL_checkudata(L, 1, LUA_METATABLE_DB_NAME);		
+		luaL_argcheck(L, s != NULL, 1, "invalid `db` userdata");
+	
+		int args = lua_gettop(L);// this:userdata in stack bottom
+		CHECK_RETURN(args == 3, 0, "`%s` lack args:%d", __FUNCTION__, args);
+		CHECK_RETURN(lua_isstring(L, -(args - 1)), 0, "[%s]", lua_typename(L, lua_type(L, -(args - 1))));
+		CHECK_RETURN(lua_isnumber(L, -(args - 2)), 0, "[%s]", lua_typename(L, lua_type(L, -(args - 2))));
+		const char* table = lua_tostring(L, -(args - 1));
+		u64 id = lua_tointeger(L, -(args - 2));
+
+		//
+		// fetch protobuf::Message from db
+		google::protobuf::Message* message = (*s)->retrieveObject(table, id);
+		CHECK_RETURN(message, 0, "retrieveObject: 0x%lx from table: %s failure", id, table);
+
+		//
+		// decode protobuf::Message to lua
+		bool rc = (*s)->tableParser()->decode(L, message);
+		CHECK_RETURN(rc, 0, "decode object: 0x%lx, table: %s to lua failure", id, table);
+				
+		return 1;
+	}
+	
+	static int __cc_db_gc(lua_State *L) {
+		Easydb** s = (Easydb**) luaL_checkudata(L, 1, LUA_METATABLE_DB_NAME);		
+		luaL_argcheck(L, s != NULL, 1, "invalid `db` userdata");
+		if (s) {
+			Debug("__db_gc: %p", *s);
+		}
+		return 0;
+	}
+	
+	static int __cc_db_tostring(lua_State *L) {
+		lua_pushstring(L, "db");
+		return 1;
+	}
+	
 	
 	void luaT_reg_functions(lua_State* L) {
 		luaT_beginNamespace(L, LUA_REGISTER_NAMESPACE);
 
-		// service
+		//
+		// bool newservice(entryfile)
 		LUA_REGISTER(L, "newservice", cc_newservice);
+		//
+		// void exitservice()
 		LUA_REGISTER(L, "exitservice", cc_exitservice);
 
-		// network
+		//
+		// fd newserver(address, port)
 		LUA_REGISTER(L, "newserver", cc_newserver);
+		//
+		// fd newclient(address, port)
 		LUA_REGISTER(L, "newclient", cc_newclient);
+		//
+		// void response(fd, entityid, msgid, o)
 		LUA_REGISTER(L, "response", cc_response);
+		//
+		// bool loadmsg(filename) // filename also is a directory
 		LUA_REGISTER(L, "loadmsg", cc_loadmsg);
+		//
+		// bool regmsg(msgid, name)
 		LUA_REGISTER(L, "regmsg", cc_regmsg);
+		//
+		// void closesocket(fd)
 		LUA_REGISTER(L, "closesocket", cc_closesocket);
 
-		// logger
+		//
+		// void log_XXXX(string)
 		LUA_REGISTER(L, "log_debug", cc_log_debug);
 		LUA_REGISTER(L, "log_trace", cc_log_trace);
 		LUA_REGISTER(L, "log_alarm", cc_log_alarm);
 		LUA_REGISTER(L, "log_error", cc_log_error);
-		
-		// json
+
+		//
+		// table json_decode(string)
 		LUA_REGISTER(L, "json_decode", cc_json_decode);
+		//
+		// string json_encode(table)
 		LUA_REGISTER(L, "json_encode", cc_json_encode);
 
-		// xml
+		//
+		// table xml_decode(string)
 		LUA_REGISTER(L, "xml_decode", cc_xml_decode);
+		//
+		// string xml_encode(table)
 		LUA_REGISTER(L, "xml_encode", cc_xml_encode);
 
-		// hash string
+		// 
+		// int hash_string(string)
 		LUA_REGISTER(L, "hash_string", cc_hash_string);
-		
-		// random
+
+		//
+		// int random()
 		LUA_REGISTER(L, "random", cc_random);
+		//
+		// int random_between(int min, int max)
 		LUA_REGISTER(L, "random_between", cc_random_between);
 
-		// base64
+		//
+		// string base64_encode(string)
 		LUA_REGISTER(L, "base64_encode", cc_base64_encode);
+		//
+		// string base64_decode(string)
 		LUA_REGISTER(L, "base64_decode", cc_base64_decode);
 
-		// md5
+		//
+		// table md5(string)
 		LUA_REGISTER(L, "md5", cc_md5);
 
-		// time
+		//
+		// u64 timesec()
 		LUA_REGISTER(L, "timesec", cc_timesec);
+		//
+		// u64 timemsec() 
 		LUA_REGISTER(L, "timemsec", cc_timemsec);
+		//
+		// string timestamp()
+		// string timestamp(seconds)
+		// string timestamp(string)
+		// string timestamp(seconds, string)
 		LUA_REGISTER(L, "timestamp", cc_timestamp);
+		// YYYY, MM, DD, HH, MM, SS timespec([u64])
 		LUA_REGISTER(L, "timespec", cc_timespec);
+		// void msleep(milliseconds)
 		LUA_REGISTER(L, "msleep", cc_msleep);
 
-		// message parser
+		//
+		// string message_encode(msgid, table)
 		LUA_REGISTER(L, "message_encode", cc_message_encode);
+		//
+		// table message_decode(msgid, string)
 		LUA_REGISTER(L, "message_decode", cc_message_decode);
-		
-		// timer
+
+		//
+		// u32 newtimer(milliseconds, times, ctx, function(id, ctx) end)
+		// times: <= 0: forever, > 0: special times
 		LUA_REGISTER(L, "newtimer", cc_newtimer);
 		
 		//TODO: file i/o
@@ -573,5 +889,52 @@ BEGIN_NAMESPACE_TNODE {
 		//TODO: db agent
 		
 		luaT_endNamespace(L);
+
+
+		//
+		// db
+	    luaL_newmetatable(L, LUA_METATABLE_DB_NAME); //db metatable
+	    /* metatable.__index = metatable */
+	    lua_pushvalue(L, -1);  /* duplicates the metatable */
+	    lua_setfield(L, -2, "__index"); /* __index ref self */
+
+		//
+		// bool db:create_database(database)
+		LUA_REGISTER(L, "create_database", cc_db_create_database);
+		//
+		// bool db:select_database(database)
+		LUA_REGISTER(L, "select_database", cc_db_select_database);
+		//
+		// bool db:loadmsg(filename) // filename also is a directory
+		LUA_REGISTER(L, "loadmsg", cc_db_loadmsg);
+		//
+		// bool db:regtable(table, name) // table => name of protobuf::Message
+		LUA_REGISTER(L, "regtable", cc_db_regtable);
+		//
+		// o db:list_table()
+		LUA_REGISTER(L, "list_table", cc_db_list_table);
+		//
+		// u64 db:create_object(table, [uint64_t], o)
+		LUA_REGISTER(L, "create_object", cc_db_create_object);
+		//
+		// bool db:delete_object(table, uint64_t)
+		LUA_REGISTER(L, "delete_object", cc_db_delete_object);
+		//
+		// bool db:serialize(table, uint64_t, o)
+		LUA_REGISTER(L, "serialize", cc_db_serialize);
+		//
+		// o db:unserialize(table, uint64_t)
+		LUA_REGISTER(L, "unserialize", cc_db_unserialize);
+		
+		LUA_REGISTER(L, "__gc", __cc_db_gc);
+		LUA_REGISTER(L, "__tostring", __cc_db_tostring);
+
+		luaT_beginNamespace(L, LUA_REGISTER_NAMESPACE);
+		//
+		// userdata newdb(host, user, password, port, [database])
+		LUA_REGISTER(L, "newdb", cc_newdb);
+		luaT_endNamespace(L);
+
+		luaT_cleanup(L);
 	}
 }

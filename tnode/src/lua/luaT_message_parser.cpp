@@ -28,11 +28,16 @@ BEGIN_NAMESPACE_TNODE {
 			bool decode(lua_State* L, u32 msgid, const void* buf, size_t bufsize) override;
 			bool decode(lua_State* L, u32 msgid, const std::string& in) override;
 			google::protobuf::Message* encode(lua_State* L, u32 msgid) override;
+			google::protobuf::Message* encode_newmsg(lua_State* L, u32 msgid) override;
+			bool decode(lua_State* L, google::protobuf::Message*) override;
+			//
+			// decode buffer to new protobuf::Message
+			google::protobuf::Message* decode(u32 msgid, const void* buf, size_t bufsize) override;
 
 		private:
 			DiskSourceTree _tree;
 			Importer* _in;
-			DynamicMessageFactory _factory;			
+			DynamicMessageFactory _factory;
 			std::unordered_map<u32, Message*> _messages;
 
 			class ImporterErrorCollector : public MultiFileErrorCollector {
@@ -246,6 +251,37 @@ BEGIN_NAMESPACE_TNODE {
 		}
 
 		return message;
+	}
+
+	//
+	// allocate new protobuf::Message to return
+	google::protobuf::Message* luaT_message_parser_internal::encode_newmsg(lua_State* L, u32 msgid) {
+		google::protobuf::Message* oldmsg = this->FindMessage(msgid);
+		CHECK_RETURN(oldmsg, nullptr, "Not found message: %d", msgid);
+
+		const Descriptor* descriptor = this->_in->pool()->FindMessageTypeByName(oldmsg->GetTypeName());
+		CHECK_RETURN(descriptor, nullptr, "not found descriptor for message: %s", oldmsg->GetTypeName().c_str());
+
+		const Message* prototype = this->_factory.GetPrototype(descriptor);
+		CHECK_RETURN(prototype, nullptr, "not found prototype for message: %s", oldmsg->GetTypeName().c_str());
+
+		//
+		// allocate new protobuf::Message
+		google::protobuf::Message* newmsg = prototype->New();
+		assert(newmsg->ByteSize() == 0);
+		try {
+			if (!this->encodeDescriptor(L, newmsg, descriptor, newmsg->GetReflection())) {
+				Error << "encodeDescriptor failure for newmsg: " << newmsg->GetTypeName();
+				SafeDelete(newmsg);
+				return nullptr;
+			}
+		}
+		catch(std::exception& e) {
+			SafeDelete(newmsg);
+			CHECK_RETURN(false, nullptr, "encodeDescriptor newmsg exception: %s", e.what());
+		}
+
+		return newmsg;
 	}
 
 	bool luaT_message_parser_internal::encode(lua_State* L, u32 msgid, void* buf, size_t& bufsize) {
@@ -504,6 +540,30 @@ BEGIN_NAMESPACE_TNODE {
 		return true;
 	}
 
+	//
+	// decode buffer to new protobuf::Message
+	google::protobuf::Message* luaT_message_parser_internal::decode(u32 msgid, const void* buf, size_t bufsize) {
+		google::protobuf::Message* oldmsg = this->FindMessage(msgid);
+		CHECK_RETURN(oldmsg, nullptr, "Not found message: %d", msgid);
+		
+		const Descriptor* descriptor = this->_in->pool()->FindMessageTypeByName(oldmsg->GetTypeName());
+		CHECK_RETURN(descriptor, nullptr, "not found descriptor for message: %s", oldmsg->GetTypeName().c_str());
+		
+		const Message* prototype = this->_factory.GetPrototype(descriptor);
+		CHECK_RETURN(prototype, nullptr, "not found prototype for message: %s", oldmsg->GetTypeName().c_str());
+		
+		//
+		// allocate new protobuf::Message
+		google::protobuf::Message* newmsg = prototype->New();
+		assert(newmsg->ByteSize() == 0);
+		if (!newmsg->ParseFromArray(buf, bufsize)) {
+			SafeDelete(newmsg);
+			CHECK_RETURN("decode buffer to newmsg failure, bufsize: %ld, msgid: %d", nullptr, bufsize, msgid);
+		}
+
+		return newmsg;
+	}
+
 	bool luaT_message_parser_internal::decode(lua_State* L, u32 msgid, const void* buf, size_t bufsize) {
 		Message* message = this->FindMessage(msgid);
 		CHECK_RETURN(message, false, "Not found message: %d", msgid);
@@ -562,6 +622,25 @@ BEGIN_NAMESPACE_TNODE {
 		return true;
 	}
 
+	//
+	// decode protobuf::Message to lua
+	bool luaT_message_parser::decode(lua_State* L, google::protobuf::Message* message) {
+		const Descriptor* descriptor = this->_in->pool()->FindMessageTypeByName(message->GetTypeName());
+		CHECK_RETURN(descriptor, false, "not found descriptor for message: %s", message->GetTypeName().c_str());
+
+		lua_newtable(L);
+		try {
+			if (!this->decodeDescriptor(L, *message, descriptor, message->GetReflection())) {
+				Error << "decodeDescriptor failure for message: " << message->GetTypeName();
+				return false;
+			}
+		}
+		catch(std::exception& e) {
+			CHECK_RETURN(false, false, "decodeDescriptor exception:%s", e.what());
+		}
+
+		return true;
+	}
 
 	luaT_message_parser::~luaT_message_parser() {}
 	luaT_message_parser_internal::luaT_message_parser_internal() {
