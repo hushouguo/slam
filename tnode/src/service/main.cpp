@@ -18,6 +18,7 @@
 #include "lua/luaT.h"
 #include "lua/luaT_message_parser.h"
 #include "message/ServiceMessage.h"
+#include "db/Easydb.h"
 #include "service/Service.h"
 #include "service/ServiceManager.h"
 #include "net/NetworkManager.h"

@@ -558,7 +558,7 @@ BEGIN_NAMESPACE_TNODE {
 		assert(newmsg->ByteSize() == 0);
 		if (!newmsg->ParseFromArray(buf, bufsize)) {
 			SafeDelete(newmsg);
-			CHECK_RETURN("decode buffer to newmsg failure, bufsize: %ld, msgid: %d", nullptr, bufsize, msgid);
+			CHECK_RETURN(false, nullptr, "decode buffer to newmsg failure, bufsize: %ld, msgid: %d", bufsize, msgid);
 		}
 
 		return newmsg;
@@ -624,7 +624,7 @@ BEGIN_NAMESPACE_TNODE {
 
 	//
 	// decode protobuf::Message to lua
-	bool luaT_message_parser::decode(lua_State* L, google::protobuf::Message* message) {
+	bool luaT_message_parser_internal::decode(lua_State* L, google::protobuf::Message* message) {
 		const Descriptor* descriptor = this->_in->pool()->FindMessageTypeByName(message->GetTypeName());
 		CHECK_RETURN(descriptor, false, "not found descriptor for message: %s", message->GetTypeName().c_str());
 

@@ -18,6 +18,7 @@
 #include "lua/luaT_message_parser.h"
 #include "lua/luaT_entry.h"
 #include "time/Time.h"
+#include "db/Easydb.h"
 #include "service/Service.h"
 #include "net/NetworkManager.h"
 

@@ -22,6 +22,7 @@
 #include "lua/luaT_xml_parser.h"
 #include "lua/luaT_json_parser.h"
 #include "lua/luaT_message_parser.h"
+#include "db/Easydb.h"
 #include "service/Service.h"
 #include "service/ServiceManager.h"
 #include "net/NetworkManager.h"
