@@ -128,7 +128,7 @@ BEGIN_NAMESPACE_TNODE {
 		ts->ref = ref;
 		ts->ctx = ctx;
 		ts->next_time_point = sTime.milliseconds() + milliseconds;
-		Debug << "regtimer: " << ts->id << " interval: " << ts->milliseconds;
+		//Debug << "regtimer: " << ts->id << " interval: " << ts->milliseconds;
 		this->pushTimer(ts);
 		return ts->id;
 	}
