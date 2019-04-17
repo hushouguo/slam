@@ -12,12 +12,12 @@
 
 BEGIN_NAMESPACE_TNODE {
 
-	bool encodeDescriptor(lua_State* L, Message* message, const Descriptor* descriptor, const Reflection* ref);
-	bool decodeDescriptor(lua_State* L, const Message& message, const Descriptor* descriptor, const Reflection* ref);
+	bool encodeDescriptor(MessageParser* parser, lua_State* L, Message* message, const Descriptor* descriptor, const Reflection* ref);
+	bool decodeDescriptor(MessageParser* parser, lua_State* L, const Message& message, const Descriptor* descriptor, const Reflection* ref);
 
 	//-----------------------------------------------------------------------------------------------------------------------
 
-	bool encodeFieldRepeated(lua_State* L, Message* message, const FieldDescriptor* field, const Reflection* ref)
+	bool encodeFieldRepeated(MessageParser* parser, lua_State* L, Message* message, const FieldDescriptor* field, const Reflection* ref)
 	{
 		assert(field->is_repeated());
 		bool rc = true;
@@ -40,8 +40,8 @@ BEGIN_NAMESPACE_TNODE {
 #undef CASE_FIELD_TYPE
 
 				case google::protobuf::FieldDescriptor::CPPTYPE_MESSAGE: { // TYPE_MESSAGE, TYPE_GROUP
-					Message* submessage = ref->AddMessage(message, field, &this->_factory);
-					rc = encodeDescriptor(L, submessage, field->message_type(), submessage->GetReflection());
+					Message* submessage = ref->AddMessage(message, field, parser->GetMessageFactory());
+					rc = encodeDescriptor(parser, L, submessage, field->message_type(), submessage->GetReflection());
 				}
 				break;
 			}
@@ -51,7 +51,7 @@ BEGIN_NAMESPACE_TNODE {
 	}
 
 
-	bool encodeFieldSimple(lua_State* L, Message* message, const FieldDescriptor* field, const Reflection* ref) {
+	bool encodeFieldSimple(MessageParser* parser, lua_State* L, Message* message, const FieldDescriptor* field, const Reflection* ref) {
 		assert(!field->is_repeated());
 		bool rc = true;
 		if (!lua_isnoneornil(L, -1)) {
@@ -73,8 +73,8 @@ BEGIN_NAMESPACE_TNODE {
 #undef CASE_FIELD_TYPE
 
 				case google::protobuf::FieldDescriptor::CPPTYPE_MESSAGE: { // TYPE_MESSAGE, TYPE_GROUP
-					Message* submessage = ref->MutableMessage(message, field, &this->_factory);
-					rc = encodeDescriptor(L, submessage, field->message_type(), submessage->GetReflection());
+					Message* submessage = ref->MutableMessage(message, field, parser->GetMessageFactory());
+					rc = encodeDescriptor(parser, L, submessage, field->message_type(), submessage->GetReflection());
 				}
 				break;
 			}
@@ -83,7 +83,7 @@ BEGIN_NAMESPACE_TNODE {
 		return rc;
 	}
 
-	bool encodeField(lua_State* L, Message* message, const FieldDescriptor* field, const Reflection* ref) {
+	bool encodeField(MessageParser* parser, lua_State* L, Message* message, const FieldDescriptor* field, const Reflection* ref) {
 		bool rc = true;
 		if (field->is_repeated()) {
 			lua_pushstring(L, field->name().c_str());/* push key */
@@ -99,7 +99,7 @@ BEGIN_NAMESPACE_TNODE {
 					//}
 					//ignore `key` type
 
-					rc = encodeFieldRepeated(L, message, field, ref);
+					rc = encodeFieldRepeated(parser, L, message, field, ref);
 
 					lua_pop(L, 1);/* removes 'value'; keeps 'key' for next iteration */
 				}
@@ -111,7 +111,7 @@ BEGIN_NAMESPACE_TNODE {
 			lua_pushstring(L, field->name().c_str());/* key */
 			lua_gettable(L, -2);
 
-			rc = encodeFieldSimple(L, message, field, ref);
+			rc = encodeFieldSimple(parser, L, message, field, ref);
 
 			lua_pop(L, 1);/* remove `value` or nil */
 		}
@@ -119,12 +119,12 @@ BEGIN_NAMESPACE_TNODE {
 		return rc;
 	}
 
-	bool encodeDescriptor(lua_State* L, Message* message, const Descriptor* descriptor, const Reflection* ref) {
+	bool encodeDescriptor(MessageParser* parser, lua_State* L, Message* message, const Descriptor* descriptor, const Reflection* ref) {
 		CHECK_RETURN(lua_istable(L, -1), false, "stack top not table for message: %s", message->GetTypeName().c_str());
 		int field_count = descriptor->field_count();
 		for (int i = 0; i < field_count; ++i) {
 			const FieldDescriptor* field = descriptor->field(i);
-			if (!encodeField(L, message, field, ref)) {
+			if (!encodeField(parser, L, message, field, ref)) {
 				Error("encodeField: %s for message:%s failure", field->name().c_str(), message->GetTypeName().c_str());
 				return false;
 			}
@@ -135,7 +135,7 @@ BEGIN_NAMESPACE_TNODE {
 
 	//-------------------------------------------------------------------------------------------------------
 
-	void decodeFieldDefaultValue(lua_State* L, const Message& message, const FieldDescriptor* field) {
+	void decodeFieldDefaultValue(MessageParser* parser, lua_State* L, const Message& message, const FieldDescriptor* field) {
 		if (field->is_repeated()) {
 			lua_pushstring(L, field->name().c_str());
 #ifdef DEF_NIL_VALUE
@@ -191,7 +191,7 @@ BEGIN_NAMESPACE_TNODE {
 		}
 	}
 
-	bool decodeFieldRepeated(lua_State* L, const Message& message, const FieldDescriptor* field, const Reflection* ref, int index)
+	bool decodeFieldRepeated(MessageParser* parser, lua_State* L, const Message& message, const FieldDescriptor* field, const Reflection* ref, int index)
 	{
 		assert(field->is_repeated());
 		bool rc = true;
@@ -228,7 +228,7 @@ BEGIN_NAMESPACE_TNODE {
 				lua_newtable(L);
 
 				const Message& submessage = ref->GetRepeatedMessage(message, field, index);
-				rc = decodeDescriptor(L, submessage, field->message_type(), submessage.GetReflection());
+				rc = decodeDescriptor(parser, L, submessage, field->message_type(), submessage.GetReflection());
 
 				lua_settable(L, -3);
 			}
@@ -238,7 +238,7 @@ BEGIN_NAMESPACE_TNODE {
 		return rc;
 	}
 
-	bool decodeFieldSimple(lua_State* L, const Message& message, const FieldDescriptor* field, const Reflection* ref)
+	bool decodeFieldSimple(MessageParser* parser, lua_State* L, const Message& message, const FieldDescriptor* field, const Reflection* ref)
 	{
 		assert(!field->is_repeated());
 		bool rc = true;
@@ -250,7 +250,7 @@ BEGIN_NAMESPACE_TNODE {
 				   	   VALUE_TYPE value = ref->Get##METHOD_TYPE(message, field);\
 				   	   METHOD(L, value);\
 		   		   } else {\
-					   decodeFieldDefaultValue(L, message, field);\
+					   decodeFieldDefaultValue(parser, L, message, field);\
 				   }\
 				   lua_settable(L, -3);\
 		    } break;
@@ -278,8 +278,8 @@ BEGIN_NAMESPACE_TNODE {
 				lua_pushstring(L, field->name().c_str()); /* key */
 				lua_newtable(L);
 
-				const Message& submessage = ref->GetMessage(message, field, &this->_factory);
-				rc = decodeDescriptor(L, submessage, field->message_type(), submessage.GetReflection());
+				const Message& submessage = ref->GetMessage(message, field, parser->GetMessageFactory());
+				rc = decodeDescriptor(parser, L, submessage, field->message_type(), submessage.GetReflection());
 
 				lua_settable(L, -3);
 			}
@@ -289,7 +289,7 @@ BEGIN_NAMESPACE_TNODE {
 		return rc;
 	}
 
-	bool decodeField(lua_State* L, const Message& message, const FieldDescriptor* field, const Reflection* ref) {
+	bool decodeField(MessageParser* parser, lua_State* L, const Message& message, const FieldDescriptor* field, const Reflection* ref) {
 		bool rc = true;
 		if (field->is_repeated()) {
 			lua_pushstring(L, field->name().c_str());
@@ -298,30 +298,30 @@ BEGIN_NAMESPACE_TNODE {
 			//Debug("message:%s, field:%s, fieldsize:%d", message.GetTypeName().c_str(), field->name().c_str(), ref->FieldSize(message, field));
 
 			for (int i = 0; rc && i < ref->FieldSize(message, field); ++i) {
-				rc = decodeFieldRepeated(L, message, field, ref, i);
+				rc = decodeFieldRepeated(parser, L, message, field, ref, i);
 			}
 
 			lua_settable(L, -3);
 		}
 		else {
-			rc = decodeFieldSimple(L, message, field, ref);
+			rc = decodeFieldSimple(parser, L, message, field, ref);
 		}
 
 		return rc;
 	}
 
-	bool decodeDescriptor(lua_State* L, const Message& message, const Descriptor* descriptor, const Reflection* ref)
+	bool decodeDescriptor(MessageParser* parser, lua_State* L, const Message& message, const Descriptor* descriptor, const Reflection* ref)
 	{
 		int field_count = descriptor->field_count();
 		for (int i = 0; i < field_count; ++i) {
 			const FieldDescriptor* field = descriptor->field(i);
 
 			if (!field->is_repeated() && !ref->HasField(message, field)) {
-				decodeFieldDefaultValue(L, message, field);
+				decodeFieldDefaultValue(parser, L, message, field);
 				continue;
 			}/* fill default value to lua when a non-repeated field not set, for message field */
 
-			if (!decodeField(L, message, field, ref)) {
+			if (!decodeField(parser, L, message, field, ref)) {
 				Error("decodeField: %s for message:%s failure", field->name().c_str(), message.GetTypeName().c_str());
 				return false;
 			}
@@ -329,6 +329,12 @@ BEGIN_NAMESPACE_TNODE {
 		return true;
 	}
 
+
+	//
+	//------------------------------------------------------------------------------------------------------
+	//
+
+	
 	//
 	// encode lua's table to buffer
 	bool luaT_message_parser_encode(MessageParser* parser, lua_State* L, u32 msgid, std::string& out) {
@@ -341,7 +347,7 @@ BEGIN_NAMESPACE_TNODE {
 
 		assert(message->ByteSize() == 0);
 		try {
-			if (!encodeDescriptor(L, message, descriptor, message->GetReflection())) {
+			if (!encodeDescriptor(parser, L, message, descriptor, message->GetReflection())) {
 				Error << "encodeDescriptor failure for message: " << message->GetTypeName();
 				return false;
 			}
@@ -370,7 +376,7 @@ BEGIN_NAMESPACE_TNODE {
 
 		assert(message->ByteSize() == 0);
 		try {
-			if (!encodeDescriptor(L, message, descriptor, message->GetReflection())) {
+			if (!encodeDescriptor(parser, L, message, descriptor, message->GetReflection())) {
 				Error << "encodeDescriptor failure for message: " << message->GetTypeName();
 				return false;
 			}
@@ -407,7 +413,7 @@ BEGIN_NAMESPACE_TNODE {
 
 		assert(message->ByteSize() == 0);
 		try {
-			if (!encodeDescriptor(L, message, descriptor, message->GetReflection())) {
+			if (!encodeDescriptor(parser, L, message, descriptor, message->GetReflection())) {
 				Error << "encodeDescriptor failure for message: " << message->GetTypeName();
 				if (alloc_new) {
 					SafeDelete(message);
@@ -444,7 +450,7 @@ BEGIN_NAMESPACE_TNODE {
 
 		lua_newtable(L);
 		try {
-			if (!decodeDescriptor(L, *message, descriptor, message->GetReflection())) {
+			if (!decodeDescriptor(parser, L, *message, descriptor, message->GetReflection())) {
 				Error << "decodeDescriptor failure for message: " << message->GetTypeName();
 				return false;
 			}
@@ -469,7 +475,7 @@ BEGIN_NAMESPACE_TNODE {
 
 		lua_newtable(L);
 		try {
-			if (!decodeDescriptor(L, *message, descriptor, message->GetReflection())) {
+			if (!decodeDescriptor(parser, L, *message, descriptor, message->GetReflection())) {
 				Error << "decodeDescriptor failure for message: " << message->GetTypeName();
 				return false;
 			}
@@ -486,7 +492,7 @@ BEGIN_NAMESPACE_TNODE {
 		CHECK_RETURN(descriptor, false, "not found descriptor for message: %s", message->GetTypeName().c_str());
 		lua_newtable(L);
 		try {
-			if (!decodeDescriptor(L, *message, descriptor, message->GetReflection())) {
+			if (!decodeDescriptor(parser, L, *message, descriptor, message->GetReflection())) {
 				Error << "decodeDescriptor failure for message: " << message->GetTypeName();
 				return false;
 			}

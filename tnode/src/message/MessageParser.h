@@ -39,6 +39,10 @@ BEGIN_NAMESPACE_TNODE {
 			//
 			// get descriptor of message
 			const Descriptor* FindMessageDescriptor(Message* message);
+
+			//
+			// get Message Factory
+			MessageFactory* GetMessageFactory();
 			
 		private:
 			DiskSourceTree _tree;

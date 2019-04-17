@@ -108,6 +108,10 @@ BEGIN_NAMESPACE_TNODE {
     
 	const Descriptor* MessageParser::FindMessageDescriptor(Message* message) {
 		return this->_in->pool()->FindMessageTypeByName(message->GetTypeName());
-	}|	
+	}
+
+	MessageFactory* MessageParser::GetMessageFactory() {
+		return &this->_factory;
+	}
 }
 
