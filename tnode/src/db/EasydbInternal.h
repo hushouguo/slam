@@ -6,6 +6,10 @@
 #ifndef __EASYDBINTERNAL_H__
 #define __EASYDBINTERNAL_H__
 
+#define EASYDB_DEF_ASYNC_FLUSH				false
+#define EASYDB_DEF_ASYNC_FLUSH_INTERVAL		300u
+#define EASYDB_DEF_ASYNC_FLUSH_MAXSIZE		100u
+
 BEGIN_NAMESPACE_TNODE {
 	class EasydbInternal : public Easydb {
 		public:
@@ -26,11 +30,15 @@ BEGIN_NAMESPACE_TNODE {
 			Message* retrieveObject(std::string table, u64 id) override;
 			bool deleteObject(std::string table, u64 id) override;
 			bool updateObject(std::string table, u64 id, Message*) override;
+			bool flushObject(std::string table, u64 id) override;
 
 		public:
 			MessageParser* tableParser() override { return this->_tableParser; }
 
 		private:
+			bool _async_flush = false;
+			u32 _async_flush_interval = 0;
+			u32 _async_flush_maxsize = 0;
 			MessageParser* _tableParser = nullptr;
 		
 		private:
@@ -41,9 +49,10 @@ BEGIN_NAMESPACE_TNODE {
 			struct db_object {
 				u64 id;
 				bool dirty;
-				Spinlocker locker;
 				Message* message = nullptr;
+				db_object(u64 _id, bool _dirty, Message* _message) : id(_id), dirty(_dirty), message(_message) {}
 			};
+			Spinlocker _locker;
 		    std::unordered_map<std::string, std::unordered_map<u64, db_object*>> _objects;
             			
 		private:
@@ -52,6 +61,7 @@ BEGIN_NAMESPACE_TNODE {
 		    bool getObject(std::string table, u64 id, ByteBuffer* buffer);
 		    bool removeObject(std::string table, u64 id);
 		    bool setObject(std::string table, u64 id, const ByteBuffer* buffer);
+		    bool flushObject(std::string table, db_object* object);
 	};
 }
 

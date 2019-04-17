@@ -9,8 +9,6 @@
 #include "tools/Spinlocker.h"
 #include "tools/ByteBuffer.h"
 
-#define EASYDB_ENABLE_FLUSH_SYNC		1
-
 BEGIN_NAMESPACE_TNODE {	
 	class Easydb {
 		public:
@@ -33,6 +31,7 @@ BEGIN_NAMESPACE_TNODE {
 			virtual Message* retrieveObject(std::string table, u64 id) = 0;
 			virtual bool deleteObject(std::string table, u64 id) = 0;
 			virtual bool updateObject(std::string table, u64 id, Message*) = 0;
+			virtual bool flushObject(std::string table, u64 id) = 0;
 
 		public:
 			static Easydb* createInstance();

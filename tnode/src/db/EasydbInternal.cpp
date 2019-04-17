@@ -16,6 +16,15 @@
 BEGIN_NAMESPACE_TNODE {
 	EasydbInternal::EasydbInternal() {		
 		this->_tableParser = new MessageParser();
+		this->_async_flush = sConfig.get("db.async", EASYDB_DEF_ASYNC_FLUSH);
+		this->_async_flush_interval = sConfig.get("db.async_flush_interval", EASYDB_DEF_ASYNC_FLUSH_INTERVAL);
+		this->_async_flush_maxsize = sConfig.get("db.async_flush_maxsize", EASYDB_DEF_ASYNC_FLUSH_MAXSIZE);
+		if (this->_async_flush) {
+			Debug("Easydb async flush: on, interval: %u, maxsize: %u", this->_async_flush_interval, this->_async_flush_maxsize);
+		}
+		else {
+			Debug("Easydb async flush: off");
+		}
 	}
 
 	Easydb::~Easydb() {}
@@ -30,23 +39,34 @@ BEGIN_NAMESPACE_TNODE {
 			//
 			// release MySQL handler
 			if (this->_dbhandler) {
-				//TODO: flush dirty entity to db
+				//
+				// flush dirty entity to db & release all of db_objects
+				for (auto& i : this->_objects) {
+					const std::string& table = i.first;
+					auto& objects = i.second;
+					for (auto& iterator : objects) {
+						db_object* object = iterator.second;
+						assert(object);
+						assert(object->message);
+						assert(object->id == iterator.first);
+						if (object->dirty) {
+							object->dirty = !this->flushObject(table, object);
+							Debug("flush object: 0x%lx, table:%s [%s]", object->id, table.c_str(), object->dirty ? "FAIL" : "OK");
+						}						
+						SafeDelete(object->message);
+						SafeDelete(object);
+					}
+				}
+				this->_objects.clear();
+
+				//
+				// close MySQL handler
 				this->_dbhandler->closeDatabase();
 			}
 			SafeDelete(this->_dbhandler);
 
 			//
-			// release all of protobuf::Messages
-			for (auto& i : this->_objects) {
-				auto& objects = i.second;
-				for (auto& iterator : objects) {
-					db_object* o = iterator.second;
-					SafeDelete(o->message);// delete protobuf::Message
-					SafeDelete(o);// delete db_object
-				}
-			}
-			this->_objects.clear();
-			
+			// release MessageParser
 			SafeDelete(this->_tableParser);
 		}
 	}
@@ -131,10 +151,7 @@ BEGIN_NAMESPACE_TNODE {
 
 		//
 		// add object to cache
-		db_object* object = new db_object();
-		object->id = objectid;
-		object->dirty = false;
-		object->message = message;
+		db_object* object = new db_object(objectid, false, message);
 		objects[objectid] = object;
 		return objectid;
 	}
@@ -169,10 +186,7 @@ BEGIN_NAMESPACE_TNODE {
 
 		//
 		// add object to cache
-		db_object* object = new db_object();
-		object->id = id;
-		object->dirty = false;
-		object->message = message;
+		db_object* object = new db_object(id, false, message);
 		objects[id] = object;
 		
 		return message;
@@ -218,27 +232,66 @@ BEGIN_NAMESPACE_TNODE {
 		}
 
 		assert(object);
-		assert(object->message);			
+		assert(object->message);
 
 		bool rc = this->tableParser()->MergeMessage(object->message, update_msg);
 		CHECK_RETURN(rc, false, "merge message error: 0x%lx, table: %s", id, table.c_str());
 
-#if EASYDB_ENABLE_FLUSH_SYNC
+		//
+		// NOTE: async flush not implement
+#if 0
+		if (this->_async_flush) {
+			object->dirty = true;
+		}
+		else {
+			rc = this->flushObject(table, object);
+		}
+#else
+		object->dirty = true;
+#endif
+		
+		return rc;
+	}
+
+ 	bool EasydbInternal::flushObject(std::string table, u64 id) {
+        CHECK_RETURN(this->_dbhandler, false, "not connectServer");
+        CHECK_RETURN(this->_objects.find(table) != this->_objects.end(), false, "table: %s not exist", table.c_str());	
+        
+		auto& objects = this->_objects[table];
+		auto iterator = objects.find(id);
+		CHECK_RETURN(iterator != objects.end(), false, "not found object: 0x%lx, table: %s in cache", id, table.c_str());
+		db_object* object = iterator->second;
+		assert(object);
+		assert(object->message);
+		assert(object->id == id);
+		if (!object->dirty) {
+			return true; // async off or already flush
+		}
+		//CHECK_ALARM(object->dirty, true, "object: 0x%lx, table: %s not dirty", id, table.c_str());
+		
+		bool rc = this->flushObject(table, object);
+		if (rc) {
+			object->dirty = false;
+		}
+		return rc;
+ 	}
+
+ 	//
+ 	//------------------------------------------------------------------------------------------------
+ 	//
+
+	bool EasydbInternal::flushObject(std::string table, db_object* object) {
 		//
 		// serialize protobuf::Message to buffer
 		ByteBuffer buffer;
 		size_t byteSize = object->message->ByteSize();
-		rc = object->message->SerializeToArray(buffer.wbuffer(byteSize), byteSize);
-		CHECK_RETURN(rc, 0, "Serialize message:%s failure, byteSize:%ld", object->message->GetTypeName().c_str(), byteSize);
+		bool rc = object->message->SerializeToArray(buffer.wbuffer(byteSize), byteSize);
+		CHECK_RETURN(rc, false, "Serialize message:%s failure, byteSize:%ld", object->message->GetTypeName().c_str(), byteSize);
 		buffer.wlength(byteSize);
+		
 		//
 		// flush buffer to db
-		rc = this->setObject(table, id, &buffer);
-#else
-
-#endif
-		
-		return rc;
+		return this->setObject(table, object->id, &buffer);		
 	}
  	
 	bool EasydbInternal::createTable(std::string table) {

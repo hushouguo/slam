@@ -735,8 +735,31 @@ BEGIN_NAMESPACE_TNODE {
 		bool rc = (*s)->updateObject(table, id, message);
 		if (!rc) {
 			SafeDelete(message);
-			CHECK_RETURN(false, 0, "createObject failure, id: 0x%lx, msgid:%d, table:%s", id, msgid, table);
+			CHECK_RETURN(false, 0, "updateObject failure, id: 0x%lx, msgid:%d, table:%s", id, msgid, table);
 		}
+		
+		lua_pushboolean(L, rc);
+		return 1;
+	}
+
+	//
+	// bool db:flush(table, uint64_t)
+	static int cc_db_flush(lua_State* L) {
+		Easydb** s = (Easydb**) luaL_checkudata(L, 1, LUA_METATABLE_DB_NAME);		
+		luaL_argcheck(L, s != NULL, 1, "invalid `db` userdata");
+	
+		int args = lua_gettop(L);// this:userdata in stack bottom
+		CHECK_RETURN(args == 3, 0, "`%s` lack args:%d", __FUNCTION__, args);
+		CHECK_RETURN(lua_isstring(L, -(args - 1)), 0, "[%s]", lua_typename(L, lua_type(L, -(args - 1))));
+		CHECK_RETURN(lua_isnumber(L, -(args - 2)), 0, "[%s]", lua_typename(L, lua_type(L, -(args - 2))));
+		size_t len = 0;
+		const char* table = lua_tolstring(L, -(args - 1), &len);
+		u64 id = lua_tointeger(L, -(args - 2));
+
+		//
+		// flush object to db
+		bool rc = (*s)->flushObject(table, id);
+		CHECK_ERROR(rc, "flushObject failure, id: 0x%lx, table:%s", id, table);
 		
 		lua_pushboolean(L, rc);
 		return 1;
@@ -928,6 +951,9 @@ BEGIN_NAMESPACE_TNODE {
 		//
 		// o db:unserialize(table, uint64_t)
 		LUA_REGISTER(L, "unserialize", cc_db_unserialize);
+		//
+		// bool db:flush(table, uint64_t)
+		LUA_REGISTER(L, "flush", cc_db_flush);
 		
 		LUA_REGISTER(L, "__gc", __cc_db_gc);
 		LUA_REGISTER(L, "__tostring", __cc_db_tostring);
