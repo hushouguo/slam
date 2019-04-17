@@ -28,6 +28,8 @@ rc = db:loadmsg("protocol/echo.proto")
 assert(rc)
 rc = db:regtable("player", "protocol.EchoRequest")
 assert(rc)
+--local id = db:create_object("player", 100, lite_player)
+--cc.log_trace("id : " .. id)
 --local objectid = db:create_object("player", lite_player)
 local objectid = 10 
 --cc.log_trace("objectid: " .. objectid)
