@@ -65,7 +65,7 @@ BEGIN_NAMESPACE_TNODE {
 			this->removeService(sid);
 			SafeDelete(service);
 		}
-		Debug << "new service: " << sid;
+		//Debug << "new service: " << sid;
 		return service;
 	}
 

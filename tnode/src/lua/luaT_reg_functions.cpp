@@ -335,14 +335,14 @@ BEGIN_NAMESPACE_TNODE {
 	}
 
 	//
-	// bool newservice(entryfile)
+	// u32 newservice(entryfile)
 	static int cc_newservice(lua_State* L) {
 		int args = lua_gettop(L);
 		CHECK_RETURN(args == 1, 0, "`%s` lack args: %d", __FUNCTION__, args);
 		CHECK_RETURN(lua_isstring(L, -args), 0, "[%s]", lua_typename(L, lua_type(L, -args)));
 		const char* entryfile = lua_tostring(L, -args);
-		bool retval = sServiceManager.newservice(entryfile);
-		lua_pushboolean(L, retval ? 1 : 0);
+		Service* service = sServiceManager.newservice(entryfile);
+		lua_pushinteger(L, service ? service->id : -1);
 		return 1;
 	}
 
@@ -743,8 +743,8 @@ BEGIN_NAMESPACE_TNODE {
 	}
 
 	//
-	// bool db:flush(table, uint64_t)
-	static int cc_db_flush(lua_State* L) {
+	// bool db:flush_object(table, uint64_t)
+	static int cc_db_flush_object(lua_State* L) {
 		Easydb** s = (Easydb**) luaL_checkudata(L, 1, LUA_METATABLE_DB_NAME);		
 		luaL_argcheck(L, s != NULL, 1, "invalid `db` userdata");
 	
@@ -812,7 +812,7 @@ BEGIN_NAMESPACE_TNODE {
 		luaT_beginNamespace(L, LUA_REGISTER_NAMESPACE);
 
 		//
-		// bool newservice(entryfile)
+		// u32 newservice(entryfile)
 		LUA_REGISTER(L, "newservice", cc_newservice);
 		//
 		// void exitservice()
@@ -950,8 +950,8 @@ BEGIN_NAMESPACE_TNODE {
 		// o db:unserialize(table, uint64_t)
 		LUA_REGISTER(L, "unserialize", cc_db_unserialize);
 		//
-		// bool db:flush(table, uint64_t)
-		LUA_REGISTER(L, "flush", cc_db_flush);
+		// bool db:flush_object(table, uint64_t)
+		LUA_REGISTER(L, "flush_object", cc_db_flush_object);
 		
 		LUA_REGISTER(L, "__gc", __cc_db_gc);
 		LUA_REGISTER(L, "__tostring", __cc_db_tostring);
