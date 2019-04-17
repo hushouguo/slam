@@ -9,6 +9,8 @@
 #include "tools/Spinlocker.h"
 #include "tools/ByteBuffer.h"
 
+#define EASYDB_ENABLE_FLUSH_SYNC		1
+
 BEGIN_NAMESPACE_TNODE {	
 	class Easydb {
 		public:

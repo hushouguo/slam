@@ -114,5 +114,10 @@ BEGIN_NAMESPACE_TNODE {
 	MessageFactory* MessageParser::GetMessageFactory() {
 		return &this->_factory;
 	}
+
+	bool MessageParser::MergeMessage(Message* dest, const Message* src) {
+		//TODO:
+		return false;
+	}
 }
 

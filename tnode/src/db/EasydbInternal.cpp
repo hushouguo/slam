@@ -164,13 +164,62 @@ BEGIN_NAMESPACE_TNODE {
 	}
 	
 	bool EasydbInternal::deleteObject(std::string table, u64 id) {
-		//TODO:
-		return false;
+        CHECK_RETURN(this->_dbhandler, false, "not connectServer");
+        CHECK_RETURN(this->_objects.find(table) != this->_objects.end(), false, "table: %s not exist", table.c_str());	
+
+		//
+		// remove cache if exists
+        auto& objects = this->_objects[table];
+        auto iterator = objects.find(id);
+        if (iterator != objects.end()) {
+        	objects.erase(iterator);
+        }
+
+		return this->removeObject(table, id);
 	}
 	
-	bool EasydbInternal::updateObject(std::string table, u64 id, google::protobuf::Message*) {
-		//TODO:
-		return false;
+	bool EasydbInternal::updateObject(std::string table, u64 id, Message* update_msg) {
+        CHECK_RETURN(this->_dbhandler, false, "not connectServer");
+        CHECK_RETURN(this->_objects.find(table) != this->_objects.end(), false, "table: %s not exist", table.c_str());	
+
+		Message* message = nullptr;
+		
+		auto& objects = this->_objects[table];
+		auto iterator = objects.find(id);
+		if (iterator != objects.end()) {
+			message = iterator->second;
+		}
+		else {
+			Alarm("updateObject: 0x%lx not cache, table: %s", id, table.c_str());
+			this->retrieveObject(table, id);
+			//
+			// find object again
+			iterator = objects.find(id);
+			CHECK_RETURN(iterator != objects.end(), false, "updateObject: 0x%lx error, table: %s", id, table.c_str());
+			message = iterator->second;
+		}
+
+		assert(message != nullptr);
+
+		bool rc = this->tableParser()->MergeMessage(message, update_msg);
+		CHECK_RETURN(rc, false, "merge message error: 0x%lx, table: %s", id, table.c_str());
+
+#if EASYDB_ENABLE_FLUSH_SYNC
+		//
+		// serialize protobuf::Message to buffer
+		ByteBuffer buffer;
+		size_t byteSize = message->ByteSize();
+		rc = message->SerializeToArray(buffer.wbuffer(byteSize), byteSize);
+		CHECK_RETURN(rc, 0, "Serialize message:%s failure, byteSize:%ld", message->GetTypeName().c_str(), byteSize);
+		buffer.wlength(byteSize);
+		//
+		// flush buffer to db
+		rc = this->setObject(table, id, &buffer);
+#else
+
+#endif
+		
+		return rc;
 	}
  	
 	bool EasydbInternal::createTable(std::string table) {
@@ -182,13 +231,23 @@ BEGIN_NAMESPACE_TNODE {
         return this->_dbhandler->runCommand(sql.str());	
     }
 
+	bool EasydbInternal::removeObject(std::string table, u64 id) {
+		CHECK_RETURN(this->_dbhandler, 0, "not connectServer");
+        CHECK_RETURN(this->_objects.find(table) != this->_objects.end(), 0, "table: %s not exist", table.c_str());
+        //
+        // remove object from db
+		std::ostringstream sql;
+		sql << "DELETE FROM `" << table << "` WHERE id = " << id;
+		return this->_dbhandler->runCommand(sql.str());
+	}
+
     //
     // insert object to db
 	u64 EasydbInternal::addObject(std::string table, u64 id, const ByteBuffer* buffer) {
 		CHECK_RETURN(this->_dbhandler, 0, "not connectServer");
         CHECK_RETURN(this->_objects.find(table) != this->_objects.end(), 0, "table: %s not exist", table.c_str());
-        auto& objects = this->_objects[table];
-        CHECK_RETURN(id == 0 || objects.find(id) == objects.end(), 0, "already exist object: 0x%lx, table: %s", id, table.c_str());
+        //auto& objects = this->_objects[table];
+        //CHECK_RETURN(id == 0 || objects.find(id) == objects.end(), 0, "already exist object: 0x%lx, table: %s", id, table.c_str());
 				
 		//
 		// sql statement
@@ -277,6 +336,42 @@ BEGIN_NAMESPACE_TNODE {
 		stmt.freeResult();
 		
 		buffer->wlength(lengths[0]);
+		return true;
+    }
+
+    //
+    // update object to db
+	bool EasydbInternal::setObject(std::string table, u64 id, const ByteBuffer* buffer) {
+		CHECK_RETURN(this->_dbhandler, 0, "not connectServer");
+        CHECK_RETURN(this->_objects.find(table) != this->_objects.end(), 0, "table: %s not exist", table.c_str());
+
+		//
+		// sql statement
+		MySQLStatement stmt(this->_dbhandler);
+		std::ostringstream o;
+		o << "UPDATE `" << table << "` SET `data` = ? WHERE id = " << id;
+		
+		const std::string sql = o.str();
+		bool rc = stmt.prepare(sql.c_str(), sql.length());
+		CHECK_RETURN(rc, 0, "prepare sql: %s error", sql.c_str());
+
+		//
+		// check buffer is empty
+		CHECK_ALARM(buffer->size() > 0, "object: 0x%lx buffer is empty", id);
+
+		unsigned long lengths[1] = { buffer->size() };
+		MYSQL_BIND params[1];
+		memset(params, 0, sizeof(params));
+		params[0].buffer_type = MYSQL_TYPE_LONG_BLOB;
+		params[0].buffer = buffer->rbuffer();
+		params[0].is_unsigned = true;
+		params[0].length = &lengths[0];
+
+		//
+		// execute sql
+		rc = stmt.bindParam(params) && stmt.exec();
+		CHECK_RETURN(rc, 0, "execute sql: %s error", sql.c_str());
+
 		return true;
     }
 }

@@ -28,7 +28,7 @@ BEGIN_NAMESPACE_TNODE {
 			Message* NewMessage(const char* name);
 			//
 			// get a protobuf::Message from cache, if not exists, call `newmsg` to allocate new message
-			Message* GetMessage(u32 msgid);			
+			Message* GetMessage(u32 msgid);
 
 		public:
 			//
@@ -43,6 +43,10 @@ BEGIN_NAMESPACE_TNODE {
 			//
 			// get Message Factory
 			MessageFactory* GetMessageFactory();
+
+			//
+			// merge two protobuf::Messages
+			bool MergeMessage(Message* dest, const Message* src);
 			
 		private:
 			DiskSourceTree _tree;

@@ -42,8 +42,10 @@ BEGIN_NAMESPACE_TNODE {
             			
 		private:
 		    bool createTable(std::string table);
-		    u64 addObject(std::string table, u64 id, const ByteBuffer* buffer);
+		    u64  addObject(std::string table, u64 id, const ByteBuffer* buffer);
 		    bool getObject(std::string table, u64 id, ByteBuffer* buffer);
+		    bool removeObject(std::string table, u64 id);
+		    bool setObject(std::string table, u64 id, const ByteBuffer* buffer);
 	};
 }
 
