@@ -908,11 +908,9 @@ BEGIN_NAMESPACE_TNODE {
 		// u32 newtimer(milliseconds, times, ctx, function(id, ctx) end)
 		// times: <= 0: forever, > 0: special times
 		LUA_REGISTER(L, "newtimer", cc_newtimer);
-		
-		//TODO: file i/o
+
 		//TODO: http
 		//TODO: curl
-		//TODO: db agent
 		
 		luaT_endNamespace(L);
 
