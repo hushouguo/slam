@@ -23,12 +23,12 @@ BEGIN_NAMESPACE_TNODE {
 		this->_async_flush = sConfig.get("db.async", EASYDB_DEF_ASYNC_FLUSH);
 		this->_async_flush_interval = sConfig.get("db.async_flush_interval", EASYDB_DEF_ASYNC_FLUSH_INTERVAL);
 		this->_async_flush_maxsize = sConfig.get("db.async_flush_maxsize", EASYDB_DEF_ASYNC_FLUSH_MAXSIZE);
-		if (this->_async_flush) {
-			Debug("Easydb async flush: on, interval: %u, maxsize: %u", this->_async_flush_interval, this->_async_flush_maxsize);
-		}
-		else {
-			Debug("Easydb async flush: off");
-		}
+//		if (this->_async_flush) {
+//			Debug("Easydb async flush: on, interval: %u, maxsize: %u", this->_async_flush_interval, this->_async_flush_maxsize);
+//		}
+//		else {
+//			Debug("Easydb async flush: off");
+//		}
 	}
 
 	Easydb::~Easydb() {}
@@ -55,7 +55,7 @@ BEGIN_NAMESPACE_TNODE {
 						assert(object->id == iterator.first);
 						if (object->dirty) {
 							object->dirty = !this->flushObject(table, object);
-							Debug("flush object: 0x%lx, table:%s [%s]", object->id, table.c_str(), object->dirty ? "FAIL" : "OK");
+							Debug("flush object: %ld, table:%s [%s]", object->id, table.c_str(), object->dirty ? "FAIL" : "OK");
 						}						
 						SafeDelete(object->message);
 						SafeDelete(object);
@@ -137,7 +137,7 @@ BEGIN_NAMESPACE_TNODE {
         }
 
 		auto& objects = this->_objects[table];
-		CHECK_RETURN(id == 0 || objects.find(id) == objects.end(), false, "duplicate object.id: 0x%lx, table: %s", id, table.c_str());
+		CHECK_RETURN(id == 0 || objects.find(id) == objects.end(), false, "duplicate object.id: %ld, table: %s", id, table.c_str());
 
 		//
 		// serialize protobuf::Message to buffer
@@ -150,8 +150,8 @@ BEGIN_NAMESPACE_TNODE {
 		//
 		// insert object into table
 		u64 objectid = this->addObject(table, id, &buffer);
-		CHECK_RETURN(objectid != 0, 0, "insert object: 0x%lx to table: %s error", id, table.c_str());
-		CHECK_RETURN(objects.find(objectid) == objects.end(), 0, "duplicate entityid: 0x%lx", objectid);
+		CHECK_RETURN(objectid != 0, 0, "insert object: %ld to table: %s error", id, table.c_str());
+		CHECK_RETURN(objects.find(objectid) == objects.end(), 0, "duplicate entityid: %ld", objectid);
 
 		//
 		// add object to cache
@@ -179,7 +179,7 @@ BEGIN_NAMESPACE_TNODE {
 		// fetch buffer from db
 		ByteBuffer buffer;
 		bool rc = this->getObject(table, id, &buffer);
-		CHECK_RETURN(rc, nullptr, "getObject: 0x%lx from table: %s error", id, table.c_str());
+		CHECK_RETURN(rc, nullptr, "getObject: %ld from table: %s error", id, table.c_str());
 
 		u32 msgid = hashString(table.c_str());
 		
@@ -226,12 +226,12 @@ BEGIN_NAMESPACE_TNODE {
 			object = iterator->second;
 		}
 		else {
-			Alarm("updateObject: 0x%lx not cache, table: %s", id, table.c_str());
+			Alarm("updateObject: %ld not cache, table: %s", id, table.c_str());
 			this->retrieveObject(table, id);
 			//
 			// find object again
 			iterator = objects.find(id);
-			CHECK_RETURN(iterator != objects.end(), false, "updateObject: 0x%lx error, table: %s", id, table.c_str());
+			CHECK_RETURN(iterator != objects.end(), false, "updateObject: %ld error, table: %s", id, table.c_str());
 			object = iterator->second;
 		}
 
@@ -239,7 +239,7 @@ BEGIN_NAMESPACE_TNODE {
 		assert(object->message);
 
 		bool rc = this->tableParser()->MergeMessage(object->message, update_msg);
-		CHECK_RETURN(rc, false, "merge message error: 0x%lx, table: %s", id, table.c_str());
+		CHECK_RETURN(rc, false, "merge message error: %ld, table: %s", id, table.c_str());
 
 		//
 		// NOTE: async flush not implement
@@ -263,7 +263,7 @@ BEGIN_NAMESPACE_TNODE {
         
 		auto& objects = this->_objects[table];
 		auto iterator = objects.find(id);
-		CHECK_RETURN(iterator != objects.end(), false, "not found object: 0x%lx, table: %s in cache", id, table.c_str());
+		CHECK_RETURN(iterator != objects.end(), false, "not found object: %ld, table: %s in cache", id, table.c_str());
 		db_object* object = iterator->second;
 		assert(object);
 		assert(object->message);
@@ -271,7 +271,7 @@ BEGIN_NAMESPACE_TNODE {
 		if (!object->dirty) {
 			return true; // async off or already flush
 		}
-		//CHECK_ALARM(object->dirty, true, "object: 0x%lx, table: %s not dirty", id, table.c_str());
+		//CHECK_ALARM(object->dirty, true, "object: %ld, table: %s not dirty", id, table.c_str());
 		
 		bool rc = this->flushObject(table, object);
 		if (rc) {
@@ -323,7 +323,7 @@ BEGIN_NAMESPACE_TNODE {
 		CHECK_RETURN(this->_dbhandler, 0, "not connectServer");
         CHECK_RETURN(this->_objects.find(table) != this->_objects.end(), 0, "table: %s not exist", table.c_str());
         //auto& objects = this->_objects[table];
-        //CHECK_RETURN(id == 0 || objects.find(id) == objects.end(), 0, "already exist object: 0x%lx, table: %s", id, table.c_str());
+        //CHECK_RETURN(id == 0 || objects.find(id) == objects.end(), 0, "already exist object: %ld, table: %s", id, table.c_str());
 				
 		//
 		// sql statement
@@ -342,7 +342,7 @@ BEGIN_NAMESPACE_TNODE {
 
 		//
 		// check buffer is empty
-		CHECK_ALARM(buffer->size() > 0, "object: 0x%lx buffer is empty", id);
+		CHECK_ALARM(buffer->size() > 0, "object: %ld buffer is empty", id);
 
 		unsigned long lengths[1] = { buffer->size() };
 		MYSQL_BIND params[1];
@@ -433,7 +433,7 @@ BEGIN_NAMESPACE_TNODE {
 
 		//
 		// check buffer is empty
-		CHECK_ALARM(buffer->size() > 0, "object: 0x%lx buffer is empty", id);
+		CHECK_ALARM(buffer->size() > 0, "object: %ld buffer is empty", id);
 
 		unsigned long lengths[1] = { buffer->size() };
 		MYSQL_BIND params[1];

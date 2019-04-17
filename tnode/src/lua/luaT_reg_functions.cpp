@@ -682,7 +682,7 @@ BEGIN_NAMESPACE_TNODE {
 		u64 autoid = (*s)->createObject(table, id, message);
 		if (autoid == 0) {
 			SafeDelete(message);
-			CHECK_RETURN(false, 0, "createObject failure, id: 0x%lx, msgid:%d, table:%s", id, msgid, table);
+			CHECK_RETURN(false, 0, "createObject failure, id: %ld, msgid:%d, table:%s", id, msgid, table);
 		}
 
 		lua_pushinteger(L, autoid);
@@ -735,7 +735,7 @@ BEGIN_NAMESPACE_TNODE {
 		bool rc = (*s)->updateObject(table, id, message);
 		if (!rc) {
 			SafeDelete(message);
-			CHECK_RETURN(false, 0, "updateObject failure, id: 0x%lx, msgid:%d, table:%s", id, msgid, table);
+			CHECK_RETURN(false, 0, "updateObject failure, id: %ld, msgid:%d, table:%s", id, msgid, table);
 		}
 		
 		lua_pushboolean(L, rc);
@@ -759,7 +759,7 @@ BEGIN_NAMESPACE_TNODE {
 		//
 		// flush object to db
 		bool rc = (*s)->flushObject(table, id);
-		CHECK_ERROR(rc, "flushObject failure, id: 0x%lx, table:%s", id, table);
+		CHECK_ERROR(rc, "flushObject failure, id: %ld, table:%s", id, table);
 		
 		lua_pushboolean(L, rc);
 		return 1;
@@ -782,12 +782,12 @@ BEGIN_NAMESPACE_TNODE {
 		//
 		// fetch protobuf::Message from db
 		Message* message = (*s)->retrieveObject(table, id);
-		CHECK_RETURN(message, 0, "retrieveObject: 0x%lx from table: %s failure", id, table);
+		CHECK_RETURN(message, 0, "retrieveObject: %ld from table: %s failure", id, table);
 
 		//
 		// decode protobuf::Message to lua
 		bool rc = luaT_message_parser_decode((*s)->tableParser(), L, message);
-		CHECK_RETURN(rc, 0, "decode object: 0x%lx, table: %s to lua failure", id, table);
+		CHECK_RETURN(rc, 0, "decode object: %ld, table: %s to lua failure", id, table);
 				
 		return 1;
 	}
