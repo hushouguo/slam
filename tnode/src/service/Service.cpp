@@ -13,6 +13,7 @@
 #include "tools/LockfreeMap.h"
 #include "tools/Registry.h"
 #include "message/ServiceMessage.h"
+#include "message/MessageParser.h"
 #include "config/Config.h"
 #include "lua/luaT.h"
 #include "lua/luaT_message_parser.h"

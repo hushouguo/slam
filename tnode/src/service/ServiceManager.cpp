@@ -12,6 +12,7 @@
 #include "tools/ThreadPool.h"
 #include "tools/Runnable.h"
 #include "message/ServiceMessage.h"
+#include "message/MessageParser.h"
 #include "time/Time.h"
 #include "lua/luaT.h"
 #include "lua/luaT_message_parser.h"

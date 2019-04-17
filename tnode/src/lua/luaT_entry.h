@@ -12,7 +12,7 @@ BEGIN_NAMESPACE_TNODE {
 	u32 luaT_entry_dispatch(lua_State* L, const void* netmsg);
 	//
 	// void msgParser(fd, entityid, msgid, o)
-	bool luaT_entry_msgParser(lua_State* L, const void* netmsg, luaT_message_parser* msgParser);
+	bool luaT_entry_msgParser(lua_State* L, const void* netmsg, MessageParser* msgParser);
 	
 	//
 	// void timer()

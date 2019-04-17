@@ -358,7 +358,7 @@ BEGIN_NAMESPACE_TNODE {
 
 		size_t byteSize = message->ByteSize();
 
-		if (!message->SerializeToString(out)) {
+		if (!message->SerializeToString(&out)) {
 			Error("Serialize message:%s failure, byteSize:%ld", message->GetTypeName().c_str(), byteSize);
 			return false;
 		}

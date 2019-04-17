@@ -16,6 +16,7 @@
 #include "tools/Runnable.h"
 #include "json/json_parser.h"
 #include "message/ServiceMessage.h"
+#include "message/MessageParser.h"
 #include "time/Time.h"
 #include "lua/luaT.h"
 #include "lua/luaT_reg_functions.h"
@@ -616,7 +617,7 @@ BEGIN_NAMESPACE_TNODE {
 		CHECK_RETURN(args == 2, 0, "`%s` lack args:%d", __FUNCTION__, args);
 		CHECK_RETURN(lua_isstring(L, -(args - 1)), 0, "[%s]", lua_typename(L, lua_type(L, -(args - 1))));
 		const char* filename = lua_tostring(L, -(args - 1));
-		bool rc = (*s)->tableParser()->LoadMessage(filename);
+		bool rc = (*s)->tableParser()->LoadMessageDescriptor(filename);
 		lua_pushboolean(L, rc);
 		return 1;
 	}

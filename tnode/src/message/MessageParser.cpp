@@ -4,6 +4,7 @@
  */
 
 #include "tnode.h"
+#include "tools/Tools.h"
 #include "MessageParser.h"
 
 BEGIN_NAMESPACE_TNODE {
@@ -56,7 +57,7 @@ BEGIN_NAMESPACE_TNODE {
 	Message* MessageParser::NewMessage(u32 msgid) {
 		Message* message = FindOrNull(this->_messages, msgid);
         CHECK_RETURN(message, nullptr, "message: %d not register", msgid);
-        return this->NewMessage(message->GetTypeName());
+        return this->NewMessage(message->GetTypeName().c_str());
 	}
 	
 	Message* MessageParser::NewMessage(const char* name) {

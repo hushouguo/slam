@@ -6,6 +6,7 @@
 #include "tnode.h"
 #include "tools/Singleton.h"
 #include "message/ServiceMessage.h"
+#include "message/MessageParser.h"
 #include "lua/luaT.h"
 #include "lua/luaT_message_parser.h"
 #include "lua/luaT_entry.h"
@@ -35,7 +36,7 @@ BEGIN_NAMESPACE_TNODE {
 
 	//
 	// void function msgParser(fd, entityid, msgid, o)
-	bool luaT_entry_msgParser(lua_State* L, const void* netmsg, luaT_message_parser* msgParser) {
+	bool luaT_entry_msgParser(lua_State* L, const void* netmsg, MessageParser* msgParser) {
 		size_t len = 0;
 		const void* payload = sNetworkManager.easynet()->getMessageContent(netmsg, &len);
 		CHECK_RETURN(len >= sizeof(ServiceMessage), false, "illegal netmsg.len: %ld, ServiceMessage: %ld", len, sizeof(ServiceMessage));
@@ -49,8 +50,8 @@ BEGIN_NAMESPACE_TNODE {
 
 		lua_pushinteger(L, fd);
 		lua_pushinteger(L, msg->entityid);
-		lua_pushinteger(L, msg->msgid);		
-		bool rc = msgParser->decode(L, msg->msgid, msg->payload, msg->len - sizeof(ServiceMessage));
+		lua_pushinteger(L, msg->msgid);
+		bool rc = luaT_message_parser_decode(msgParser, L, msg->msgid, msg->payload, msg->len - sizeof(ServiceMessage));
 		if (rc) {
 			luaT_Value ret;
 			rc = luaT_pcall(L, 4, ret);

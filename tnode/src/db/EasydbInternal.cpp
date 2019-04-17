@@ -5,6 +5,7 @@
 
 #include "tnode.h"
 #include "tools/Tools.h"
+#include "message/MessageParser.h"
 #include "mysql/MySQLResult.h"
 #include "mysql/MySQLStatement.h"
 #include "mysql/MySQL.h"
