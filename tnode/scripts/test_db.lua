@@ -52,3 +52,5 @@ local oo = db:unserialize("player", objectid)
 cc.log_trace("unserialize object: 10 again")
 dump(object)
 
+db:flush("player", objectid);
+
