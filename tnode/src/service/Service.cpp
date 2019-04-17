@@ -27,7 +27,7 @@ BEGIN_NAMESPACE_TNODE {
 	bool Service::init(const char* entryfile) {
 		//
 		// network init
-		this->_msgParser = luaT_message_parser_creator::create();
+		this->_msgParser = new MessageParser();
 
 		//
 		// lua state init & execute entryfile
@@ -59,7 +59,8 @@ BEGIN_NAMESPACE_TNODE {
 			const void* netmsg = this->_msgQueue.pop_front();
 			sNetworkManager.easynet()->releaseMessage(netmsg);
 		}
-		this->_msgQueue.clear();		
+		this->_msgQueue.clear();
+
 		SafeDelete(this->_msgParser);
 		
 		//

@@ -24,13 +24,13 @@ BEGIN_NAMESPACE_TNODE {
 			virtual bool findDatabase(std::string) = 0;
 
 		public:
-			virtual luaT_message_parser* tableParser() = 0;
+			virtual MessageParser* tableParser() = 0;
 			
 		public:
-			virtual u64 createObject(std::string table, u64 id, google::protobuf::Message*) = 0;
-			virtual google::protobuf::Message* retrieveObject(std::string table, u64 id) = 0;
+			virtual u64 createObject(std::string table, u64 id, Message*) = 0;
+			virtual Message* retrieveObject(std::string table, u64 id) = 0;
 			virtual bool deleteObject(std::string table, u64 id) = 0;
-			virtual bool updateObject(std::string table, u64 id, google::protobuf::Message*) = 0;
+			virtual bool updateObject(std::string table, u64 id, Message*) = 0;
 
 		public:
 			static Easydb* createInstance();

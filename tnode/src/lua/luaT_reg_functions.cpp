@@ -142,8 +142,8 @@ BEGIN_NAMESPACE_TNODE {
 		CHECK_RETURN(lua_istable(L, -(args - 1)), 0, "[%s]", lua_typename(L, lua_type(L, -(args - 1))));
 		u32 msgid = lua_tointeger(L, -args);
 		std::string outstring;
-		bool retval = sServiceManager.getService(L)->msgParser()->encode(L, msgid, outstring);
-		CHECK_RETURN(retval, 0, "encode message: %d error", msgid);
+		bool rc = luaT_message_parser_encode(sServiceManager.getService(L)->msgParser(), L, msgid, outstring);
+		CHECK_RETURN(rc, 0, "encode message: %d error", msgid);
 		lua_pushlstring(L, outstring.data(), outstring.length());
 		return 1;
 	}
@@ -158,8 +158,8 @@ BEGIN_NAMESPACE_TNODE {
 		u32 msgid = lua_tointeger(L, -args);
 		size_t len = 0;
 		const char* instring = lua_tolstring(L, -(args - 1), &len);
-		bool retval = sServiceManager.getService(L)->msgParser()->decode(L, msgid, instring, len);
-		CHECK_RETURN(retval, 0, "decode message: %d error", msgid);		
+		bool rc = luaT_message_parser_decode(sServiceManager.getService(L)->msgParser(), L, msgid, instring, len);
+		CHECK_RETURN(rc, 0, "decode message: %d error", msgid);		
 		return 1; // table is in the top of stack
 	}
 
@@ -405,7 +405,7 @@ BEGIN_NAMESPACE_TNODE {
 
 		//
 		// encode table of lua to protobuf::Message
-		google::protobuf::Message* message = sServiceManager.getService(L)->msgParser()->encode(L, msgid);
+		Message* message = luaT_message_parser_encode(sServiceManager.getService(L)->msgParser(), L, msgid, false);
 		CHECK_RETURN(message, 0, "encode message: %d error", msgid);
 
 		//
@@ -443,7 +443,7 @@ BEGIN_NAMESPACE_TNODE {
 		CHECK_RETURN(args == 1, 0, "`%s` lack args:%d", __FUNCTION__, args);
 		CHECK_RETURN(lua_isstring(L, -args), 0, "[%s]", lua_typename(L, lua_type(L, -args)));
 		const char* filename = lua_tostring(L, -args);
-		bool rc = sServiceManager.getService(L)->msgParser()->loadmsg(filename);
+		bool rc = sServiceManager.getService(L)->msgParser()->LoadMessageDescriptor(filename);
 		lua_pushboolean(L, rc);
 		return 1;
 	}
@@ -457,7 +457,7 @@ BEGIN_NAMESPACE_TNODE {
 		CHECK_RETURN(lua_isstring(L, -(args - 1)), 0, "[%s]", lua_typename(L, lua_type(L, -(args - 1))));
 		u32 msgid = lua_tointeger(L, -args);
 		const char* name = lua_tostring(L, -(args - 1));
-		bool rc = sServiceManager.getService(L)->msgParser()->regmsg(msgid, name);
+		bool rc = sServiceManager.getService(L)->msgParser()->RegisteMessage(msgid, name);
 		lua_pushboolean(L, rc);
 		return 1;
 	}
@@ -616,7 +616,7 @@ BEGIN_NAMESPACE_TNODE {
 		CHECK_RETURN(args == 2, 0, "`%s` lack args:%d", __FUNCTION__, args);
 		CHECK_RETURN(lua_isstring(L, -(args - 1)), 0, "[%s]", lua_typename(L, lua_type(L, -(args - 1))));
 		const char* filename = lua_tostring(L, -(args - 1));
-		bool rc = (*s)->tableParser()->loadmsg(filename);
+		bool rc = (*s)->tableParser()->LoadMessage(filename);
 		lua_pushboolean(L, rc);
 		return 1;
 	}
@@ -635,7 +635,7 @@ BEGIN_NAMESPACE_TNODE {
 		const char* table = lua_tolstring(L, -(args - 1), &len);
 		const char* name = lua_tostring(L, -(args - 2));
 		u32 msgid = hashString(table, len);
-		bool rc = (*s)->tableParser()->regmsg(msgid, name);
+		bool rc = (*s)->tableParser()->RegisteMessage(msgid, name);
 		lua_pushboolean(L, rc);
 		return 1;
 	}
@@ -672,8 +672,8 @@ BEGIN_NAMESPACE_TNODE {
 		}
 		
 		//
-		// encode table of lua to new protobuf::Message
-		google::protobuf::Message* message = (*s)->tableParser()->encode_newmsg(L, msgid);
+		// allocate NEW protobuf::Message, and encode lua's table to Message		
+		Message* message = luaT_message_parser_encode((*s)->tableParser(), L, msgid, true);
 		CHECK_RETURN(message, 0, "encode message: %d, %s error", msgid, table);
 
 		//
@@ -725,8 +725,8 @@ BEGIN_NAMESPACE_TNODE {
 		u64 id = lua_tointeger(L, -(args - 2));
 
 		//
-		// encode table of lua to new protobuf::Message
-		google::protobuf::Message* message = (*s)->tableParser()->encode_newmsg(L, msgid);
+		// encode table of lua to NEW protobuf::Message
+		Message* message = luaT_message_parser_encode((*s)->tableParser(), L, msgid, true);
 		CHECK_RETURN(message, 0, "encode message: %d, %s error", msgid, table);
 
 		//
@@ -757,12 +757,12 @@ BEGIN_NAMESPACE_TNODE {
 
 		//
 		// fetch protobuf::Message from db
-		google::protobuf::Message* message = (*s)->retrieveObject(table, id);
+		Message* message = (*s)->retrieveObject(table, id);
 		CHECK_RETURN(message, 0, "retrieveObject: 0x%lx from table: %s failure", id, table);
 
 		//
 		// decode protobuf::Message to lua
-		bool rc = (*s)->tableParser()->decode(L, message);
+		bool rc = luaT_message_parser_decode((*s)->tableParser(), L, message);
 		CHECK_RETURN(rc, 0, "decode object: 0x%lx, table: %s to lua failure", id, table);
 				
 		return 1;

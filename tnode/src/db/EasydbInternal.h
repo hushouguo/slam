@@ -22,23 +22,23 @@ BEGIN_NAMESPACE_TNODE {
 			bool findDatabase(std::string) override;
 			
 		public:
-			u64 createObject(std::string table, u64 id, google::protobuf::Message*) override;
-			google::protobuf::Message* retrieveObject(std::string table, u64 id) override;
+			u64 createObject(std::string table, u64 id, Message*) override;
+			Message* retrieveObject(std::string table, u64 id) override;
 			bool deleteObject(std::string table, u64 id) override;
-			bool updateObject(std::string table, u64 id, google::protobuf::Message*) override;
+			bool updateObject(std::string table, u64 id, Message*) override;
 
 		public:
-			luaT_message_parser* tableParser() override { return this->_tableParser; }
+			MessageParser* tableParser() override { return this->_tableParser; }
 
 		private:
-			luaT_message_parser* _tableParser = nullptr;
+			MessageParser* _tableParser = nullptr;
 		
 		private:
 			bool _isstop = true;
 			void stop();
 			std::string _database;
 			MySQL* _dbhandler = nullptr;
-		    std::unordered_map<std::string, std::unordered_map<u64, google::protobuf::Message*>> _objects;
+		    std::unordered_map<std::string, std::unordered_map<u64, Message*>> _objects;
             			
 		private:
 		    bool createTable(std::string table);

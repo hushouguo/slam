@@ -14,7 +14,7 @@
 
 BEGIN_NAMESPACE_TNODE {
 	EasydbInternal::EasydbInternal() {		
-		this->_tableParser = luaT_message_parser_creator::create();
+		this->_tableParser = new MessageParser();
 	}
 
 	Easydb::~Easydb() {}
@@ -25,19 +25,25 @@ BEGIN_NAMESPACE_TNODE {
 	void EasydbInternal::stop() {
 		if (!this->_isstop) {
 			this->_isstop = true;
+			
+			//
+			// release MySQL handler
 			if (this->_dbhandler) {
 				//TODO: flush dirty entity to db
 				this->_dbhandler->closeDatabase();
 			}
 			SafeDelete(this->_dbhandler);
-			/*
-			SafeDelete(this->_in);
-			for (auto& i : this->_messages) {
-				Message* message = i.second;
-				SafeDelete(message);
+
+			//
+			// release all of protobuf::Messages
+			for (auto& i : this->_objects) {
+				auto& objects = i.second;
+				for (auto& iterator : objects) {
+					delete iterator.second;// delete protobuf::Message
+				}
 			}
-			this->_messages.clear();
-			*/
+			this->_objects.clear();
+			
 			SafeDelete(this->_tableParser);
 		}
 	}
@@ -94,7 +100,7 @@ BEGIN_NAMESPACE_TNODE {
 		return this->_dbhandler->findDatabase(database);
 	}
 
-	u64 EasydbInternal::createObject(std::string table, u64 id, google::protobuf::Message* message) {
+	u64 EasydbInternal::createObject(std::string table, u64 id, Message* message) {
         CHECK_RETURN(this->_dbhandler, 0, "not connectServer");
         //
         // check if table exists
@@ -126,7 +132,7 @@ BEGIN_NAMESPACE_TNODE {
 		return objectid;
 	}
 		
-	google::protobuf::Message* EasydbInternal::retrieveObject(std::string table, u64 id) {
+	Message* EasydbInternal::retrieveObject(std::string table, u64 id) {
         CHECK_RETURN(this->_dbhandler, nullptr, "not connectServer");
         CHECK_RETURN(this->_objects.find(table) != this->_objects.end(), nullptr, "table: %s not exist", table.c_str());
 
@@ -145,8 +151,8 @@ BEGIN_NAMESPACE_TNODE {
 		u32 msgid = hashString(table.c_str());
 		
 		//
-		// decode buffer to protobuf::Message
-		google::protobuf::Message* message = this->tableParser()->decode(msgid, buffer.rbuffer(), buffer.size());
+		// decode buffer to NEW protobuf::Message
+		Message* message = this->tableParser()->DecodeToMessage(msgid, buffer.rbuffer(), buffer.size());
 		CHECK_RETURN(message, nullptr, "decode buffer failure: %d", msgid);						
 
 		//

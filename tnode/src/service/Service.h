@@ -43,13 +43,13 @@ BEGIN_NAMESPACE_TNODE {
 		// network
 		private:
 			LockfreeQueue<const void*> _msgQueue;
-			luaT_message_parser* _msgParser = nullptr;
+			MessageParser* _msgParser = nullptr;
 			
 		public:
 			inline void pushMessage(const void* netmsg) {
 				this->_msgQueue.push_back(netmsg);
 			}
-			inline luaT_message_parser* msgParser() { return this->_msgParser; }
+			inline MessageParser* msgParser() { return this->_msgParser; }
 			
 		
 		// timer handle
