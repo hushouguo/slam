@@ -38,7 +38,13 @@ BEGIN_NAMESPACE_TNODE {
 			void stop();
 			std::string _database;
 			MySQL* _dbhandler = nullptr;
-		    std::unordered_map<std::string, std::unordered_map<u64, Message*>> _objects;
+			struct db_object {
+				u64 id;
+				bool dirty;
+				Spinlocker locker;
+				Message* message = nullptr;
+			};
+		    std::unordered_map<std::string, std::unordered_map<u64, db_object*>> _objects;
             			
 		private:
 		    bool createTable(std::string table);

@@ -774,6 +774,7 @@ BEGIN_NAMESPACE_TNODE {
 		luaL_argcheck(L, s != NULL, 1, "invalid `db` userdata");
 		if (s) {
 			Debug("__db_gc: %p", *s);
+			// NOTE: should be remove Easydb from this service
 		}
 		return 0;
 	}

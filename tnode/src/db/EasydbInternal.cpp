@@ -40,7 +40,9 @@ BEGIN_NAMESPACE_TNODE {
 			for (auto& i : this->_objects) {
 				auto& objects = i.second;
 				for (auto& iterator : objects) {
-					delete iterator.second;// delete protobuf::Message
+					db_object* o = iterator.second;
+					SafeDelete(o->message);// delete protobuf::Message
+					SafeDelete(o);// delete db_object
 				}
 			}
 			this->_objects.clear();
@@ -129,7 +131,11 @@ BEGIN_NAMESPACE_TNODE {
 
 		//
 		// add object to cache
-		objects[objectid] = message;
+		db_object* object = new db_object();
+		object->id = objectid;
+		object->dirty = false;
+		object->message = message;
+		objects[objectid] = object;
 		return objectid;
 	}
 		
@@ -138,10 +144,15 @@ BEGIN_NAMESPACE_TNODE {
         CHECK_RETURN(this->_objects.find(table) != this->_objects.end(), nullptr, "table: %s not exist", table.c_str());
 
 		//
-		// check cache
+		// check cache if exists
 		auto& objects = this->_objects[table];
 		auto iterator = objects.find(id);
-		if (iterator != objects.end()) { return iterator->second; }
+		if (iterator != objects.end()) { 
+			db_object* object = iterator->second;
+			assert(object);
+			assert(object->message);
+			return object->message;
+		}
 
 		//
 		// fetch buffer from db
@@ -158,7 +169,11 @@ BEGIN_NAMESPACE_TNODE {
 
 		//
 		// add object to cache
-		objects[id] = message;
+		db_object* object = new db_object();
+		object->id = id;
+		object->dirty = false;
+		object->message = message;
+		objects[id] = object;
 		
 		return message;
 	}
@@ -172,6 +187,9 @@ BEGIN_NAMESPACE_TNODE {
         auto& objects = this->_objects[table];
         auto iterator = objects.find(id);
         if (iterator != objects.end()) {
+			db_object* object = iterator->second;
+			SafeDelete(object->message);
+			SafeDelete(object);
         	objects.erase(iterator);
         }
 
@@ -182,12 +200,12 @@ BEGIN_NAMESPACE_TNODE {
         CHECK_RETURN(this->_dbhandler, false, "not connectServer");
         CHECK_RETURN(this->_objects.find(table) != this->_objects.end(), false, "table: %s not exist", table.c_str());	
 
-		Message* message = nullptr;
+		db_object* object = nullptr;
 		
 		auto& objects = this->_objects[table];
 		auto iterator = objects.find(id);
 		if (iterator != objects.end()) {
-			message = iterator->second;
+			object = iterator->second;
 		}
 		else {
 			Alarm("updateObject: 0x%lx not cache, table: %s", id, table.c_str());
@@ -196,21 +214,22 @@ BEGIN_NAMESPACE_TNODE {
 			// find object again
 			iterator = objects.find(id);
 			CHECK_RETURN(iterator != objects.end(), false, "updateObject: 0x%lx error, table: %s", id, table.c_str());
-			message = iterator->second;
+			object = iterator->second;
 		}
 
-		assert(message != nullptr);
+		assert(object);
+		assert(object->message);			
 
-		bool rc = this->tableParser()->MergeMessage(message, update_msg);
+		bool rc = this->tableParser()->MergeMessage(object->message, update_msg);
 		CHECK_RETURN(rc, false, "merge message error: 0x%lx, table: %s", id, table.c_str());
 
 #if EASYDB_ENABLE_FLUSH_SYNC
 		//
 		// serialize protobuf::Message to buffer
 		ByteBuffer buffer;
-		size_t byteSize = message->ByteSize();
-		rc = message->SerializeToArray(buffer.wbuffer(byteSize), byteSize);
-		CHECK_RETURN(rc, 0, "Serialize message:%s failure, byteSize:%ld", message->GetTypeName().c_str(), byteSize);
+		size_t byteSize = object->message->ByteSize();
+		rc = object->message->SerializeToArray(buffer.wbuffer(byteSize), byteSize);
+		CHECK_RETURN(rc, 0, "Serialize message:%s failure, byteSize:%ld", object->message->GetTypeName().c_str(), byteSize);
 		buffer.wlength(byteSize);
 		//
 		// flush buffer to db
