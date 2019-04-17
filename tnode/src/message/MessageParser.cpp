@@ -116,8 +116,20 @@ BEGIN_NAMESPACE_TNODE {
 	}
 
 	bool MessageParser::MergeMessage(Message* dest, const Message* src) {
-		//TODO:
-		return false;
+		// Merge the fields from the given message into this message.  Singular
+		// fields will be overwritten, if specified in from, except for embedded
+		// messages which will be merged.  Repeated fields will be concatenated.
+		// The given message must be of the same type as this message (i.e. the
+		// exact same class).
+		//
+		// NOTE: `dest` and `src` must be of the same type as this message!!
+		try {
+			dest->MergeFrom(*src);
+		}
+		catch (std::exception& e) {
+			CHECK_RETURN(false, false, "MergeMessage exception:%s", e.what());
+		}
+		return true;
 	}
 }
 
