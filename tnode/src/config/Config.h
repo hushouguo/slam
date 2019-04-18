@@ -48,6 +48,11 @@ BEGIN_NAMESPACE_TNODE {
 			// Special spawn number of SeriveProcess, 0 means auto match
 			//
 			int threads = 0;
+
+			//
+			// Record entryfile
+			//
+			std::string entryfile = "scripts/init.lua";
 			
 			inline void syshalt(int reason = 0) {
 				if (!this->halt) {

@@ -4,5 +4,4 @@
 	<log level = "0" dir = ".logs" autosplit_day = "true" autosplit_hour = "false"/> 
 	<limit stack_size = "16777216" max_files = "4000"/> <!-- 16M -->
 	<db async = "true" async_flush_interval = "300" async_flush_maxsize = "100" />
-	<tnode entryfile = "scripts/init.lua" />
 </root>

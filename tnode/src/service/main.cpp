@@ -206,7 +206,7 @@ int main(int argc, char* argv[]) {
 
 	//
 	// init Service
-	CHECK_GOTO(sServiceManager.init(sConfig.get("tnode.entryfile", "N/A")), exit_failure, "ServiceManager init failure");
+	CHECK_GOTO(sServiceManager.init(sConfig.entryfile.c_str()), exit_failure, "ServiceManager init failure");
 
 	//
 	// delivery message to service

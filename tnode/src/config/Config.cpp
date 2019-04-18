@@ -28,19 +28,21 @@ BEGIN_NAMESPACE_TNODE {
 	bool Config::init(int argc, char* argv[]) {
 		int c;
 		/*--argc, argv++;*/
-		while ((c = getopt(argc, argv, "dDhHc:gt:")) != -1) {
+		while ((c = getopt(argc, argv, "dDhHc:gt:e:")) != -1) {
 			switch (c) {
 				case 'd': case 'D': sConfig.runasdaemon = true; break;
 				case 'c': this->confile = optarg; break;
 				case 'g': this->guard = true; break;
 				case 't': this->threads = atoi(optarg); break;
+				case 'e': this->entryfile = optarg; break;
 				case 'h': case 'H': default: 
 					fprintf(stderr, "Usage: tnode [OPTIONS]\n");
 					fprintf(stderr, "    OPTIONS:\n");
 					fprintf(stderr, "      -d: 			run as daemon, default: %s\n", sConfig.runasdaemon ? "true" : "false");
 					fprintf(stderr, "      -c filename: load config file, default: %s\n", sConfig.confile.c_str());
 					fprintf(stderr, "      -g: 			enable guard process, default: %s\n", sConfig.guard ? "true" : "false");
-					fprintf(stderr, "      -t: number: special init number of thread, default: %d\n", sConfig.threads);
+					fprintf(stderr, "      -t: number:  special init number of thread, default: %d\n", sConfig.threads);
+					fprintf(stderr, "      -e filename: entryfile, default: %s\n", sConfig.entryfile.c_str());
 					return false;
 			}
 		}
