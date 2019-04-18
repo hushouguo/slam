@@ -989,7 +989,8 @@ BEGIN_NAMESPACE_TNODE {
 		lua_pushinteger(L, (*log)->level());
 		return 1;
 	}
-	
+
+#if 0	
 	//		BLACK
 	//		RED,	LRED
 	//		GREEN,	LGREEN
@@ -1061,6 +1062,7 @@ BEGIN_NAMESPACE_TNODE {
 		lua_pushstring(L, __color_to_string[color].c_str());		
 		return 1;
 	}
+#endif	
 
 	//----------------------------------------------------------------------------------------------------
 
@@ -1297,6 +1299,7 @@ BEGIN_NAMESPACE_TNODE {
 		//		LEVEL_ERROR		=	4,
 		LUA_REGISTER(L, "level", cc_log_level);
 
+#if 0
 		//
 		// string db:console_color(int level, [string color])
 		//		BLACK
@@ -1309,8 +1312,9 @@ BEGIN_NAMESPACE_TNODE {
 		//		GREY
 		//		WHITE
 		//		YELLOW
-		LUA_REGISTER(L, "console_color", cc_log_console_color);
-		
+		//LUA_REGISTER(L, "console_color", cc_log_console_color);
+#endif
+
 		//
 		// void log:XXXXX(string)
 		LUA_REGISTER(L, "debug", cc_log_debug);
