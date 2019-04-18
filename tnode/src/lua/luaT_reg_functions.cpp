@@ -775,6 +775,53 @@ BEGIN_NAMESPACE_TNODE {
 	//
 
 	//
+	// cc.log_XXXXX to syslog
+	static int cc_syslog_debug(lua_State* L) {
+		int args = lua_gettop(L);
+		CHECK_RETURN(args == 1, 0, "`%s` lack args:%d", __FUNCTION__, args);
+		CHECK_RETURN(lua_isstring(L, -args), 0, "[%s]", lua_typename(L, lua_type(L, -args)));
+		const char* content = lua_tostring(L, -args);
+		if (content) {
+			Debug << "[LUA] " << content;
+		}
+		return 0;
+	}
+	static int cc_syslog_trace(lua_State* L) {
+		int args = lua_gettop(L);
+		CHECK_RETURN(args == 1, 0, "`%s` lack args:%d", __FUNCTION__, args);
+		CHECK_RETURN(lua_isstring(L, -args), 0, "[%s]", lua_typename(L, lua_type(L, -args)));
+		const char* content = lua_tostring(L, -args);
+		if (content) {
+			Trace << "[LUA] " << content;
+		}
+		return 0;
+	}
+	static int cc_syslog_alarm(lua_State* L) {
+		int args = lua_gettop(L);
+		CHECK_RETURN(args == 1, 0, "`%s` lack args:%d", __FUNCTION__, args);
+		CHECK_RETURN(lua_isstring(L, -args), 0, "[%s]", lua_typename(L, lua_type(L, -args)));
+		const char* content = lua_tostring(L, -args);
+		if (content) {
+			Alarm << "[LUA] " << content;
+		}
+		return 0;
+	}
+	static int cc_syslog_error(lua_State* L) {
+		int args = lua_gettop(L);
+		CHECK_RETURN(args == 1, 0, "`%s` lack args:%d", __FUNCTION__, args);
+		CHECK_RETURN(lua_isstring(L, -args), 0, "[%s]", lua_typename(L, lua_type(L, -args)));
+		const char* content = lua_tostring(L, -args);
+		if (content) {
+			lua_Debug ar;
+			lua_getstack(L, 1, &ar);
+			lua_getinfo(L, "nSl", &ar);
+			Error << "[LUA] (" << ar.source << ":" << ar.currentline << ") " << content;
+		}
+		return 0;
+	}
+	
+
+	//
 	// userdata newlog()
 	static int cc_newlog(lua_State* L) {
 		//
@@ -1196,6 +1243,13 @@ BEGIN_NAMESPACE_TNODE {
 		// u32 newtimer(milliseconds, times, ctx, function(id, ctx) end)
 		// times: <= 0: forever, > 0: special times
 		LUA_REGISTER(L, "newtimer", cc_newtimer);
+
+		//
+		// void log_XXXX(string)
+		LUA_REGISTER(L, "log_debug", cc_syslog_debug);
+		LUA_REGISTER(L, "log_trace", cc_syslog_trace);
+		LUA_REGISTER(L, "log_alarm", cc_syslog_alarm);
+		LUA_REGISTER(L, "log_error", cc_syslog_error);
 
 		//TODO: http
 		//TODO: curl

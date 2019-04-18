@@ -5,6 +5,21 @@ cc.log_trace(string.format("[%4s] test `log_trace",	"OK"))
 cc.log_alarm(string.format("[%4s] test `log_alarm",	"OK"))
 cc.log_error(string.format("[%4s] test `log_error",	"OK"))
 
+local log = cc.newlog()
+cc.log_trace(string.format("[%4s] test `newlog`", log ~= nil and "OK" or "FAIL"))
+cc.log_trace(string.format("[%4s] test `log:level`", log:level(0) == 0 and "OK" or "FAIL"))
+cc.log_trace(string.format("[%4s] test `log:autosplit_day`", log:autosplit_day(true) and "OK" or "FAIL"))
+cc.log_trace(string.format("[%4s] test `log:autosplit_hour`", log:autosplit_hour(false) and "OK" or "FAIL"))
+cc.log_trace(string.format("[%4s] test `log:destination`", log:destination("./.logs") == "./.logs" and "OK" or "FAIL"))
+cc.log_trace(string.format("[%4s] test `log:tofile`", log:tofile(0, "lua") == "lua" and "OK" or "FAIL"))
+cc.log_trace(string.format("[%4s] test `log:tostdout`", log:tostdout(0, true) and "OK" or "FAIL"))
+cc.log_trace(string.format("[%4s] test `log:console_color`", log:console_color(1, "CYAN") == "CYAN" and "OK" or "FAIL"))
+log:debug(string.format("[%4s] test `log:debug",	"OK"))
+log:trace(string.format("[%4s] test `log:trace",	"OK"))
+log:alarm(string.format("[%4s] test `log:alarm",	"OK"))
+log:error(string.format("[%4s] test `log:error",	"OK"))
+
+
 --
 -- random
 cc.log_trace(string.format("[%4s] test `random`", cc.random() ~= nil and "OK" or "FAIL"))
