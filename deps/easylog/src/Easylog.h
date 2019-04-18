@@ -202,8 +202,8 @@ namespace logger {
 		public:
 			virtual EasylogSeverityLevel level() = 0;
 			virtual void set_level(EasylogSeverityLevel level) = 0;
-			virtual EasylogColor color(EasylogSeverityLevel level) = 0;
-			virtual void set_color(EasylogSeverityLevel level, EasylogColor color) = 0;
+			virtual EasylogColor console_color(EasylogSeverityLevel level) = 0;
+			virtual void set_console_color(EasylogSeverityLevel level, EasylogColor color) = 0;
 			virtual const char* destination() = 0;
 			virtual bool set_destination(std::string dir) = 0;
 			virtual bool tostdout(EasylogSeverityLevel level) = 0;

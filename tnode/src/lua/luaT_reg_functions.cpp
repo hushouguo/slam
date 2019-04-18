@@ -758,7 +758,7 @@ BEGIN_NAMESPACE_TNODE {
 	static int __cc_db_gc(lua_State *L) {
 		Easydb** db = (Easydb**) luaL_checkudata(L, 1, LUA_METATABLE_DB_NAME);		
 		luaL_argcheck(L, db != NULL, 1, "invalid `db` userdata");
-		if (s) {
+		if (db) {
 			Debug("__db_gc: %p", *db);
 			// NOTE: should be remove Easydb from this service
 		}
@@ -827,7 +827,7 @@ BEGIN_NAMESPACE_TNODE {
 		luaL_argcheck(L, log != NULL, 1, "invalid `log` userdata");
 		
 		CHECK_RETURN(lua_isnumber(L, -(args - 1)), 0, "[%s]", lua_typename(L, lua_type(L, -(args - 1))));
-		int level = lua_tointeger(L, -(args - 1));
+		EasylogSeverityLevel level = (EasylogSeverityLevel) lua_tointeger(L, -(args - 1));
 		const char* address = nullptr;
 		int port = 0;
 		if (args == 4) {
@@ -852,11 +852,11 @@ BEGIN_NAMESPACE_TNODE {
 		luaL_argcheck(L, log != NULL, 1, "invalid `log` userdata");
 		
 		CHECK_RETURN(lua_isnumber(L, -(args - 1)), 0, "[%s]", lua_typename(L, lua_type(L, -(args - 1))));
-		int level = lua_tointeger(L, -(args - 1));
+		EasylogSeverityLevel level = (EasylogSeverityLevel) lua_tointeger(L, -(args - 1));
 		if (args == 3) {
 			CHECK_RETURN(lua_isboolean(L, -(args - 2)), 0, "[%s]", lua_typename(L, lua_type(L, -(args - 2))));
 			bool enable = lua_toboolean(L, -(args - 2));
-			(*log)->set_tostdout(level, enable)
+			(*log)->set_tostdout(level, enable);
 		}
 		lua_pushboolean(L, (*log)->tostdout(level));
 		return 1;
@@ -872,7 +872,7 @@ BEGIN_NAMESPACE_TNODE {
 		luaL_argcheck(L, log != NULL, 1, "invalid `log` userdata");
 		
 		CHECK_RETURN(lua_isnumber(L, -(args - 1)), 0, "[%s]", lua_typename(L, lua_type(L, -(args - 1))));
-		int level = lua_tointeger(L, -(args - 1));
+		EasylogSeverityLevel level = (EasylogSeverityLevel) lua_tointeger(L, -(args - 1));
 		if (args == 3) {
 			CHECK_RETURN(lua_isstring(L, -(args - 2)), 0, "[%s]", lua_typename(L, lua_type(L, -(args - 2))));
 			const char* filename = lua_tostring(L, -(args - 2));
@@ -936,7 +936,7 @@ BEGIN_NAMESPACE_TNODE {
 
 		if (args == 2) {
 			CHECK_RETURN(lua_isnumber(L, -(args - 1)), 0, "[%s]", lua_typename(L, lua_type(L, -(args - 1))));
-			int level = lua_tointeger(L, -(args - 1));
+			EasylogSeverityLevel level = (EasylogSeverityLevel) lua_tointeger(L, -(args - 1));
 			(*log)->set_level(level);
 		}
 		lua_pushinteger(L, (*log)->level());
@@ -953,7 +953,7 @@ BEGIN_NAMESPACE_TNODE {
 	//		GREY
 	//		WHITE
 	//		YELLOW
-	static std::unordered_map<logger::EasylogColor, std::string> __color_to_string = {
+	static std::map<logger::EasylogColor, std::string> __color_to_string = {
 			{logger::BLACK, "BLACK"},
 			{logger::RED, "RED"},
 			{logger::LRED, "LRED"},
@@ -971,7 +971,7 @@ BEGIN_NAMESPACE_TNODE {
 			{logger::YELLOW, "YELLOW"},
 	};
 	
-	static std::unordered_map<std::string, logger::EasylogColor> __string_to_color = {
+	static std::map<std::string, logger::EasylogColor> __string_to_color = {
 			{"BLACK", logger::BLACK},
 			{"RED", logger::RED},
 			{"LRED", logger::LRED},
@@ -998,7 +998,7 @@ BEGIN_NAMESPACE_TNODE {
 		luaL_argcheck(L, log != NULL, 1, "invalid `log` userdata");
 		
 		CHECK_RETURN(lua_isnumber(L, -(args - 1)), 0, "[%s]", lua_typename(L, lua_type(L, -(args - 1))));
-		int level = lua_tointeger(L, -(args - 1));
+		EasylogSeverityLevel level = (EasylogSeverityLevel) lua_tointeger(L, -(args - 1));
 		if (args == 3) {
 			CHECK_RETURN(lua_isstring(L, -(args - 2)), 0, "[%s]", lua_typename(L, lua_type(L, -(args - 2))));
 			std::string s = lua_tostring(L, -(args - 2));
@@ -1027,7 +1027,9 @@ BEGIN_NAMESPACE_TNODE {
 		CHECK_RETURN(args == 2, 0, "`%s` lack args:%d", __FUNCTION__, args);
 		CHECK_RETURN(lua_isstring(L, -(args - 1)), 0, "[%s]", lua_typename(L, lua_type(L, -(args - 1))));
 		const char* s = lua_tostring(L, -(args - 1));
-		logger::EasylogMessage(*log, logger::LEVEL_DEBUG,  __FILE__, __LINE__, __FUNCTION__) << s;
+		if (s) {
+			logger::EasylogMessage(*log, logger::LEVEL_DEBUG,  __FILE__, __LINE__, __FUNCTION__) << s;
+		}
 		return 0;
 	}
 
@@ -1041,7 +1043,9 @@ BEGIN_NAMESPACE_TNODE {
 		CHECK_RETURN(args == 2, 0, "`%s` lack args:%d", __FUNCTION__, args);
 		CHECK_RETURN(lua_isstring(L, -(args - 1)), 0, "[%s]", lua_typename(L, lua_type(L, -(args - 1))));
 		const char* s = lua_tostring(L, -(args - 1));
-		logger::EasylogMessage(*log, logger::LEVEL_TRACE,  __FILE__, __LINE__, __FUNCTION__) << s;
+		if (s) {
+			logger::EasylogMessage(*log, logger::LEVEL_TRACE,  __FILE__, __LINE__, __FUNCTION__) << s;
+		}
 		return 0;
 	}
 	
@@ -1055,7 +1059,9 @@ BEGIN_NAMESPACE_TNODE {
 		CHECK_RETURN(args == 2, 0, "`%s` lack args:%d", __FUNCTION__, args);
 		CHECK_RETURN(lua_isstring(L, -(args - 1)), 0, "[%s]", lua_typename(L, lua_type(L, -(args - 1))));
 		const char* s = lua_tostring(L, -(args - 1));
-		logger::EasylogMessage(*log, logger::LEVEL_ALARM,  __FILE__, __LINE__, __FUNCTION__) << s;
+		if (s) {
+			logger::EasylogMessage(*log, logger::LEVEL_ALARM,  __FILE__, __LINE__, __FUNCTION__) << s;
+		}
 		return 0;
 	}
 
@@ -1069,7 +1075,14 @@ BEGIN_NAMESPACE_TNODE {
 		CHECK_RETURN(args == 2, 0, "`%s` lack args:%d", __FUNCTION__, args);
 		CHECK_RETURN(lua_isstring(L, -(args - 1)), 0, "[%s]", lua_typename(L, lua_type(L, -(args - 1))));
 		const char* s = lua_tostring(L, -(args - 1));
-		logger::EasylogMessage(*log, logger::LEVEL_ERROR,  __FILE__, __LINE__, __FUNCTION__) << s;
+		if (s) {
+			lua_Debug ar;
+			lua_getstack(L, 1, &ar);
+			lua_getinfo(L, "nSl", &ar);
+			//Error << "[LUA] (" << ar.source << ":" << ar.currentline << ") " << content;
+			logger::EasylogMessage(*log, logger::LEVEL_ERROR,  __FILE__, __LINE__, __FUNCTION__) 
+				<< "(" << ar.source << ":" << ar.currentline << ") " << s;
+		}
 		return 0;
 	}
 
@@ -1077,7 +1090,7 @@ BEGIN_NAMESPACE_TNODE {
 	static int __cc_log_gc(lua_State *L) {		
 		Easylog** log = (Easylog**) luaL_checkudata(L, 1, LUA_METATABLE_LOGGER_NAME);		
 		luaL_argcheck(L, log != NULL, 1, "invalid `log` userdata");
-		if (s) {
+		if (log) {
 			Debug("__log_gc: %p", *log);
 			// NOTE: should be remove Easylog from this service
 		}
