@@ -280,11 +280,14 @@ namespace logger {
 		public:
 			EasylogSeverityLevel level() override { return this->_level; }
 			void set_level(EasylogSeverityLevel level) override { this->_level = level; }
-			EasylogColor color(EasylogSeverityLevel level) override { return this->_levels[level].color; }
-			void set_color(EasylogSeverityLevel level, EasylogColor color) override;
+			EasylogColor console_color(EasylogSeverityLevel level) override { return this->_levels[level].color; }
+			void set_console_color(EasylogSeverityLevel level, EasylogColor color) override;
 			bool set_destination(std::string dir) override;
+			bool tostdout(EasylogSeverityLevel level) override;
 			void set_tostdout(EasylogSeverityLevel level, bool enable) override;
+			bool toserver(EasylogSeverityLevel level) override;
 			void set_toserver(EasylogSeverityLevel level, std::string address, int port) override;
+			const char* tofile(EasylogSeverityLevel level) override;
 			void set_tofile(EasylogSeverityLevel level, std::string filename) override;
 			bool autosplit_day() override { return this->_autosplit_day; }
 			bool autosplit_hour() override { return this->_autosplit_hour; }
@@ -296,7 +299,6 @@ namespace logger {
 			const std::list<EasylogLayoutNode*>& layout_postfix(EasylogSeverityLevel level) override { return this->_levels[level].layouts_postfix; }
 #endif
 			const char* destination() override { return this->_dest_dir.c_str(); }
-			const char* current_log_filename(EasylogSeverityLevel level) override;
 
 			inline bool isstop() { return this->_stop; }
 			void stop() override;
@@ -736,6 +738,11 @@ namespace logger {
 		}
 	}
 
+	bool EasylogInternal::tostdout(EasylogSeverityLevel level) {
+		EasylogLevelNode* levelNode = &this->_levels[level];
+		return levelNode->to_stdout;
+	}
+
 	void EasylogInternal::set_tostdout(EasylogSeverityLevel level, bool enable) {
 		for (auto& i : this->_levels) {
 			EasylogLevelNode& levelNode = i.second;
@@ -745,6 +752,11 @@ namespace logger {
 		}
 	}
 	
+	const char* EasylogInternal::tofile(EasylogSeverityLevel level) {
+		EasylogLevelNode* levelNode = &this->_levels[level];
+		return levelNode->fullname.c_str();
+	}
+
 	void EasylogInternal::set_tofile(EasylogSeverityLevel level, std::string filename) {
 		for (auto& i : this->_levels) {
 			EasylogLevelNode& levelNode = i.second;
@@ -761,16 +773,16 @@ namespace logger {
 		}
 	}
 
-	const char* EasylogInternal::current_log_filename(EasylogSeverityLevel level) {
-		EasylogLevelNode* levelNode = &this->_levels[level];
-		return levelNode->fullname.c_str();
+	bool EasylogInternal::toserver(EasylogSeverityLevel level) {
+		//TODO: toserver by MessageQueue
+		return false;
 	}
 
 	void EasylogInternal::set_toserver(EasylogSeverityLevel level, std::string address, int port) {
 		//TODO: toserver by MessageQueue
 	}
 			
-	void EasylogInternal::set_color(EasylogSeverityLevel level, EasylogColor color) {
+	void EasylogInternal::set_console_color(EasylogSeverityLevel level, EasylogColor color) {
 		for (auto& i : this->_levels) {
 			EasylogLevelNode& levelNode = i.second;
 			if (levelNode.level == level || level == GLOBAL) {

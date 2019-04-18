@@ -289,52 +289,6 @@ BEGIN_NAMESPACE_TNODE {
 	}
 
 	//
-	// logger
-	static int cc_log_debug(lua_State* L) {
-		int args = lua_gettop(L);
-		CHECK_RETURN(args == 1, 0, "`%s` lack args:%d", __FUNCTION__, args);
-		CHECK_RETURN(lua_isstring(L, -args), 0, "[%s]", lua_typename(L, lua_type(L, -args)));
-		const char* content = lua_tostring(L, -args);
-		if (content) {
-			Debug << "[LUA] " << content;
-		}
-		return 0;
-	}
-	static int cc_log_trace(lua_State* L) {
-		int args = lua_gettop(L);
-		CHECK_RETURN(args == 1, 0, "`%s` lack args:%d", __FUNCTION__, args);
-		CHECK_RETURN(lua_isstring(L, -args), 0, "[%s]", lua_typename(L, lua_type(L, -args)));
-		const char* content = lua_tostring(L, -args);
-		if (content) {
-			Trace << "[LUA] " << content;
-		}
-		return 0;
-	}
-	static int cc_log_alarm(lua_State* L) {
-		int args = lua_gettop(L);
-		CHECK_RETURN(args == 1, 0, "`%s` lack args:%d", __FUNCTION__, args);
-		CHECK_RETURN(lua_isstring(L, -args), 0, "[%s]", lua_typename(L, lua_type(L, -args)));
-		const char* content = lua_tostring(L, -args);
-		if (content) {
-			Alarm << "[LUA] " << content;
-		}
-		return 0;
-	}
-	static int cc_log_error(lua_State* L) {
-		int args = lua_gettop(L);
-		CHECK_RETURN(args == 1, 0, "`%s` lack args:%d", __FUNCTION__, args);
-		CHECK_RETURN(lua_isstring(L, -args), 0, "[%s]", lua_typename(L, lua_type(L, -args)));
-		const char* content = lua_tostring(L, -args);
-		if (content) {
-			lua_Debug ar;
-			lua_getstack(L, 1, &ar);
-			lua_getinfo(L, "nSl", &ar);
-			Error << "[LUA] (" << ar.source << ":" << ar.currentline << ") " << content;
-		}
-		return 0;
-	}
-
-	//
 	// u32 newservice(entryfile)
 	static int cc_newservice(lua_State* L) {
 		int args = lua_gettop(L);
@@ -561,14 +515,14 @@ BEGIN_NAMESPACE_TNODE {
 
 		//
 		// create userdata and setup metatable into userdata
-		Easydb** s = (Easydb**) lua_newuserdata(L, sizeof(Easydb*));
-		*s = easydb;
+		Easydb** db = (Easydb**) lua_newuserdata(L, sizeof(Easydb*));
+		*db = easydb;
 		luaL_getmetatable(L, LUA_METATABLE_DB_NAME);
 		lua_setmetatable(L, -2);
 
 		//
 		// add Easydb to Service
-		sServiceManager.getService(L)->addEasydb(*s);
+		sServiceManager.getService(L)->addEasydb(easydb);
 		
 		return 1;
 	}
@@ -578,14 +532,15 @@ BEGIN_NAMESPACE_TNODE {
 	//
 	// bool db:create_database(database)
 	static int cc_db_create_database(lua_State* L) {	
-		Easydb** s = (Easydb**) luaL_checkudata(L, 1, LUA_METATABLE_DB_NAME);
-		luaL_argcheck(L, s != NULL, 1, "invalid `db` userdata");
-	
 		int args = lua_gettop(L);// this:userdata in stack bottom
 		CHECK_RETURN(args == 2, 0, "`%s` lack args:%d", __FUNCTION__, args);
+		
+		Easydb** db = (Easydb**) luaL_checkudata(L, 1, LUA_METATABLE_DB_NAME);
+		luaL_argcheck(L, db != NULL, 1, "invalid `db` userdata");
+	
 		CHECK_RETURN(lua_isstring(L, -(args - 1)), 0, "[%s]", lua_typename(L, lua_type(L, -(args - 1))));
 		const char* database = lua_tostring(L, -(args - 1));
-		bool rc = (*s)->createDatabase(database);
+		bool rc = (*db)->createDatabase(database);
 		
 		lua_pushboolean(L, rc);
 		return 1;
@@ -594,14 +549,15 @@ BEGIN_NAMESPACE_TNODE {
 	//
 	// bool db:select_database(database)
 	static int cc_db_select_database(lua_State* L) {	
-		Easydb** s = (Easydb**) luaL_checkudata(L, 1, LUA_METATABLE_DB_NAME);
-		luaL_argcheck(L, s != NULL, 1, "invalid `db` userdata");
-	
 		int args = lua_gettop(L);// this:userdata in stack bottom
 		CHECK_RETURN(args == 2, 0, "`%s` lack args:%d", __FUNCTION__, args);
+		
+		Easydb** db = (Easydb**) luaL_checkudata(L, 1, LUA_METATABLE_DB_NAME);
+		luaL_argcheck(L, db != NULL, 1, "invalid `db` userdata");
+	
 		CHECK_RETURN(lua_isstring(L, -(args - 1)), 0, "[%s]", lua_typename(L, lua_type(L, -(args - 1))));
 		const char* database = lua_tostring(L, -(args - 1));
-		bool rc = (*s)->selectDatabase(database);
+		bool rc = (*db)->selectDatabase(database);
 		
 		lua_pushboolean(L, rc);
 		return 1;
@@ -610,14 +566,15 @@ BEGIN_NAMESPACE_TNODE {
 	//
 	// bool db:loadmsg(filename) // filename also is a directory
 	static int cc_db_loadmsg(lua_State* L) {
-		Easydb** s = (Easydb**) luaL_checkudata(L, 1, LUA_METATABLE_DB_NAME);
-		luaL_argcheck(L, s != NULL, 1, "invalid `db` userdata");
-		
 		int args = lua_gettop(L);// this:userdata in stack bottom
 		CHECK_RETURN(args == 2, 0, "`%s` lack args:%d", __FUNCTION__, args);
+		
+		Easydb** db = (Easydb**) luaL_checkudata(L, 1, LUA_METATABLE_DB_NAME);
+		luaL_argcheck(L, db != NULL, 1, "invalid `db` userdata");
+		
 		CHECK_RETURN(lua_isstring(L, -(args - 1)), 0, "[%s]", lua_typename(L, lua_type(L, -(args - 1))));
 		const char* filename = lua_tostring(L, -(args - 1));
-		bool rc = (*s)->tableParser()->LoadMessageDescriptor(filename);
+		bool rc = (*db)->tableParser()->LoadMessageDescriptor(filename);
 		lua_pushboolean(L, rc);
 		return 1;
 	}
@@ -625,18 +582,19 @@ BEGIN_NAMESPACE_TNODE {
 	//
 	// bool db:regtable(table, name) // table => name of protobuf::Message
 	static int cc_db_regtable(lua_State* L) {
-		Easydb** s = (Easydb**) luaL_checkudata(L, 1, LUA_METATABLE_DB_NAME);
-		luaL_argcheck(L, s != NULL, 1, "invalid `db` userdata");
-		
 		int args = lua_gettop(L);// this:userdata in stack bottom
 		CHECK_RETURN(args == 3, 0, "`%s` lack args:%d", __FUNCTION__, args);
+		
+		Easydb** db = (Easydb**) luaL_checkudata(L, 1, LUA_METATABLE_DB_NAME);
+		luaL_argcheck(L, db != NULL, 1, "invalid `db` userdata");
+		
 		CHECK_RETURN(lua_isstring(L, -(args - 1)), 0, "[%s]", lua_typename(L, lua_type(L, -(args - 1))));
 		CHECK_RETURN(lua_isstring(L, -(args - 2)), 0, "[%s]", lua_typename(L, lua_type(L, -(args - 2))));
 		size_t len = 0;
 		const char* table = lua_tolstring(L, -(args - 1), &len);
 		const char* name = lua_tostring(L, -(args - 2));
 		u32 msgid = hashString(table, len);
-		bool rc = (*s)->tableParser()->RegisteMessage(msgid, name);
+		bool rc = (*db)->tableParser()->RegisteMessage(msgid, name);
 		lua_pushboolean(L, rc);
 		return 1;
 	}
@@ -644,8 +602,8 @@ BEGIN_NAMESPACE_TNODE {
 	//
 	// o db:list_table()
 	static int cc_db_list_table(lua_State* L) {
-		Easydb** s = (Easydb**) luaL_checkudata(L, 1, LUA_METATABLE_DB_NAME);
-		luaL_argcheck(L, s != NULL, 1, "invalid `db` userdata");
+		Easydb** db = (Easydb**) luaL_checkudata(L, 1, LUA_METATABLE_DB_NAME);
+		luaL_argcheck(L, db != NULL, 1, "invalid `db` userdata");
 		//TODO:
 		return 0;
 	}
@@ -653,11 +611,12 @@ BEGIN_NAMESPACE_TNODE {
 	//
 	// u64 db:create_object(table, [u64], o)
 	static int cc_db_create_object(lua_State* L) {
-		Easydb** s = (Easydb**) luaL_checkudata(L, 1, LUA_METATABLE_DB_NAME);		
-		luaL_argcheck(L, s != NULL, 1, "invalid `db` userdata");
-	
 		int args = lua_gettop(L);// this:userdata in stack bottom
 		CHECK_RETURN(args >= 3, 0, "`%s` lack args:%d", __FUNCTION__, args);
+		
+		Easydb** db = (Easydb**) luaL_checkudata(L, 1, LUA_METATABLE_DB_NAME);		
+		luaL_argcheck(L, db != NULL, 1, "invalid `db` userdata");
+	
 		CHECK_RETURN(lua_isstring(L, -(args - 1)), 0, "[%s]", lua_typename(L, lua_type(L, -(args - 1))));
 		size_t len = 0;
 		const char* table = lua_tolstring(L, -(args - 1), &len);
@@ -674,12 +633,12 @@ BEGIN_NAMESPACE_TNODE {
 		
 		//
 		// allocate NEW protobuf::Message, and encode lua's table to Message		
-		Message* message = luaT_message_parser_encode((*s)->tableParser(), L, msgid, true);
+		Message* message = luaT_message_parser_encode((*db)->tableParser(), L, msgid, true);
 		CHECK_RETURN(message, 0, "encode message: %d, %s error", msgid, table);
 
 		//
 		// insert object to db
-		u64 autoid = (*s)->createObject(table, id, message);
+		u64 autoid = (*db)->createObject(table, id, message);
 		if (autoid == 0) {
 			SafeDelete(message);
 			CHECK_RETURN(false, 0, "createObject failure, id: %ld, msgid:%d, table:%s", id, msgid, table);
@@ -692,11 +651,12 @@ BEGIN_NAMESPACE_TNODE {
 	//
 	// bool db:delete_object(table, uint64_t)
 	static int cc_db_delete_object(lua_State* L) {
-		Easydb** s = (Easydb**) luaL_checkudata(L, 1, LUA_METATABLE_DB_NAME);		
-		luaL_argcheck(L, s != NULL, 1, "invalid `db` userdata");
-	
 		int args = lua_gettop(L);// this:userdata in stack bottom
 		CHECK_RETURN(args == 3, 0, "`%s` lack args:%d", __FUNCTION__, args);
+		
+		Easydb** db = (Easydb**) luaL_checkudata(L, 1, LUA_METATABLE_DB_NAME);		
+		luaL_argcheck(L, db != NULL, 1, "invalid `db` userdata");
+	
 		CHECK_RETURN(lua_isstring(L, -(args - 1)), 0, "[%s]", lua_typename(L, lua_type(L, -(args - 1))));
 		CHECK_RETURN(lua_isnumber(L, -(args - 2)), 0, "[%s]", lua_typename(L, lua_type(L, -(args - 2))));
 		const char* table = lua_tostring(L, -(args - 1));
@@ -704,7 +664,7 @@ BEGIN_NAMESPACE_TNODE {
 
 		//
 		// delete object from db
-		bool rc = (*s)->deleteObject(table, id);		
+		bool rc = (*db)->deleteObject(table, id);		
 		lua_pushboolean(L, rc);
 		return 1;
 	}
@@ -712,11 +672,12 @@ BEGIN_NAMESPACE_TNODE {
 	//
 	// bool db:serialize(table, uint64_t, o)
 	static int cc_db_serialize(lua_State* L) {
-		Easydb** s = (Easydb**) luaL_checkudata(L, 1, LUA_METATABLE_DB_NAME);		
-		luaL_argcheck(L, s != NULL, 1, "invalid `db` userdata");
-	
 		int args = lua_gettop(L);// this:userdata in stack bottom
 		CHECK_RETURN(args == 4, 0, "`%s` lack args:%d", __FUNCTION__, args);
+		
+		Easydb** db = (Easydb**) luaL_checkudata(L, 1, LUA_METATABLE_DB_NAME);		
+		luaL_argcheck(L, db != NULL, 1, "invalid `db` userdata");
+	
 		CHECK_RETURN(lua_isstring(L, -(args - 1)), 0, "[%s]", lua_typename(L, lua_type(L, -(args - 1))));
 		CHECK_RETURN(lua_isnumber(L, -(args - 2)), 0, "[%s]", lua_typename(L, lua_type(L, -(args - 2))));
 		CHECK_RETURN(lua_istable(L, -(args - 3)), 0, "[%s]", lua_typename(L, lua_type(L, -(args - 3))));
@@ -727,12 +688,12 @@ BEGIN_NAMESPACE_TNODE {
 
 		//
 		// encode table of lua to NEW protobuf::Message
-		Message* message = luaT_message_parser_encode((*s)->tableParser(), L, msgid, true);
+		Message* message = luaT_message_parser_encode((*db)->tableParser(), L, msgid, true);
 		CHECK_RETURN(message, 0, "encode message: %d, %s error", msgid, table);
 
 		//
 		// update object to db
-		bool rc = (*s)->updateObject(table, id, message);
+		bool rc = (*db)->updateObject(table, id, message);
 		if (!rc) {
 			SafeDelete(message);
 			CHECK_RETURN(false, 0, "updateObject failure, id: %ld, msgid:%d, table:%s", id, msgid, table);
@@ -745,11 +706,12 @@ BEGIN_NAMESPACE_TNODE {
 	//
 	// bool db:flush_object(table, uint64_t)
 	static int cc_db_flush_object(lua_State* L) {
-		Easydb** s = (Easydb**) luaL_checkudata(L, 1, LUA_METATABLE_DB_NAME);		
-		luaL_argcheck(L, s != NULL, 1, "invalid `db` userdata");
-	
 		int args = lua_gettop(L);// this:userdata in stack bottom
 		CHECK_RETURN(args == 3, 0, "`%s` lack args:%d", __FUNCTION__, args);
+		
+		Easydb** db = (Easydb**) luaL_checkudata(L, 1, LUA_METATABLE_DB_NAME);		
+		luaL_argcheck(L, db != NULL, 1, "invalid `db` userdata");
+	
 		CHECK_RETURN(lua_isstring(L, -(args - 1)), 0, "[%s]", lua_typename(L, lua_type(L, -(args - 1))));
 		CHECK_RETURN(lua_isnumber(L, -(args - 2)), 0, "[%s]", lua_typename(L, lua_type(L, -(args - 2))));
 		size_t len = 0;
@@ -758,7 +720,7 @@ BEGIN_NAMESPACE_TNODE {
 
 		//
 		// flush object to db
-		bool rc = (*s)->flushObject(table, id);
+		bool rc = (*db)->flushObject(table, id);
 		CHECK_ERROR(rc, "flushObject failure, id: %ld, table:%s", id, table);
 		
 		lua_pushboolean(L, rc);
@@ -769,11 +731,12 @@ BEGIN_NAMESPACE_TNODE {
 	//
 	// o db:unserialize(table, uint64_t)
 	static int cc_db_unserialize(lua_State* L) {
-		Easydb** s = (Easydb**) luaL_checkudata(L, 1, LUA_METATABLE_DB_NAME);		
-		luaL_argcheck(L, s != NULL, 1, "invalid `db` userdata");
-	
 		int args = lua_gettop(L);// this:userdata in stack bottom
 		CHECK_RETURN(args == 3, 0, "`%s` lack args:%d", __FUNCTION__, args);
+		
+		Easydb** db = (Easydb**) luaL_checkudata(L, 1, LUA_METATABLE_DB_NAME);		
+		luaL_argcheck(L, db != NULL, 1, "invalid `db` userdata");
+	
 		CHECK_RETURN(lua_isstring(L, -(args - 1)), 0, "[%s]", lua_typename(L, lua_type(L, -(args - 1))));
 		CHECK_RETURN(lua_isnumber(L, -(args - 2)), 0, "[%s]", lua_typename(L, lua_type(L, -(args - 2))));
 		const char* table = lua_tostring(L, -(args - 1));
@@ -781,22 +744,22 @@ BEGIN_NAMESPACE_TNODE {
 
 		//
 		// fetch protobuf::Message from db
-		Message* message = (*s)->retrieveObject(table, id);
+		Message* message = (*db)->retrieveObject(table, id);
 		CHECK_RETURN(message, 0, "retrieveObject: %ld from table: %s failure", id, table);
 
 		//
 		// decode protobuf::Message to lua
-		bool rc = luaT_message_parser_decode((*s)->tableParser(), L, message);
+		bool rc = luaT_message_parser_decode((*db)->tableParser(), L, message);
 		CHECK_RETURN(rc, 0, "decode object: %ld, table: %s to lua failure", id, table);
 				
 		return 1;
 	}
 	
 	static int __cc_db_gc(lua_State *L) {
-		Easydb** s = (Easydb**) luaL_checkudata(L, 1, LUA_METATABLE_DB_NAME);		
-		luaL_argcheck(L, s != NULL, 1, "invalid `db` userdata");
+		Easydb** db = (Easydb**) luaL_checkudata(L, 1, LUA_METATABLE_DB_NAME);		
+		luaL_argcheck(L, db != NULL, 1, "invalid `db` userdata");
 		if (s) {
-			Debug("__db_gc: %p", *s);
+			Debug("__db_gc: %p", *db);
 			// NOTE: should be remove Easydb from this service
 		}
 		return 0;
@@ -806,7 +769,326 @@ BEGIN_NAMESPACE_TNODE {
 		lua_pushstring(L, "db");
 		return 1;
 	}
+
+	//
+	// logger
+	//
+
+	//
+	// userdata newlog()
+	static int cc_newlog(lua_State* L) {
+		//
+		// create new Easylog
+		logger::Easylog* easylog = logger::EasylogCreator::create();
+		assert(easylog);
+
+		//
+		// create userdata and setup metatable into userdata
+		logger::Easylog** log = (logger::Easylog**) lua_newuserdata(L, sizeof(logger::Easylog*));
+		*log = easylog;
+		luaL_getmetatable(L, LUA_METATABLE_LOGGER_NAME);
+		lua_setmetatable(L, -2);
+
+		//
+		// add Easylog to Service
+		sServiceManager.getService(L)->addEasylog(easylog);
+		
+		return 1;
+	}
+
+	//
+	// string log:destination([string dir])
+	static int cc_log_destination(lua_State* L) {
+		int args = lua_gettop(L);// this:userdata in stack bottom
+		CHECK_RETURN(args == 1 || args == 2, 0, "`%s` lack args:%d", __FUNCTION__, args);
+		
+		logger::Easylog** log = (logger::Easylog**) luaL_checkudata(L, 1, LUA_METATABLE_LOGGER_NAME);
+		luaL_argcheck(L, log != NULL, 1, "invalid `log` userdata");
+		
+		const char* dir = nullptr;
+		if (args == 2) {
+			CHECK_RETURN(lua_isstring(L, -(args - 1)), 0, "[%s]", lua_typename(L, lua_type(L, -(args - 1))));
+			dir = lua_tostring(L, -(args - 1));
+		}
+		if (dir) {
+			(*log)->set_destination(dir);
+		}
+		lua_pushstring(L, (*log)->destination());
+		return 1;
+	}
 	
+	//
+	// bool log:toserver(int level, [string address, int port])
+	static int cc_log_toserver(lua_State* L) {
+		int args = lua_gettop(L);// this:userdata in stack bottom
+		CHECK_RETURN(args == 2 || args == 4, 0, "`%s` lack args:%d", __FUNCTION__, args);
+		
+		logger::Easylog** log = (logger::Easylog**) luaL_checkudata(L, 1, LUA_METATABLE_LOGGER_NAME);
+		luaL_argcheck(L, log != NULL, 1, "invalid `log` userdata");
+		
+		CHECK_RETURN(lua_isnumber(L, -(args - 1)), 0, "[%s]", lua_typename(L, lua_type(L, -(args - 1))));
+		int level = lua_tointeger(L, -(args - 1));
+		const char* address = nullptr;
+		int port = 0;
+		if (args == 4) {
+			CHECK_RETURN(lua_isstring(L, -(args - 2)), 0, "[%s]", lua_typename(L, lua_type(L, -(args - 2))));
+			CHECK_RETURN(lua_isnumber(L, -(args - 3)), 0, "[%s]", lua_typename(L, lua_type(L, -(args - 3))));
+			address = lua_tostring(L, -(args - 2));
+			port = lua_tointeger(L, -(args - 3));
+			(*log)->set_toserver(level, address, port);
+		}
+		bool rc = (*log)->toserver(level);
+		lua_pushboolean(L, rc);
+		return 1;
+	}
+	
+	//
+	// bool log:tostdout(int level, [bool])
+	static int cc_log_tostdout(lua_State* L) {
+		int args = lua_gettop(L);// this:userdata in stack bottom
+		CHECK_RETURN(args == 2 || args == 3, 0, "`%s` lack args:%d", __FUNCTION__, args);
+		
+		logger::Easylog** log = (logger::Easylog**) luaL_checkudata(L, 1, LUA_METATABLE_LOGGER_NAME);
+		luaL_argcheck(L, log != NULL, 1, "invalid `log` userdata");
+		
+		CHECK_RETURN(lua_isnumber(L, -(args - 1)), 0, "[%s]", lua_typename(L, lua_type(L, -(args - 1))));
+		int level = lua_tointeger(L, -(args - 1));
+		if (args == 3) {
+			CHECK_RETURN(lua_isboolean(L, -(args - 2)), 0, "[%s]", lua_typename(L, lua_type(L, -(args - 2))));
+			bool enable = lua_toboolean(L, -(args - 2));
+			(*log)->set_tostdout(level, enable)
+		}
+		lua_pushboolean(L, (*log)->tostdout(level));
+		return 1;
+	}
+	
+	//
+	// string log:tofile(int level, [string filename])
+	static int cc_log_tofile(lua_State* L) {
+		int args = lua_gettop(L);// this:userdata in stack bottom
+		CHECK_RETURN(args == 2 || args == 3, 0, "`%s` lack args:%d", __FUNCTION__, args);
+		
+		logger::Easylog** log = (logger::Easylog**) luaL_checkudata(L, 1, LUA_METATABLE_LOGGER_NAME);
+		luaL_argcheck(L, log != NULL, 1, "invalid `log` userdata");
+		
+		CHECK_RETURN(lua_isnumber(L, -(args - 1)), 0, "[%s]", lua_typename(L, lua_type(L, -(args - 1))));
+		int level = lua_tointeger(L, -(args - 1));
+		if (args == 3) {
+			CHECK_RETURN(lua_isstring(L, -(args - 2)), 0, "[%s]", lua_typename(L, lua_type(L, -(args - 2))));
+			const char* filename = lua_tostring(L, -(args - 2));
+			(*log)->set_tofile(level, filename);
+		}
+		lua_pushstring(L, (*log)->tofile(level));
+		return 1;
+	}
+	
+	//
+	// bool log:autosplit_day([bool])
+	static int cc_log_autosplit_day(lua_State* L) {
+		int args = lua_gettop(L);// this:userdata in stack bottom
+		CHECK_RETURN(args == 1 || args == 2, 0, "`%s` lack args:%d", __FUNCTION__, args);
+		
+		logger::Easylog** log = (logger::Easylog**) luaL_checkudata(L, 1, LUA_METATABLE_LOGGER_NAME);
+		luaL_argcheck(L, log != NULL, 1, "invalid `log` userdata");
+
+		if (args == 2) {
+			CHECK_RETURN(lua_isboolean(L, -(args - 1)), 0, "[%s]", lua_typename(L, lua_type(L, -(args - 1))));
+			bool value = lua_toboolean(L, -(args - 1));
+			(*log)->set_autosplit_day(value);
+		}
+		bool rc = (*log)->autosplit_day();
+		lua_pushboolean(L, rc);
+		return 1;
+	}
+	
+	//
+	// bool log:autosplit_hour([bool])
+	static int cc_log_autosplit_hour(lua_State* L) {
+		int args = lua_gettop(L);// this:userdata in stack bottom
+		CHECK_RETURN(args == 1 || args == 2, 0, "`%s` lack args:%d", __FUNCTION__, args);
+		
+		logger::Easylog** log = (logger::Easylog**) luaL_checkudata(L, 1, LUA_METATABLE_LOGGER_NAME);
+		luaL_argcheck(L, log != NULL, 1, "invalid `log` userdata");
+
+		if (args == 2) {
+			CHECK_RETURN(lua_isboolean(L, -(args - 1)), 0, "[%s]", lua_typename(L, lua_type(L, -(args - 1))));
+			bool value = lua_toboolean(L, -(args - 1));
+			(*log)->set_autosplit_hour(value);
+		}
+		bool rc = (*log)->autosplit_hour();
+		lua_pushboolean(L, rc);
+		return 1;
+	}
+	
+	//
+	// int log:level([int level])
+	//		GLOBAL			=	0,
+	//		LEVEL_DEBUG 	=	1,
+	//		LEVEL_TRACE 	=	2,
+	//		LEVEL_ALARM 	=	3,
+	//		LEVEL_ERROR 	=	4,
+	static int cc_log_level(lua_State* L) {
+		int args = lua_gettop(L);// this:userdata in stack bottom
+		CHECK_RETURN(args == 1 || args == 2, 0, "`%s` lack args:%d", __FUNCTION__, args);
+		
+		logger::Easylog** log = (logger::Easylog**) luaL_checkudata(L, 1, LUA_METATABLE_LOGGER_NAME);
+		luaL_argcheck(L, log != NULL, 1, "invalid `log` userdata");
+
+		if (args == 2) {
+			CHECK_RETURN(lua_isnumber(L, -(args - 1)), 0, "[%s]", lua_typename(L, lua_type(L, -(args - 1))));
+			int level = lua_tointeger(L, -(args - 1));
+			(*log)->set_level(level);
+		}
+		lua_pushinteger(L, (*log)->level());
+		return 1;
+	}
+	
+	//		BLACK
+	//		RED,	LRED
+	//		GREEN,	LGREEN
+	//		BROWN
+	//		BLUE,	LBLUE
+	//		MAGENTA,LMAGENTA
+	//		CYAN,	LCYAN
+	//		GREY
+	//		WHITE
+	//		YELLOW
+	static std::unordered_map<logger::EasylogColor, std::string> __color_to_string = {
+			{logger::BLACK, "BLACK"},
+			{logger::RED, "RED"},
+			{logger::LRED, "LRED"},
+			{logger::GREEN, "GREEN"},
+			{logger::LGREEN, "LGREEN"},
+			{logger::BROWN, "BROWN"},
+			{logger::BLUE, "BLUE"},
+			{logger::LBLUE, "LBLUE"},
+			{logger::MAGENTA, "MAGENTA"},
+			{logger::LMAGENTA, "LMAGENTA"},
+			{logger::CYAN, "CYAN"},
+			{logger::LCYAN, "LCYAN"},
+			{logger::GREY, "GREY"},
+			{logger::WHITE, "WHITE"},
+			{logger::YELLOW, "YELLOW"},
+	};
+	
+	static std::unordered_map<std::string, logger::EasylogColor> __string_to_color = {
+			{"BLACK", logger::BLACK},
+			{"RED", logger::RED},
+			{"LRED", logger::LRED},
+			{"GREEN", logger::GREEN},
+			{"LGREEN", logger::LGREEN},
+			{"BROWN", logger::BROWN},
+			{"BLUE", logger::BLUE},
+			{"LBLUE", logger::LBLUE},
+			{"MAGENTA", logger::MAGENTA},
+			{"LMAGENTA", logger::LMAGENTA},
+			{"CYAN", logger::CYAN},
+			{"LCYAN", logger::LCYAN},
+			{"GREY", logger::GREY},
+			{"WHITE", logger::WHITE},
+			{"YELLOW", logger::YELLOW},
+	};
+	//
+	// string db:console_color(int level, [string color])
+	static int cc_log_console_color(lua_State* L) {
+		int args = lua_gettop(L);// this:userdata in stack bottom
+		CHECK_RETURN(args == 2 || args == 3, 0, "`%s` lack args:%d", __FUNCTION__, args);
+		
+		logger::Easylog** log = (logger::Easylog**) luaL_checkudata(L, 1, LUA_METATABLE_LOGGER_NAME);
+		luaL_argcheck(L, log != NULL, 1, "invalid `log` userdata");
+		
+		CHECK_RETURN(lua_isnumber(L, -(args - 1)), 0, "[%s]", lua_typename(L, lua_type(L, -(args - 1))));
+		int level = lua_tointeger(L, -(args - 1));
+		if (args == 3) {
+			CHECK_RETURN(lua_isstring(L, -(args - 2)), 0, "[%s]", lua_typename(L, lua_type(L, -(args - 2))));
+			std::string s = lua_tostring(L, -(args - 2));
+			std::string color_string;
+			transform(s.begin(), s.end(), color_string.begin(), ::toupper);
+			CHECK_RETURN(__string_to_color.find(color_string) != __string_to_color.end(), 0, "error color: %s(%s)", s.c_str(), color_string.c_str());
+			(*log)->set_console_color(level, __string_to_color[color_string]);
+		}
+		
+		logger::EasylogColor color = (*log)->console_color(level);
+		CHECK_RETURN(__color_to_string.find(color) != __color_to_string.end(), 0, "error color: %d", color);
+
+		lua_pushstring(L, __color_to_string[color].c_str());		
+		return 1;
+	}
+
+	//----------------------------------------------------------------------------------------------------
+
+	//
+	// void db:debug(string)
+	static int cc_log_debug(lua_State* L) {
+		logger::Easylog** log = (logger::Easylog**) luaL_checkudata(L, 1, LUA_METATABLE_LOGGER_NAME);
+		luaL_argcheck(L, log != NULL, 1, "invalid `log` userdata");
+	
+		int args = lua_gettop(L);// this:userdata in stack bottom
+		CHECK_RETURN(args == 2, 0, "`%s` lack args:%d", __FUNCTION__, args);
+		CHECK_RETURN(lua_isstring(L, -(args - 1)), 0, "[%s]", lua_typename(L, lua_type(L, -(args - 1))));
+		const char* s = lua_tostring(L, -(args - 1));
+		logger::EasylogMessage(*log, logger::LEVEL_DEBUG,  __FILE__, __LINE__, __FUNCTION__) << s;
+		return 0;
+	}
+
+	//
+	// void db:trace(string)
+	static int cc_log_trace(lua_State* L) {
+		logger::Easylog** log = (logger::Easylog**) luaL_checkudata(L, 1, LUA_METATABLE_LOGGER_NAME);		
+		luaL_argcheck(L, log != NULL, 1, "invalid `log` userdata");
+	
+		int args = lua_gettop(L);// this:userdata in stack bottom
+		CHECK_RETURN(args == 2, 0, "`%s` lack args:%d", __FUNCTION__, args);
+		CHECK_RETURN(lua_isstring(L, -(args - 1)), 0, "[%s]", lua_typename(L, lua_type(L, -(args - 1))));
+		const char* s = lua_tostring(L, -(args - 1));
+		logger::EasylogMessage(*log, logger::LEVEL_TRACE,  __FILE__, __LINE__, __FUNCTION__) << s;
+		return 0;
+	}
+	
+	//
+	// void db:alarm(string)
+	static int cc_log_alarm(lua_State* L) {
+		logger::Easylog** log = (logger::Easylog**) luaL_checkudata(L, 1, LUA_METATABLE_LOGGER_NAME);		
+		luaL_argcheck(L, log != NULL, 1, "invalid `log` userdata");
+	
+		int args = lua_gettop(L);// this:userdata in stack bottom
+		CHECK_RETURN(args == 2, 0, "`%s` lack args:%d", __FUNCTION__, args);
+		CHECK_RETURN(lua_isstring(L, -(args - 1)), 0, "[%s]", lua_typename(L, lua_type(L, -(args - 1))));
+		const char* s = lua_tostring(L, -(args - 1));
+		logger::EasylogMessage(*log, logger::LEVEL_ALARM,  __FILE__, __LINE__, __FUNCTION__) << s;
+		return 0;
+	}
+
+	//
+	// void db:error(string)	
+	static int cc_log_error(lua_State* L) {
+		logger::Easylog** log = (logger::Easylog**) luaL_checkudata(L, 1, LUA_METATABLE_LOGGER_NAME);		
+		luaL_argcheck(L, log != NULL, 1, "invalid `log` userdata");
+	
+		int args = lua_gettop(L);// this:userdata in stack bottom
+		CHECK_RETURN(args == 2, 0, "`%s` lack args:%d", __FUNCTION__, args);
+		CHECK_RETURN(lua_isstring(L, -(args - 1)), 0, "[%s]", lua_typename(L, lua_type(L, -(args - 1))));
+		const char* s = lua_tostring(L, -(args - 1));
+		logger::EasylogMessage(*log, logger::LEVEL_ERROR,  __FILE__, __LINE__, __FUNCTION__) << s;
+		return 0;
+	}
+
+	
+	static int __cc_log_gc(lua_State *L) {		
+		Easylog** log = (Easylog**) luaL_checkudata(L, 1, LUA_METATABLE_LOGGER_NAME);		
+		luaL_argcheck(L, log != NULL, 1, "invalid `log` userdata");
+		if (s) {
+			Debug("__log_gc: %p", *log);
+			// NOTE: should be remove Easylog from this service
+		}
+		return 0;
+	}
+	
+	static int __cc_log_tostring(lua_State *L) {
+		lua_pushstring(L, "log");
+		return 1;
+	}
+
 	
 	void luaT_reg_functions(lua_State* L) {
 		luaT_beginNamespace(L, LUA_REGISTER_NAMESPACE);
@@ -836,13 +1118,6 @@ BEGIN_NAMESPACE_TNODE {
 		//
 		// void closesocket(fd)
 		LUA_REGISTER(L, "closesocket", cc_closesocket);
-
-		//
-		// void log_XXXX(string)
-		LUA_REGISTER(L, "log_debug", cc_log_debug);
-		LUA_REGISTER(L, "log_trace", cc_log_trace);
-		LUA_REGISTER(L, "log_alarm", cc_log_alarm);
-		LUA_REGISTER(L, "log_error", cc_log_error);
 
 		//
 		// table json_decode(string)
@@ -916,6 +1191,77 @@ BEGIN_NAMESPACE_TNODE {
 
 
 		//
+		// logger
+	    luaL_newmetatable(L, LUA_METATABLE_LOGGER_NAME); //logger metatable
+	    /* metatable.__index = metatable */
+	    lua_pushvalue(L, -1);  /* duplicates the metatable */
+	    lua_setfield(L, -2, "__index"); /* __index ref self */
+		
+		//
+		// string log:destination([string dir])
+		LUA_REGISTER(L, "destination", cc_log_destination);
+
+		//
+		// bool log:toserver(int level, [string address, int port])
+		LUA_REGISTER(L, "toserver", cc_log_toserver);
+		
+		//
+		// bool log:tostdout(int level, [bool])
+		LUA_REGISTER(L, "tostdout", cc_log_tostdout);
+		
+		//
+		// string log:tofile(int level, [string filename])
+		LUA_REGISTER(L, "tofile", cc_log_tofile);
+
+		//
+		// bool log:autosplit_day([bool])
+		LUA_REGISTER(L, "autosplit_day", cc_log_autosplit_day);
+
+		//
+		// bool log:autosplit_hour([bool])
+		LUA_REGISTER(L, "autosplit_hour", cc_log_autosplit_hour);
+		
+		//
+		// int log:level([int level])
+		//		GLOBAL			=	0,
+		//		LEVEL_DEBUG		=	1,
+		//		LEVEL_TRACE		=	2,
+		//		LEVEL_ALARM		=	3,
+		//		LEVEL_ERROR		=	4,
+		LUA_REGISTER(L, "level", cc_log_level);
+
+		//
+		// string db:console_color(int level, [string color])
+		//		BLACK
+		//		RED,	LRED
+		//		GREEN,	LGREEN
+		//		BROWN
+		//		BLUE,	LBLUE
+		//		MAGENTA,LMAGENTA
+		//		CYAN,	LCYAN
+		//		GREY
+		//		WHITE
+		//		YELLOW
+		LUA_REGISTER(L, "console_color", cc_log_console_color);
+		
+		//
+		// void log:XXXXX(string)
+		LUA_REGISTER(L, "debug", cc_log_debug);
+		LUA_REGISTER(L, "trace", cc_log_trace);
+		LUA_REGISTER(L, "alarm", cc_log_alarm);
+		LUA_REGISTER(L, "error", cc_log_error);
+
+		LUA_REGISTER(L, "__gc", __cc_log_gc);
+		LUA_REGISTER(L, "__tostring", __cc_log_tostring);
+
+		//
+		// userdata newlog()
+		luaT_beginNamespace(L, LUA_REGISTER_NAMESPACE);
+		LUA_REGISTER(L, "newlog", cc_newlog);
+		luaT_endNamespace(L);
+
+
+		//
 		// db
 	    luaL_newmetatable(L, LUA_METATABLE_DB_NAME); //db metatable
 	    /* metatable.__index = metatable */
@@ -956,9 +1302,9 @@ BEGIN_NAMESPACE_TNODE {
 		LUA_REGISTER(L, "__gc", __cc_db_gc);
 		LUA_REGISTER(L, "__tostring", __cc_db_tostring);
 
-		luaT_beginNamespace(L, LUA_REGISTER_NAMESPACE);
 		//
 		// userdata newdb(host, user, password, port, [database])
+		luaT_beginNamespace(L, LUA_REGISTER_NAMESPACE);
 		LUA_REGISTER(L, "newdb", cc_newdb);
 		luaT_endNamespace(L);
 

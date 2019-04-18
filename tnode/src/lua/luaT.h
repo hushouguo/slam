@@ -9,9 +9,9 @@
 #define	USE_LUAJIT							1
 #define LUA_STACK_SIZE						8192
 #define LUA_REGISTER_NAMESPACE				"cc"
-#define LUA_REGISTER_SERVICE				"cc.service"
+#define LUA_REGISTER_SERVICE				"cc.SERVICE"
 #define LUA_METATABLE_DB_NAME				"cc.DB"
-#define LUA_METATABLE_TABLE_NAME			"cc.TABLE"
+#define LUA_METATABLE_LOGGER_NAME			"cc.LOGGER"
 
 #define LUA_TINTEGER						9
 

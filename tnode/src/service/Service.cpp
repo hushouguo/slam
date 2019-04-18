@@ -48,13 +48,6 @@ BEGIN_NAMESPACE_TNODE {
 		this->stop();
 
 		//
-		// db cleanup
-		for (auto& easydb : this->_dbs) {
-			SafeDelete(easydb);
-		}
-		this->_dbs.clear();
-		
-		//
 		// network cleanup
 		while (!this->_msgQueue.empty()) {
 			const void* netmsg = this->_msgQueue.pop_front();
@@ -74,6 +67,20 @@ BEGIN_NAMESPACE_TNODE {
 		//
 		// close lua state
 		luaT_close(this->_L);
+		
+		//
+		// db cleanup
+		for (auto& easydb : this->_dbs) {
+			SafeDelete(easydb);
+		}
+		this->_dbs.clear();
+
+		//
+		// log cleanup
+		for (auto& easylog : this->_logs) {
+			SafeDelete(easylog);
+		}
+		this->_logs.clear();
 	}
 
 	void Service::stop() {

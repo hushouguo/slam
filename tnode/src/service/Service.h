@@ -31,13 +31,17 @@ BEGIN_NAMESPACE_TNODE {
 			lua_State* _L = nullptr;
 			void cleanup();
 
-		// db
+		// db & log
 		private:
 			std::list<Easydb*> _dbs;
+			std::list<logger::Easylog*> _logs;
 
 		public:
 			inline void addEasydb(Easydb* easydb) {
 				this->_dbs.push_back(easydb);
+			}
+			inline void addEasylog(logger::Easylog* easylog) {
+				this->_logs.push_back(easylog);
 			}
 		
 		// network
