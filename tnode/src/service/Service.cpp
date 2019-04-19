@@ -130,7 +130,7 @@ BEGIN_NAMESPACE_TNODE {
 	}
 
 	bool Service::need_schedule() {
-		return !this->isstop() && (!this->_msgQueue.empty() || this->hasTimerExpire());
+		return !this->isstop() && (!this->_isinit || !this->_msgQueue.empty() || this->hasTimerExpire());
 	}
     
 	u32 Service::regtimer(u32 milliseconds, s32 times, int ref, const luaT_Value& ctx) {
