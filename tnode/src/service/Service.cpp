@@ -35,7 +35,7 @@ BEGIN_NAMESPACE_TNODE {
 		this->_L = luaT_newstate();
 		luaT_setOwner(this->_L, this->id);
 		this->_entryfile = entryfile;
-		if (!luaT_execFile(this->_L, this->_entryfile.c_str())) { return false; }
+		//if (!luaT_execFile(this->_L, this->_entryfile.c_str())) { return false; }
 		
 		return true;
 	}
@@ -90,6 +90,14 @@ BEGIN_NAMESPACE_TNODE {
 	void Service::run() {
 		if (this->isstop()) {
 			return;
+		}
+
+		if (!this->_isinit) {
+			this->_isinit = true;
+			if (!luaT_execFile(this->_L, this->_entryfile.c_str())) { 
+				this->stop();
+				return; 
+			}
 		}
 		
 		while (!this->_msgQueue.empty()) {

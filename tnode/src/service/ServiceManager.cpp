@@ -66,6 +66,7 @@ BEGIN_NAMESPACE_TNODE {
 			SafeDelete(service);
 		}
 		//Debug << "new service: " << sid;
+		this->schedule(service);
 		return service;
 	}
 

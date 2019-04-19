@@ -27,6 +27,7 @@ BEGIN_NAMESPACE_TNODE {
 
 		private:
 			bool _isstop = false;
+			bool _isinit = false;
 			std::string _entryfile;
 			lua_State* _L = nullptr;
 			void cleanup();
