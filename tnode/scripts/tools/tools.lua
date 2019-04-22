@@ -1,3 +1,5 @@
+--
+-- dump table
 function dump(t)  
     local dump_cache={}
     local function sub_dump(t,indent)

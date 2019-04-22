@@ -1,4 +1,5 @@
-require('scripts/helper')
+require('scripts/tools/tools')
+
 --dump(_G)
 local sid = cc.newservice("scripts/tests/test.lua")
 

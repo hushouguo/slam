@@ -1,4 +1,4 @@
-require('scripts/helper')
+require('scripts/tools/tools')
 --dump(_G)
 
 --local fd_client = cc.newclient("client", "0.0.0.0", 12306)

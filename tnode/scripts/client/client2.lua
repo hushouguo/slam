@@ -1,4 +1,4 @@
-require('scripts/helper')
+require('scripts/tools/tools')
 
 local sid = _G["cc.SERVICE"]
 
