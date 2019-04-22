@@ -59,12 +59,12 @@ BEGIN_NAMESPACE_TNODE {
 		u32 sid = this->_autoid++;
 		assert(this->getService(sid) == nullptr);
 		Service* service = new Service(sid);
-		this->insertService(sid, service);
 		bool result = service->init(entryfile);
 		if (!result) {
-			this->removeService(sid);
 			SafeDelete(service);
+			return nullptr;
 		}
+		this->insertService(sid, service);
 		//Debug << "new service: " << sid;
 		this->schedule(service);
 		return service;
