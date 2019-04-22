@@ -59,6 +59,7 @@ namespace net {
 			Spinlocker _locker;
 			std::list<const NetMessage*> _msgQueue;
 			void closeSocket(SOCKET, const char* reason);
+			std::list<const Socket*> _removeSockets;
 	};
 }
 

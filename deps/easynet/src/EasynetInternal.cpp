@@ -77,9 +77,14 @@ namespace net {
 		CHECK_RETURN(VALID_SOCKET(s), void(0), "invalid socket: %d", s);
 		this->_poll->removeSocket(s);
 		Socket* socket = this->_sockets[s];
-		CHECK_ALARM(socket, "Not found socket: %d", s);
-		SafeDelete(socket);
 		this->_sockets[s] = nullptr;
+		//CHECK_ALARM(socket, "Not found socket: %d", s);
+		//SafeDelete(socket);
+		//
+		//NOTE: DON'T DELETE SOCKET HERE, CAUSE MAYBE OTHER THREAD CALLING `Socket::sendMessage`
+		if (socket) {
+			this->_removeSockets.push_back(socket);
+		}
 	}
 
 	void EasynetInternal::socketRead(SOCKET s) {
@@ -124,7 +129,16 @@ namespace net {
 	
 	void EasynetInternal::run() {
 		while (!this->isstop()) {
+			//
+			// poll
 			this->_poll->run(-1);
+
+			//
+			// remove sockets closed
+			for (auto& socket : this->_removeSockets) {
+				SafeDelete(socket);
+			}
+			this->_removeSockets.clear();
 		}
 		Debug("Easynet exit, msgQueue: %ld", this->_msgQueue.size());
 	}
