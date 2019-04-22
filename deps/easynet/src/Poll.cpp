@@ -75,6 +75,9 @@ namespace net {
 		for (int i = 0; i < numevents; ++i) {
 			struct epoll_event* ee = &this->_events[i];
 			if (ee->events & EPOLLERR) {
+				//
+				// if the server-side does not process messages in time,
+				// error happens: Connection reset by peer
 				Error("fd: %d poll error: %d, %d,%s", ee->data.fd, ee->events, errno, strerror(errno));
 				this->_easynet->socketError(ee->data.fd);
 			}
