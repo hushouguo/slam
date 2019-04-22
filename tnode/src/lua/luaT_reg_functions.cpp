@@ -364,7 +364,7 @@ BEGIN_NAMESPACE_TNODE {
 
 
 	//
-	// void response(fd, entityid, msgid, o)
+	// bool response(fd, entityid, msgid, o)
 	static int cc_response(lua_State* L) {
 		int args = lua_gettop(L);
 		CHECK_RETURN(args == 4, 0, "`%s` lack args:%d", __FUNCTION__, args);
@@ -405,9 +405,10 @@ BEGIN_NAMESPACE_TNODE {
 		msg->entityid = entityid;
 		msg->msgid = msgid;
 		msg->flags = 0;
-		sNetworkManager.easynet()->sendMessage(fd, netmsg);
-		
-		return 0;
+		rc = sNetworkManager.easynet()->sendMessage(fd, netmsg);
+
+		lua_pushboolean(L, rc);
+		return 1;
 	}
 
 	//
