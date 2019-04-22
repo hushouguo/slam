@@ -117,7 +117,7 @@ namespace net {
 		int error = 0;
 		socklen_t errlen = sizeof(error);
 		if (getsockopt(s, SOL_SOCKET, SO_ERROR, (void *)&error, &errlen) == 0) {
-			Error << "socketError: " << strerror(error);
+			Error("socketError: %s", strerror(error));
 		}
 		this->closeSocket(s, "poll error");
 	}
