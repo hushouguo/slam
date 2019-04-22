@@ -5,6 +5,8 @@
 
 #include "Network.h"
 
+#define VALID_SOCKET(s)	((s) >= 0 && (s) < MAX_SOCKET)
+
 namespace net {
 	SOCKET EasynetInternal::createServer(const char* address, int port) {
 		SocketServer* socketServer = SocketServerCreator::create(this);
@@ -13,7 +15,7 @@ namespace net {
 			SafeDelete(socketServer);
 			return -1;
 		}
-		assert(socketServer->fd() < MAX_SOCKET);
+		assert(VALID_SOCKET(socketServer->fd()));
 		assert(this->_sockets[socketServer->fd()] == nullptr);
 		this->_sockets[socketServer->fd()] = socketServer;
 		this->_poll->addSocket(socketServer->fd());
@@ -27,7 +29,7 @@ namespace net {
 			SafeDelete(socketClient);
 			return -1;
 		}
-		assert(socketClient->fd() < MAX_SOCKET);
+		assert(VALID_SOCKET(socketClient->fd()));
 		assert(this->_sockets[socketClient->fd()] == nullptr);
 		this->_sockets[socketClient->fd()] = socketClient;
 		this->_poll->addSocket(socketClient->fd());
@@ -35,8 +37,8 @@ namespace net {
 	}
 	
 	bool EasynetInternal::sendMessage(SOCKET s, const void* msg) {
-		assert(s < MAX_SOCKET);
-		assert(isValidNetMessage(msg));
+		CHECK_RETURN(VALID_SOCKET(s), false, "invalid socket: %d", s);
+		CHECK_RETURN(isValidNetMessage(msg), false, "invalid msg");
 		Socket* socket = this->_sockets[s];
 		CHECK_RETURN(socket, false, "Not found socket: %d when send msg", s);
 		NetMessage* netmsg = (NetMessage*) msg;
@@ -67,13 +69,13 @@ namespace net {
 	}
 	
 	bool EasynetInternal::isActive(SOCKET s) {
-		return s < MAX_SOCKET && this->_sockets[s] != nullptr;
+		return VALID_SOCKET(s) && this->_sockets[s] != nullptr;
 	}
 
 	void EasynetInternal::closeSocket(SOCKET s, const char* reason) {
 		Debug("Easynet, closeSocket: %d, reason: %s", s, reason);
+		CHECK_RETURN(VALID_SOCKET(s), void(0), "invalid socket: %d", s);
 		this->_poll->removeSocket(s);
-		assert(s < MAX_SOCKET);
 		Socket* socket = this->_sockets[s];
 		CHECK_ALARM(socket, "Not found socket: %d", s);
 		SafeDelete(socket);
@@ -81,6 +83,7 @@ namespace net {
 	}
 
 	void EasynetInternal::socketRead(SOCKET s) {
+		assert(VALID_SOCKET(s));
 		Socket* socket = this->_sockets[s];
 		CHECK_RETURN(socket, void(0), "Not found socket: %d when socketRead", s);
 		if (socket->socket_type() == SOCKET_SERVER) {
@@ -102,6 +105,7 @@ namespace net {
 	}
 	
 	void EasynetInternal::socketWrite(SOCKET s) {
+		assert(VALID_SOCKET(s));
 		Socket* socket = this->_sockets[s];
 		CHECK_RETURN(socket, void(0), "Not found socket: %d when socketWrite", s);
 		if (!socket->send()) {
@@ -150,12 +154,12 @@ namespace net {
 	}
 	
 	void EasynetInternal::releaseMessage(const void* msg) {
-		assert(isValidNetMessage(msg));
+		CHECK_RETURN(isValidNetMessage(msg), void(0), "invalid msg");
 		releaseNetMessage((const NetMessage*) msg);
 	}
 	
 	void EasynetInternal::setMessageContent(const void* msg, const void* data, size_t len) {
-		assert(isValidNetMessage(msg));
+		CHECK_RETURN(isValidNetMessage(msg), void(0), "invalid msg");
 		NetMessage* netmsg = (NetMessage*) msg;
 		assert(netmsg->size >= len);
 		memcpy(netmsg->payload, data, len);
@@ -163,7 +167,7 @@ namespace net {
 	}
 	
 	const void* EasynetInternal::getMessageContent(const void* msg, size_t* len) {
-		assert(isValidNetMessage(msg));
+		CHECK_RETURN(isValidNetMessage(msg), nullptr, "invalid msg");
 		const NetMessage* netmsg = (const NetMessage*) msg;
 		if (len) {
 			*len = netmsg->payload_len;
@@ -172,7 +176,7 @@ namespace net {
 	}
 
 	SOCKET EasynetInternal::getMessageSocket(const void* msg) {
-		assert(isValidNetMessage(msg));
+		CHECK_RETURN(isValidNetMessage(msg), -1, "invalid msg");
 		const NetMessage* netmsg = (const NetMessage*) msg;
 		return netmsg->fd;
 	}
