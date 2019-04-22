@@ -79,8 +79,8 @@ cc.log_trace(string.format("[%4s] test `newservice`", cc.newservice("scripts/tes
 cc.log_trace(string.format("[%4s] test `loadmsg`", cc.loadmsg("protocol/echo.proto") and "OK" or "FAIL"))
 cc.log_trace(string.format("[%4s] test `regmsg`", cc.regmsg(1, "protocol.EchoRequest") and "OK" or "FAIL"))
 
-local fd_server = cc.newserver("0.0.0.0", 12306)
-local fd_client = cc.newclient("0.0.0.0", 12306)
+local fd_server = cc.newserver("server", "0.0.0.0", 12306)
+local fd_client = cc.newclient("client", "0.0.0.0", 12306)
 local playerid = 1000
 cc.log_trace(string.format("[%4s] test `newserver`", fd_server ~= -1 and "OK" or "FAIL"))
 cc.log_trace(string.format("[%4s] test `newclient`", fd_client ~= -1 and "OK" or "FAIL"))
