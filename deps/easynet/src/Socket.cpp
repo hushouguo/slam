@@ -80,10 +80,12 @@ namespace net {
 		
 	bool SocketInternal::sendMessage(const NetMessage* msg) {
 		assert(msg->fd == this->fd());
+		bool rc = false;
 		this->_locker.lock();
 		this->_sendQueue.push_back(msg);
+		rc = this->_easynet->poll()->setSocketPollout(this->fd(), true);	// set EPOLL_OUT
 		this->_locker.unlock();
-		return this->_easynet->poll()->setSocketPollout(this->fd(), true);	// set EPOLL_OUT
+		return rc;
 	}	
 
 	bool SocketInternal::send() {
@@ -116,7 +118,9 @@ namespace net {
 
 			if (!msg) {
 				// remove EPOLL_OUT when send all messages over
+				this->_locker.lock();
 				this->_easynet->poll()->setSocketPollout(this->fd(), false);
+				this->_locker.unlock();
 				break;	// no more message to send
 			}
 
