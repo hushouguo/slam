@@ -110,7 +110,12 @@ namespace net {
 	}
 	
 	void EasynetInternal::socketError(SOCKET s) {
-		this->closeSocket(s, "poll error"); 
+		int error = 0;
+		socklen_t errlen = sizeof(error);
+		if (getsockopt(s, SOL_SOCKET, SO_ERROR, (void *)&error, &errlen) == 0) {
+			Error << "socketError: " << strerror(error);
+		}
+		this->closeSocket(s, "poll error");
 	}
 	
 	void EasynetInternal::run() {
