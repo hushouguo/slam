@@ -39,25 +39,24 @@ namespace net {
 	bool EasynetInternal::sendMessage(SOCKET s, const void* msg) {
 		CHECK_RETURN(VALID_SOCKET(s), false, "invalid socket: %d", s);
 		CHECK_RETURN(isValidNetMessage(msg), false, "invalid msg");
-		Socket* socket = this->_sockets[s];
-		CHECK_RETURN(socket, false, "Not found socket: %d when send msg", s);
+		CHECK_RETURN(this->_sockets[s], false, "Not found socket: %d when send msg", s);
 		NetMessage* netmsg = (NetMessage*) msg;
 		netmsg->fd = s;
-		if (!socket->sendMessage(netmsg)) {
-			this->closeSocket(s, "sendMessage error");
-			return false;
-		}
+		this->_rlocker.lock();
+		this->_rQueue.push_back(netmsg);
+		this->_rlocker.unlock();
+		this->poll()->wakeup();
 		return true;
 	}
 	
 	const void* EasynetInternal::getMessage(SOCKET* s) {
 		const NetMessage* msg = nullptr;
-		this->_locker.lock();
-		if (!this->_msgQueue.empty()) {
-			msg = this->_msgQueue.front();
-			this->_msgQueue.pop_front();
+		this->_wlocker.lock();
+		if (!this->_wQueue.empty()) {
+			msg = this->_wQueue.front();
+			this->_wQueue.pop_front();
 		}
-		this->_locker.unlock();
+		this->_wlocker.unlock();
 		if (msg && s) {
 			*s = msg->fd;
 		}
@@ -78,13 +77,8 @@ namespace net {
 		this->_poll->removeSocket(s);
 		Socket* socket = this->_sockets[s];
 		this->_sockets[s] = nullptr;
-		//CHECK_ALARM(socket, "Not found socket: %d", s);
-		//SafeDelete(socket);
-		//
-		//NOTE: DON'T DELETE SOCKET HERE, CAUSE MAYBE OTHER THREAD CALLING `Socket::sendMessage`
-		if (socket) {
-			this->_removeSockets.push_back(socket);
-		}
+		CHECK_ALARM(socket, "Not found socket: %d", s);
+		SafeDelete(socket);
 	}
 
 	void EasynetInternal::socketRead(SOCKET s) {
@@ -130,15 +124,36 @@ namespace net {
 	void EasynetInternal::run() {
 		while (!this->isstop()) {
 			//
+			// push message to socket
+			while (true) {
+				NetMessage* netmsg = nullptr;				
+				this->_rlocker.lock();
+				if (!this->_rQueue.empty()) {
+					netmsg = this->_rQueue.front();
+					this->_rQueue.pop_front();
+				}
+				this->_rlocker.unlock();
+
+				if (!netmsg) {
+					break;
+				}
+
+				assert(VALID_SOCKET(netmsg->fd));
+				Socket* socket = this->_sockets[netmsg->fd];
+				if (!socket) {
+					this->releaseMessage(netmsg);
+					continue;
+				}
+				
+				if (!socket->sendMessage(netmsg)) {
+					this->releaseMessage(netmsg);
+					this->closeSocket(netmsg->fd, "sendMessage error");
+				}				
+			}
+			
+			//
 			// poll
 			this->_poll->run(-1);
-
-			//
-			// remove sockets closed
-			for (auto& socket : this->_removeSockets) {
-				SafeDelete(socket);
-			}
-			this->_removeSockets.clear();
 		}
 		Debug("Easynet exit, msgQueue: %ld", this->_msgQueue.size());
 	}
@@ -146,18 +161,27 @@ namespace net {
 	void EasynetInternal::stop() {
 		if (!this->isstop()) {
 			this->_isstop = true;
-			this->_poll->stop();
+			this->_poll->wakeup();
 			if (this->_threadWorker && this->_threadWorker->joinable()) {
 				this->_threadWorker->join();
 			}
 
 			SafeDelete(this->_poll);
 			SafeDelete(this->_threadWorker);
-			
-			for (auto& msg : this->_msgQueue) {
+
+			//
+			// cleanup readQueue
+			for (auto& msg : this->rQueue) {
 				releaseNetMessage(msg);
 			}
-			this->_msgQueue.clear();
+			this->_rQueue.clear();
+
+			//
+			// cleanup writeQueue
+			for (auto& msg : this->_wQueue) {
+				releaseNetMessage(msg);
+			}
+			this->_wQueue.clear();
 		}
 	}
 

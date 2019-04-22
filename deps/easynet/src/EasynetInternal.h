@@ -43,23 +43,24 @@ namespace net {
 			}
 			inline Poll* poll() { return this->_poll; }
 			inline void pushMessage(const NetMessage* msg) {
-				this->_locker.lock();
-				this->_msgQueue.push_back(msg);
-				this->_locker.unlock();
+				this->_wlocker.lock();
+				this->_wQueue.push_back(msg);
+				this->_wlocker.unlock();
 			}
 
 		private:
 			bool _isstop = false;
 			std::thread* _threadWorker = nullptr;
 			std::function<int(const void*, size_t)> _spliter;
+			void closeSocket(SOCKET, const char* reason);
 			
 		private:
 			Poll* _poll = nullptr;
 			Socket* _sockets[MAX_SOCKET];
-			Spinlocker _locker;
-			std::list<const NetMessage*> _msgQueue;
-			void closeSocket(SOCKET, const char* reason);
-			std::list<const Socket*> _removeSockets;
+
+		private:
+			Spinlocker _rlocker, _wlocker;
+			std::list<const NetMessage*> _rQueue, _wQueue;
 	};
 }
 

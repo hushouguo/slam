@@ -25,7 +25,7 @@ namespace net {
 			SOCKET _fd = -1;
 			int _socket_type = -1;
 			EasynetInternal* _easynet = nullptr;
-			Spinlocker _locker;
+			//Spinlocker _locker;
 			std::list<const NetMessage*> _sendQueue;
 
 		private:			
@@ -80,9 +80,9 @@ namespace net {
 		
 	bool SocketInternal::sendMessage(const NetMessage* msg) {
 		assert(msg->fd == this->fd());
-		this->_locker.lock();
+		//this->_locker.lock();
 		this->_sendQueue.push_back(msg);
-		this->_locker.unlock();
+		//this->_locker.unlock();
 		return this->_easynet->poll()->setSocketPollout(this->fd(), true);	// set EPOLL_OUT
 	}	
 
@@ -104,7 +104,7 @@ namespace net {
 
 		const NetMessage* msg = nullptr;
 		while (true) {
-			this->_locker.lock();
+			//this->_locker.lock();
 			if (!this->_sendQueue.empty()) {
 				msg = this->_sendQueue.front();
 				this->_sendQueue.pop_front();
@@ -112,7 +112,7 @@ namespace net {
 			else {
 				msg = nullptr;
 			}
-			this->_locker.unlock();
+			//this->_locker.unlock();
 
 			if (!msg) {
 				// remove EPOLL_OUT when send all messages over

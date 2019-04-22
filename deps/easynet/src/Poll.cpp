@@ -10,9 +10,11 @@ namespace net {
 		this->_easynet = easynet;
 		this->_epfd = epoll_create(NM_POLL_EVENT); /* `NM_POLL_EVENT` is just a hint for the kernel */
 		memset(this->_events, 0, sizeof(this->_events));
+		this->_wakefd = open("/dev/null", O_RDWR);
 	}
 		
 	Poll::~Poll() {
+		SafeClose(this->_wakefd);
 	}
 
 	bool Poll::addSocket(SOCKET s) {
@@ -39,6 +41,17 @@ namespace net {
 		return true;
 	}
 
+	bool Poll::setSocketPollin(SOCKET s, bool value) {
+		struct epoll_event ee;
+		ee.events = value ? (EPOLLET | EPOLLIN | EPOLLOUT | EPOLLERR) : (EPOLLET | EPOLLOUT | EPOLLERR);
+		ee.data.u64 = 0; /* avoid valgrind warning */
+		ee.data.fd = s;
+		/* Note, Kernel < 2.6.9 requires a non null event pointer even for EPOLL_CTL_DEL. */
+		int rc = epoll_ctl(this->_epfd, EPOLL_CTL_MOD, s, &ee);
+		CHECK_RETURN(rc == 0, false, "epoll_mod error: %d, %s, socket: %d", errno, strerror(errno), s);
+		return true;
+	}
+	
 	bool Poll::setSocketPollout(SOCKET s, bool value) {
 		struct epoll_event ee;
 		ee.events = value ? (EPOLLET | EPOLLIN | EPOLLOUT | EPOLLERR) : (EPOLLET | EPOLLIN | EPOLLERR);
@@ -50,12 +63,8 @@ namespace net {
 		return true;
 	}
 
-	void Poll::stop() {
-		if (!this->_isstop) {
-			this->_isstop = true;
-			this->addSocket(STDOUT_FILENO);// try to wakeup epoll_wait
-			this->setSocketPollout(STDOUT_FILENO, true);
-		}
+	void Poll::wakeup() {
+		this->addSocket(this->_wakefd);
 	}
 
 	void Poll::run(int milliseconds) {
@@ -90,11 +99,16 @@ namespace net {
 				this->_easynet->socketError(ee->data.fd);
 			}
 			else {
-				if (ee->events & EPOLLIN) {
-					this->_easynet->socketRead(ee->data.fd);
+				if (ee->data.fd == this->_wakefd) {
+					this->removeSocket(this->_wakefd);
 				}
-				if (ee->events & EPOLLOUT) {
-					this->_easynet->socketWrite(ee->data.fd);
+				else {
+					if (ee->events & EPOLLIN) {
+						this->_easynet->socketRead(ee->data.fd);
+					}
+					if (ee->events & EPOLLOUT) {
+						this->_easynet->socketWrite(ee->data.fd);
+					}
 				}
 			}
 		}

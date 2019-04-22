@@ -16,17 +16,17 @@ namespace net {
 			~Poll();
 
 		public:
-			void stop();
+			void wakeup();
 			void run(int milliseconds);
 			
 		public:
 			bool addSocket(SOCKET s);
 			bool removeSocket(SOCKET s);
+			bool setSocketPollin(SOCKET s, bool value);
 			bool setSocketPollout(SOCKET s, bool value);
 
 		private:
-			bool _isstop = false;
-			int _epfd = -1;
+			int _epfd = -1, _wakefd;
 			struct epoll_event _events[NM_POLL_EVENT];
 			EasynetInternal* _easynet = nullptr;
 	};
