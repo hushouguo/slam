@@ -542,10 +542,6 @@ BEGIN_NAMESPACE_TNODE {
 		*db = easydb;
 		luaL_getmetatable(L, LUA_METATABLE_DB_NAME);
 		lua_setmetatable(L, -2);
-
-		//
-		// add Easydb to Service
-		sServiceManager.getService(L)->addEasydb(easydb);
 		
 		return 1;
 	}
@@ -783,7 +779,8 @@ BEGIN_NAMESPACE_TNODE {
 		luaL_argcheck(L, db != NULL, 1, "invalid `db` userdata");
 		if (db) {
 			Debug("__db_gc: %p", *db);
-			// NOTE: should be remove Easydb from this service
+			// destroy Easydb from this service
+			SafeDelete(*db);
 		}
 		return 0;
 	}
@@ -858,10 +855,6 @@ BEGIN_NAMESPACE_TNODE {
 		*log = easylog;
 		luaL_getmetatable(L, LUA_METATABLE_LOGGER_NAME);
 		lua_setmetatable(L, -2);
-
-		//
-		// add Easylog to Service
-		sServiceManager.getService(L)->addEasylog(easylog);
 		
 		return 1;
 	}
@@ -1164,7 +1157,8 @@ BEGIN_NAMESPACE_TNODE {
 		luaL_argcheck(L, log != NULL, 1, "invalid `log` userdata");
 		if (log) {
 			Debug("__log_gc: %p", *log);
-			// NOTE: should be remove Easylog from this service
+			// destroy Easylog from this service
+			SafeDelete(*log);
 		}
 		return 0;
 	}
@@ -1192,7 +1186,7 @@ BEGIN_NAMESPACE_TNODE {
 		// fd newclient(name, address, port)
 		LUA_REGISTER(L, "newclient", cc_newclient);
 		//
-		// void response(fd, entityid, msgid, o)
+		// bool response(fd, entityid, msgid, o)
 		LUA_REGISTER(L, "response", cc_response);
 		//
 		// bool loadmsg(filename) // filename also is a directory
@@ -1324,22 +1318,6 @@ BEGIN_NAMESPACE_TNODE {
 		//		LEVEL_ALARM		=	3,
 		//		LEVEL_ERROR		=	4,
 		LUA_REGISTER(L, "level", cc_log_level);
-
-#if 0
-		//
-		// string db:console_color(int level, [string color])
-		//		BLACK
-		//		RED,	LRED
-		//		GREEN,	LGREEN
-		//		BROWN
-		//		BLUE,	LBLUE
-		//		MAGENTA,LMAGENTA
-		//		CYAN,	LCYAN
-		//		GREY
-		//		WHITE
-		//		YELLOW
-		//LUA_REGISTER(L, "console_color", cc_log_console_color);
-#endif
 
 		//
 		// void log:XXXXX(string)

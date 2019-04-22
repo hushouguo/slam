@@ -196,26 +196,6 @@ int main(int argc, char* argv[]) {
 
 	dump_library_version();
 
-#if 1
-	Easynet* easynet = Easynet::createInstance([](const void* buffer, size_t len) {
-			return len;
-			});
-	easynet->createServer("127.0.0.1", 12306);
-	SOCKET s = easynet->createClient("127.0.0.1", 12306);
-	Debug << "s: " << s;
-//	uint32_t count = 0;
-    while (true) {
-		const void* msg = easynet->allocateMessage(1024);
-		assert(msg);
-		if (!easynet->sendMessage(s, msg)) {
-			break;
-		}
-//		Debug << "sendMessage: " << count++;
-	}	
-
-	return 1;
-#endif
-
 	//
 	// init thread pool
 	sThreadPool.init(sConfig.threads);
