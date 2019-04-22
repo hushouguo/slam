@@ -108,8 +108,12 @@ BEGIN_NAMESPACE_TNODE {
 		}
 
 		sTime.now();
-		while (!this->_timerQueue.empty()) {
+		//while (!this->_timerQueue.empty()) {
+		while (true) {
 			timer_struct* ts = this->popTimer();
+			if (!ts) {
+				break;
+			}
 			if (ts->next_time_point > sTime.milliseconds()) {
 				this->pushTimer(ts);
 				break;
@@ -130,7 +134,7 @@ BEGIN_NAMESPACE_TNODE {
 	}
 
 	bool Service::need_schedule() {
-		return !this->isstop() && (!this->_isinit || !this->_msgQueue.empty() || this->hasTimerExpire());
+		return !this->isstop() && (!this->_isinit || !this->_msgQueue.empty() || this->timerExpire());
 	}
     
 	u32 Service::regtimer(u32 milliseconds, s32 times, int ref, const luaT_Value& ctx) {

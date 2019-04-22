@@ -89,22 +89,25 @@ BEGIN_NAMESPACE_TNODE {
 				//}
 			}
 			inline timer_struct* popTimer() {
-				assert(!this->_timerQueue.empty());
+				timer_struct* ts = nullptr;
 				this->_locker.lock();
-				timer_struct* ts = this->_timerQueue.front();
-				this->_timerQueue.pop_front();
+				if (!this->_timerQueue.empty()) {
+					ts = this->_timerQueue.front();
+					this->_timerQueue.pop_front();
+				}
 				this->_locker.unlock();
 				return ts;
 			}
-			inline bool hasTimerExpire() {
+			inline bool timerExpire() {
 				sTime.now();
+				bool rc = false;
+				this->_locker.lock();
 				if (!this->_timerQueue.empty()) {
-					this->_locker.lock();
 					timer_struct* ts = this->_timerQueue.front();
-					this->_locker.unlock();
-					return ts->next_time_point <= sTime.milliseconds();
+					rc = ts->next_time_point <= sTime.milliseconds();
 				}
-				return false;
+				this->_locker.unlock();
+				return rc;
 			}
 	};
 }
