@@ -74,8 +74,12 @@ namespace net {
 		
 		for (int i = 0; i < numevents; ++i) {
 			struct epoll_event* ee = &this->_events[i];
-			if (ee->events & (EPOLLERR | EPOLLHUP)) {
-				Error("fd: %d poll error or hup: %d", ee->data.fd, ee->events);
+			if (ee->events & EPOLLERR) {
+				Error("fd: %d poll error: %d, %d,%s", ee->data.fd, ee->events, errno, strerror(errno));
+				this->_easynet->socketError(ee->data.fd);
+			}
+			else if (ee->events & EPOLLHUP) {
+				Error("fd: %d poll hup: %d, %d,%s", ee->data.fd, ee->events, errno, strerror(errno));
 				this->_easynet->socketError(ee->data.fd);
 			}
 			else if (ee->events & EPOLLRDHUP) {
