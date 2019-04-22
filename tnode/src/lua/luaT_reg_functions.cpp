@@ -455,6 +455,9 @@ BEGIN_NAMESPACE_TNODE {
 		else if (lua_isstring(L, -(args - 2))) {
 			ctx = lua_tostring(L, -(args - 2));
 		}
+		else if (lua_isnil(L, -(args - 2))) {
+			// ctx is nil
+		}
 		else {
 			Error << "Not support ctx type: " << lua_typename(L, lua_type(L, -(args - 2)));
 		}
