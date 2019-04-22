@@ -15,91 +15,11 @@
 15. config macro in config.h
 16. main process
 17. APIs and document
+18. random_string的api
 
 19. 把主线程的任务也做成service，主线程
 21. zero-copy, lockfree for easylog
 
 
-
-
--------------------------------------------------------------------------
-[client]
-default-character-set=utf8
-[mysql]
-default-character-set=utf8
-[mysqld]
-collation-server = utf8_unicode_ci
-init-connect='SET NAMES utf8'
-character-set-server = utf8
-
---------------------------------------------------------------------------
-
-wget http://repo.mysql.com/mysql-community-release-el7-5.noarch.rpm
-rpm -ivh mysql-community-release-el7-5.noarch.rpm
-yum update
-yum install mysql-server
-
---------------------------------------------------------------------------
-
-grant all privileges on GProject.* to admin@192.168.100.1 identified by 'vgk2s4tn';
-grant all privileges on *.*  to root@'%' identified by 'vgk2s4tn';
-
-GRANT ALL PRIVILEGES ON *.* TO 'root'@'%' IDENTIFIED BY 'lxh' WITH GRANT OPTION; # 所有的地址都可以使用root用户，密码为lxh远程访问所有的数据库
-flush privileges;
-GRANT ALL PRIVILEGES ON testdb.* TO 'lxh'@'172.16.52.225'  IDENTIFIED BY 'lxh' WITH GRANT OPTION; # IP为172.16.52.225的电脑可以使用lxh用户，密码为lxh远程访问数据库testdb的所有表
-
------------------------------------------------------------------------------
-
-backupdir=/home/hushouguo/backup/data
-time=` date +%Y%m%d%H `
-mysqldump -u root --single-transaction GProject | gzip > $backupdir/GProject$time.sql.gz
-
------------------------------------------------------------------------------
-
-cmake CMakeList.txt -DCMAKE_INSTALL_PREFIX=dir
-
-------------------------------------------------------------------------------
-
-netstat -n | awk '/^tcp/ {++S[$NF]} END {for(a in S) print a, S[a]}'
-
----------------------------------------------------------------------------------
-
-要解决这个问题的可以修改系统的参数，系统默认超时时间的是7200秒，也就是2小时。
-
-tcp_keepalive_time = 7200 seconds (2 hours)
-tcp_keepalive_probes = 9
-tcp_keepalive_intvl = 75 seconds
-
-意思是如果某个TCP连接在idle 2个小时后,内核才发起probe.如果probe 9次(每次75秒)不成功,内核才彻底放弃,认为该连接已失效
-
-sysctl -w net.ipv4.tcp_keepalive_time=30
-sysctl -w net.ipv4.tcp_keepalive_probes=2
-sysctl -w net.ipv4.tcp_keepalive_intvl=2
-									
---------------------------------------------------------------------------------------
-
-小怪兽编译安装指南:
-1. libprotobuf.2.6.1, configure : 2517， 增加 CXXFLAGS="-fPIC" // protobuf-2.4.1
-2. 修改CMakeLists.txt: 226,227, /usr/local/lib/libprotobuf.a
-3. 按照liblsan
-	yum install centos-release-scl-rh
-	yum --enablerepo=centos-sclo-rh-testing install liblsan
-4. 升级gcc, gcc.7.3, 
-	./contrib/download_prerequisites
-	./configure --prefix=/usr --libdir=/usr/lib --libexecdir=/usr/lib --mandir=/usr/share/man --infodir=/usr/share/info --with-bugurl=https://bugs.archlinux.org/ --enable-languages=c,c++ --enable-shared --enable-threads=posix --enable-libmpx --with-system-zlib --with-isl --enable-__cxa_atexit --disable-libunwind-exceptions --enable-clocale=gnu --disable-libstdcxx-pch --disable-libssp --enable-gnu-unique-object --enable-linker-build-id --enable-lto --enable-plugin --enable-install-libiberty --with-linker-hash-style=gnu --enable-gnu-indirect-function --disable-multilib --disable-werror --enable-checking=release
-5. CMakeLists.txt : -D_GLIBCXX_USE_CXX11_ABI=0	
-5. cmake -DCMAKE_BUILD_TYPE=Debug . 
-
---------------------------------------------------------------------------------------
-
-port: 443
-openssl genrsa -des3 -out server.key 2048
-openssl rsa -in server.key -out server.key
-openssl req -new -key server.key -out server.csr
-openssl req -new -x509 -key server.key -out ca.crt -days 3650
-openssl x509 -req -days 3650 -in server.csr -CA ca.crt -CAkey server.key -CAcreateserial -out server.crt
-
-
-要考虑玩家中途掉线的情况，所以在玩家启动的时候处理下订单情况
 
 
