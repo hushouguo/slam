@@ -72,7 +72,7 @@ cc.log_trace(string.format("[%4s] test `xml_decode`", (table ~= nil and table.lo
 
 --
 -- service
-cc.log_trace(string.format("[%4s] test `newservice`", cc.newservice("scripts/performance.lua") ~= -1 and "OK" or "FAIL"))
+cc.log_trace(string.format("[%4s] test `newservice`", cc.newservice("scripts/tests/newservice.lua") ~= -1 and "OK" or "FAIL"))
 
 --
 -- network
