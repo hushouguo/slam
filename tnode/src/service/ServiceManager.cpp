@@ -24,32 +24,67 @@
 #include "service/ServiceManager.h"
 #include "net/NetworkManager.h"
 
+#define VALID_SERVICE(sid)	((sid) >= 0 && (sid) < TNODE_SERVICE_MAX_NUMBER)
+
 BEGIN_NAMESPACE_TNODE {
+	ServiceManager::ServiceManager() {
+		memset(this->_services, 0, sizeof(this->_services));
+	}
+	
 	bool ServiceManager::init(const char* entryfile) {
 		Service* service = this->newservice(entryfile);
 		CHECK_RETURN(service, false, "ServiceManager init failure");
-		this->_initid = service->id;
+		this->_entrysid = service->id;
 		return true;
 	}
 	
-	void ServiceManager::stop() {
-		for (auto& i : this->_services) {
-			Service* service = i.second;
+	Service* ServiceManager::newservice(const char* entryfile) {		
+		u32 sid = this->_autosid++;
+		CHECK_RETURN(VALID_SERVICE(sid), nullptr, "number of service overflow");
+		assert(this->_services[sid] == nullptr);
+		Service* service = new Service(sid);
+		bool result = service->init(entryfile);
+		if (!result) {
 			SafeDelete(service);
+			return nullptr;
 		}
-		this->_services.clear();
+		this->_services[sid] = service;
+		//
+		// schedule this service right now
+		service->schedule();
+		return service;
 	}
 
-	bool ServiceManager::pushMessage(const void* netmsg) {	
-		Service* initservice = this->getService(this->_initid);
-		CHECK_RETURN(initservice, false, "Not found initservice: %d", this->_initid);
+	void ServiceManager::stop() {
+		for (auto service : this->_services) {
+			SafeDelete(service);
+		}
+		memset(this->_services, 0, sizeof(this->_services));
+	}
 
-		u32 sid = luaT_entry_dispatch(initservice->luaState(), netmsg);
-		CHECK_RETURN(sid != ILLEGAL_SERVICE, false, "initservice: %s call `dispatch` error", initservice->entryfile().c_str());
-
+	Service* ServiceManager::getService(u32 sid) {
+		assert(VALID_SERVICE(sid));
+		return this->_services[sid];
+	}
+	
+	Service* ServiceManager::getService(lua_State* L) {
+		u32 sid = luaT_getOwner(L);
 		Service* service = this->getService(sid);
+		assert(service);
+		return service;
+	}
+
+	bool ServiceManager::pushMessage(const void* netmsg) {
+		assert(VALID_SERVICE(this->_entrysid));
+		Service* entryservice = this->_services[this->_entrysid];
+		CHECK_RETURN(entryservice, false, "Not found entryservice: %d", this->_entrysid);
+
+		u32 sid = luaT_entry_dispatch(entryservice->luaState(), netmsg);
+		CHECK_RETURN(VALID_SERVICE(sid), false, "entryservice: %s call `dispatch` error: %d", entryservice->entryfile().c_str(), sid);
+
+		Service* service = this->_services[sid];
 		CHECK_RETURN(service, false, "Not found dispatch service: %d", sid);
-		CHECK_RETURN(!service->isstop(), false, "service: %d isstop", sid);
+		CHECK_RETURN(!service->isstop(), false, "dispatch service: %d isstop", sid);
 		
 		service->pushMessage(netmsg);			
 		this->schedule(service);	// schedule service right now
@@ -57,61 +92,27 @@ BEGIN_NAMESPACE_TNODE {
 		return true;
 	}
 	
-	Service* ServiceManager::newservice(const char* entryfile) {
-		u32 sid = this->_autoid++;
-		assert(this->getService(sid) == nullptr);
-		Service* service = new Service(sid);
-		bool result = service->init(entryfile);
-		if (!result) {
-			SafeDelete(service);
-			return nullptr;
-		}
-		this->insertService(sid, service);
-		//Debug << "new service: " << sid;
-		//
-		// schedule this service right now
-		this->schedule(service);
-		return service;
-	}
-
 	bool ServiceManager::exitservice(u32 sid) {
 		Debug << "exit service: " << sid;
-		Service* service = this->getService(sid);
-		CHECK_RETURN(service, false, "not found service: %d", sid);
+		CHECK_RETURN(VALID_SERVICE(sid), false, "exitservice: %d invalid", sid);
+		Service* service = this->_services[sid];
+		CHECK_RETURN(service, false, "exitservice, not found service: %d", sid);
 		service->stop();
 		return true;
 	}
 
-	void ServiceManager::schedule(Service* service) {
-		if (service->need_schedule()) {
-			service->schedule();
-		}
-	}
-
 	void ServiceManager::schedule() {
-		std::vector<Service*> deprecated;
-		
-		this->_locker.lock();
-		for (auto& i : this->_services) {
-			Service* service = i.second;
+		for (int sid = 0; sid < TNODE_SERVICE_MAX_NUMBER; ++sid) {
+			Service* service = this->_services[sid];
 			if (service->isstop()) {
 				if (!service->isrunning()) {
-					deprecated.push_back(service);
+					this->_services[sid] = nullptr;
+					Debug << "destroy service: " << service->id;
+					SafeDelete(service);
 				}
 			}
-			else {
-				this->schedule(service);
-			}
-		}
-		this->_locker.unlock();
-
-		if (!deprecated.empty()) {
-			for (auto& service : deprecated) {
-				assert(service->isstop());
-				assert(!service->isrunning());
-				this->removeService(service->id);
-				Debug << "destroy service: " << service->id;
-				SafeDelete(service);
+			else if (service->need_schedule()) {
+				service->schedule();
 			}
 		}
 	}

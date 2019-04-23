@@ -10,6 +10,10 @@
 // NOTE: some config items in here
 //
 
+//
+// Special max support number of service
+#define TNODE_SERVICE_MAX_NUMBER				128
+
 BEGIN_NAMESPACE_TNODE {
 	class Config : public Registry {
 		public:
