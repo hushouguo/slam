@@ -88,14 +88,9 @@ BEGIN_NAMESPACE_TNODE {
 			sNetworkManager.easynet()->releaseMessage(netmsg);
 		}
 
-		while (true) {
-			Timer* timer = this->timerManager().getTimerExpire();
-			if (!timer) {
-				break;
-			}
-			luaT_entry_timer_expire(this->luaState(), timer->id, timer->ref, timer->ctx);
-			this->timerManager().tickTimer(timer);
-		}
+		this->timerManager().checkExpire([this](Timer* timer) {
+			luaT_entry_timer_expire(this->luaState(), timer->id, timer->ref, timer->ctx);			
+		});
 	}
 
 	bool Service::need_schedule() {

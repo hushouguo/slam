@@ -15,11 +15,8 @@ BEGIN_NAMESPACE_TNODE {
 		public:
 			bool setTimerInterval(u32 timerid, u32 milliseconds);
 			bool setTimerTimes(u32 timerid, s32 times);
-			Timer* getTimerExpire();
-			void tickTimer(Timer* timer);
-			inline u64 firstExpireTime() {
-				return this->_first_expire_time;
-			}
+			void checkExpire(std::function<void(Timer*)> func);
+			inline u64 firstExpireTime() { return this->_first_expire_time;	}
 			
 		private:
 			u32 _init_timerid = 1;
