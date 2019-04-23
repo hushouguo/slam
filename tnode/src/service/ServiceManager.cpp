@@ -66,6 +66,8 @@ BEGIN_NAMESPACE_TNODE {
 		}
 		this->insertService(sid, service);
 		//Debug << "new service: " << sid;
+		//
+		// schedule this service right now
 		this->schedule(service);
 		return service;
 	}

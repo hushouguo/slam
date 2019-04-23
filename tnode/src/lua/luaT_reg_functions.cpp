@@ -486,11 +486,49 @@ BEGIN_NAMESPACE_TNODE {
 		lua_pushvalue(L, -(args - 3));
 		int ref = luaL_ref(L, LUA_REGISTRYINDEX);
 
-		u32 timer_id = sServiceManager.getService(L)->regtimer(milliseconds, times, ref, ctx);
+		u32 timer_id = sServiceManager.getService(L)->timerManager().createTimer(milliseconds, times, ref, ctx);
 
 		lua_pushinteger(L, timer_id);
 		return 1;
 	}
+
+	//
+	// void set_timer_interval(u32, milliseconds)
+	static int cc_set_timer_interval(lua_State* L) {
+		int args = lua_gettop(L);
+		CHECK_RETURN(args == 2, 0, "`%s` lack args:%d", __FUNCTION__, args);
+		CHECK_RETURN(lua_isnumber(L, -args), 0, "[%s]", lua_typename(L, lua_type(L, -args)));
+		CHECK_RETURN(lua_isnumber(L, -(args - 1)), 0, "[%s]", lua_typename(L, lua_type(L, -(args - 1))));
+		lua_Integer timerid = lua_tointeger(L, -args);
+		lua_Integer milliseconds = lua_tointeger(L, -(args - 1));
+		sServiceManager.getService(L)->timerManager().setTimerInterval(timerid, milliseconds);
+		return 0;
+	}
+	
+	//
+	// void set_timer_times(u32, times)
+	static int cc_set_timer_times(lua_State* L) {
+		int args = lua_gettop(L);
+		CHECK_RETURN(args == 2, 0, "`%s` lack args:%d", __FUNCTION__, args);
+		CHECK_RETURN(lua_isnumber(L, -args), 0, "[%s]", lua_typename(L, lua_type(L, -args)));
+		CHECK_RETURN(lua_isnumber(L, -(args - 1)), 0, "[%s]", lua_typename(L, lua_type(L, -(args - 1))));
+		lua_Integer timerid = lua_tointeger(L, -args);
+		lua_Integer times = lua_tointeger(L, -(args - 1));
+		sServiceManager.getService(L)->timerManager().setTimerTimes(timerid, times);
+		return 0;
+	}
+	
+	//
+	// void remove_timer(u32)
+	static int cc_remove_timer(lua_State* L) {
+		int args = lua_gettop(L);
+		CHECK_RETURN(args == 1, 0, "`%s` lack args:%d", __FUNCTION__, args);
+		CHECK_RETURN(lua_isnumber(L, -args), 0, "[%s]", lua_typename(L, lua_type(L, -args)));
+		lua_Integer timerid = lua_tointeger(L, -args);
+		sServiceManager.getService(L)->timerManager().removeTimer(timerid);
+		return 0;
+	}
+
 
 	//
 	// db
@@ -1006,80 +1044,6 @@ BEGIN_NAMESPACE_TNODE {
 		return 1;
 	}
 
-#if 0	
-	//		BLACK
-	//		RED,	LRED
-	//		GREEN,	LGREEN
-	//		BROWN
-	//		BLUE,	LBLUE
-	//		MAGENTA,LMAGENTA
-	//		CYAN,	LCYAN
-	//		GREY
-	//		WHITE
-	//		YELLOW
-	static std::map<logger::EasylogColor, std::string> __color_to_string = {
-			{logger::BLACK, "BLACK"},
-			{logger::RED, "RED"},
-			{logger::LRED, "LRED"},
-			{logger::GREEN, "GREEN"},
-			{logger::LGREEN, "LGREEN"},
-			{logger::BROWN, "BROWN"},
-			{logger::BLUE, "BLUE"},
-			{logger::LBLUE, "LBLUE"},
-			{logger::MAGENTA, "MAGENTA"},
-			{logger::LMAGENTA, "LMAGENTA"},
-			{logger::CYAN, "CYAN"},
-			{logger::LCYAN, "LCYAN"},
-			{logger::GREY, "GREY"},
-			{logger::WHITE, "WHITE"},
-			{logger::YELLOW, "YELLOW"},
-	};
-	
-	static std::map<std::string, logger::EasylogColor> __string_to_color = {
-			{"BLACK", logger::BLACK},
-			{"RED", logger::RED},
-			{"LRED", logger::LRED},
-			{"GREEN", logger::GREEN},
-			{"LGREEN", logger::LGREEN},
-			{"BROWN", logger::BROWN},
-			{"BLUE", logger::BLUE},
-			{"LBLUE", logger::LBLUE},
-			{"MAGENTA", logger::MAGENTA},
-			{"LMAGENTA", logger::LMAGENTA},
-			{"CYAN", logger::CYAN},
-			{"LCYAN", logger::LCYAN},
-			{"GREY", logger::GREY},
-			{"WHITE", logger::WHITE},
-			{"YELLOW", logger::YELLOW},
-	};
-	//
-	// string db:console_color(int level, [string color])
-	static int cc_log_console_color(lua_State* L) {
-		int args = lua_gettop(L);// this:userdata in stack bottom
-		CHECK_RETURN(args == 2 || args == 3, 0, "`%s` lack args:%d", __FUNCTION__, args);
-		
-		logger::Easylog** log = (logger::Easylog**) luaL_checkudata(L, 1, LUA_METATABLE_LOGGER_NAME);
-		luaL_argcheck(L, log != NULL, 1, "invalid `log` userdata");
-		
-		CHECK_RETURN(lua_isnumber(L, -(args - 1)), 0, "[%s]", lua_typename(L, lua_type(L, -(args - 1))));
-		EasylogSeverityLevel level = (EasylogSeverityLevel) lua_tointeger(L, -(args - 1));
-		if (args == 3) {
-			CHECK_RETURN(lua_isstring(L, -(args - 2)), 0, "[%s]", lua_typename(L, lua_type(L, -(args - 2))));
-			std::string s = lua_tostring(L, -(args - 2));
-			std::string color_string;
-			transform(s.begin(), s.end(), color_string.begin(), ::toupper);
-			CHECK_RETURN(__string_to_color.find(color_string) != __string_to_color.end(), 0, "error color: %s(%s)", s.c_str(), color_string.c_str());
-			(*log)->set_console_color(level, __string_to_color[color_string]);
-		}
-		
-		logger::EasylogColor color = (*log)->console_color(level);
-		CHECK_RETURN(__color_to_string.find(color) != __color_to_string.end(), 0, "error color: %d", color);
-
-		lua_pushstring(L, __color_to_string[color].c_str());		
-		return 1;
-	}
-#endif	
-
 	//----------------------------------------------------------------------------------------------------
 
 	//
@@ -1265,6 +1229,15 @@ BEGIN_NAMESPACE_TNODE {
 		// u32 newtimer(milliseconds, times, ctx, function(id, ctx) end)
 		// times: <= 0: forever, > 0: special times
 		LUA_REGISTER(L, "newtimer", cc_newtimer);
+		//
+		// void set_timer_interval(u32, milliseconds)
+		LUA_REGISTER(L, "set_timer_interval", cc_set_timer_interval);
+		//
+		// void set_timer_times(u32, times)
+		LUA_REGISTER(L, "set_timer_times", cc_set_timer_times);
+		//
+		// void remove_timer(u32)
+		LUA_REGISTER(L, "remove_timer", cc_remove_timer);
 
 		//
 		// void log_XXXX(string)

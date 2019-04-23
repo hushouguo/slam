@@ -58,13 +58,6 @@ BEGIN_NAMESPACE_TNODE {
 		SafeDelete(this->_msgParser);
 		
 		//
-		// timer cleanup
-		for (auto& ts : this->_timerQueue) {
-			SafeDelete(ts);
-		}
-		this->_timerQueue.clear();
-
-		//
 		// close lua state
 		luaT_close(this->_L);		
 	}
@@ -93,49 +86,29 @@ BEGIN_NAMESPACE_TNODE {
 			sNetworkManager.easynet()->releaseMessage(netmsg);
 		}
 
-		sTime.now();
-		//while (!this->_timerQueue.empty()) {
 		while (true) {
-			timer_struct* ts = this->popTimer();
-			if (!ts) {
+			Timer* timer = this->timerManager().getTimerExpire();
+			if (!timer) {
 				break;
 			}
-			if (ts->next_time_point > sTime.milliseconds()) {
-				this->pushTimer(ts);
-				break;
-			}
-			luaT_entry_timer_expire(this->luaState(), ts->id, ts->ref, ts->ctx);
-			--ts->times;
-			if (ts->times == 0) {
-				//Debug << "timer: " << ts->id << " exhause times";
-				SafeDelete(ts);
-				//TODO: cancel lua_State reference
-			}
-			else {
-				ts->next_time_point = sTime.milliseconds() + ts->milliseconds;
-				this->pushTimer(ts);
-				//Debug << "timer: " << ts->id << " leave times: " << ts->times;
-			}
+			luaT_entry_timer_expire(this->luaState(), timer->id, timer->ref, timer->ctx);
+			this->timerManager().tickTimer(timer);
 		}
 	}
 
 	bool Service::need_schedule() {
-		return !this->isstop() && (!this->_isinit || !this->_msgQueue.empty() || this->timerExpire());
-	}
-    
-	u32 Service::regtimer(u32 milliseconds, s32 times, int ref, const luaT_Value& ctx) {
-		CHECK_RETURN(milliseconds > 0, 0, "timer interval MUST greater than 0");
-		timer_struct* ts = new timer_struct();
-		sTime.now();
-		ts->id = this->_init_timerid++;
-		ts->milliseconds = milliseconds;
-		ts->times = times;
-		ts->ref = ref;
-		ts->ctx = ctx;
-		ts->next_time_point = sTime.milliseconds() + milliseconds;
-		//Debug << "regtimer: " << ts->id << " interval: " << ts->milliseconds;
-		this->pushTimer(ts);
-		return ts->id;
+		return !this->isstop() 
+			&& 
+				//
+				// still not execute entryfile
+			(!this->_isinit
+				//
+				// network message arrived
+				|| !this->_msgQueue.empty()
+				//
+				// timer expire
+				|| this->timerManager().firstExpireTime() >= sTime.milliseconds()
+				);
 	}
 }
 

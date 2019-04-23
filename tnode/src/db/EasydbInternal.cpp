@@ -45,23 +45,7 @@ BEGIN_NAMESPACE_TNODE {
 			if (this->_dbhandler) {
 				//
 				// flush dirty entity to db & release all of db_objects
-				for (auto& i : this->_objects) {
-					const std::string& table = i.first;
-					auto& objects = i.second;
-					for (auto& iterator : objects) {
-						db_object* object = iterator.second;
-						assert(object);
-						assert(object->message);
-						assert(object->id == iterator.first);
-						if (object->dirty) {
-							object->dirty = !this->flushObject(table, object);
-							Debug("flush object: %ld, table:%s [%s]", object->id, table.c_str(), object->dirty ? "FAIL" : "OK");
-						}						
-						SafeDelete(object->message);
-						SafeDelete(object);
-					}
-				}
-				this->_objects.clear();
+				this->flushall(true);
 
 				//
 				// close MySQL handler
@@ -98,10 +82,40 @@ BEGIN_NAMESPACE_TNODE {
 		return true;
 	}
 
+	void EasydbInternal::flushall(bool cleanup) {
+		//
+		// flush dirty entity to db & release all of db_objects
+		for (auto& i : this->_objects) {
+			const std::string& table = i.first;
+			auto& objects = i.second;
+			for (auto& iterator : objects) {
+				db_object* object = iterator.second;
+				assert(object);
+				assert(object->message);
+				assert(object->id == iterator.first);
+				if (object->dirty) {
+					object->dirty = !this->flushObject(table, object);
+					Debug("flush object: %ld, table:%s [%s]", object->id, table.c_str(), object->dirty ? "FAIL" : "OK");
+				}
+				if (cleanup) {
+					SafeDelete(object->message);
+					SafeDelete(object);
+				}
+			}
+		}
+		if (cleanup) {
+			this->_objects.clear();
+		}
+	}
+
 	//
 	// selectDatabase & reload all of tables
 	bool EasydbInternal::selectDatabase(std::string database) {
 		CHECK_RETURN(this->_dbhandler, false, "not connectServer");
+		//flush all of dirty
+		if (!this->database.empty()) {
+			this->flushall(true);
+		}
 		//select database
 		bool rc = this->_dbhandler->selectDatabase(database);
 		CHECK_RETURN(rc, false, "select database: %s error", database.c_str());

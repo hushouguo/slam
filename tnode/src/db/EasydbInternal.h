@@ -54,6 +54,7 @@ BEGIN_NAMESPACE_TNODE {
 			};
 			Spinlocker _locker;
 		    std::unordered_map<std::string, std::unordered_map<u64, db_object*>> _objects;
+		    void flushall(bool cleanup);
             			
 		private:
 		    bool createTable(std::string table);
