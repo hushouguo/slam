@@ -18,15 +18,12 @@ namespace net {
 						
 		public:
 			bool receive() override;
-			bool sendMessage(const NetMessage* msg) override;
 			bool send() override;
 
 		private:
 			SOCKET _fd = -1;
 			int _socket_type = -1;
 			EasynetInternal* _easynet = nullptr;
-			//Spinlocker _locker;
-			std::list<const NetMessage*> _sendQueue;
 
 		private:			
 			ByteBuffer _rbuffer, _wbuffer;
@@ -70,7 +67,9 @@ namespace net {
 			msg->payload_len = msglen;
 			memcpy(msg->payload, this->_rbuffer.rbuffer(), msg->payload_len);
 			this->_rbuffer.rlength(msglen);
-			this->_easynet->pushMessage(msg);
+			//
+			// push message to Easynet instance
+			this->_easynet->receiveMessage(msg);
 
 			Debug("Socket: %d receive message: %ld", this->fd(), msglen);
 		}
@@ -78,14 +77,6 @@ namespace net {
 		return true;	
 	}
 		
-	bool SocketInternal::sendMessage(const NetMessage* msg) {
-		assert(msg->fd == this->fd());
-		//this->_locker.lock();
-		this->_sendQueue.push_back(msg);
-		//this->_locker.unlock();
-		return this->_easynet->poll()->setSocketPollout(this->fd(), true);	// set EPOLL_OUT
-	}	
-
 	bool SocketInternal::send() {
 		if (this->_wbuffer.size() > 0) {
 			ssize_t bytes = this->sendBytes(this->_wbuffer.rbuffer(), this->_wbuffer.size());
@@ -104,16 +95,7 @@ namespace net {
 
 		const NetMessage* msg = nullptr;
 		while (true) {
-			//this->_locker.lock();
-			if (!this->_sendQueue.empty()) {
-				msg = this->_sendQueue.front();
-				this->_sendQueue.pop_front();
-			}
-			else {
-				msg = nullptr;
-			}
-			//this->_locker.unlock();
-
+			msg = this->_easynet->fetchMessage(this->fd());
 			if (!msg) {
 				// remove EPOLL_OUT when send all messages over
 				this->_easynet->poll()->setSocketPollout(this->fd(), false);
@@ -203,11 +185,6 @@ namespace net {
 
 	Socket::~Socket() {}
 	SocketInternal::~SocketInternal() {
-		for (auto& msg : this->_sendQueue) {
-			releaseNetMessage(msg);
-		}
-		this->_sendQueue.clear();
-
 		SafeClose(this->_fd);
 	}
 

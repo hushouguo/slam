@@ -23,7 +23,6 @@ namespace net {
 			
 		public:
 			virtual bool receive() = 0;
-			virtual bool sendMessage(const NetMessage* msg) = 0;
 			virtual bool send() = 0;
 	};
 

@@ -42,10 +42,21 @@ namespace net {
 				return this->_spliter;
 			}
 			inline Poll* poll() { return this->_poll; }
-			inline void pushMessage(const NetMessage* msg) {
-				this->_wlocker.lock();
-				this->_wQueue.push_back(msg);
-				this->_wlocker.unlock();
+			inline void receiveMessage(const NetMessage* msg) {
+				this->_recvlocker.lock();
+				this->_recvQueue.push_back(msg);
+				this->_recvlocker.unlock();
+			}
+			inline const NetMessage* fetchMessage(SOCKET s) {
+				const NetMessage* netmsg = nullptr;
+				this->_sendlocker.lock();
+				auto& list = this->_sendQueue[s];
+				if (!list.empty()) {
+					netmsg = list.front();
+					list.pop_front();
+				}
+				this->_sendlocker.unlock();
+				return netmsg;
 			}
 
 		private:
@@ -59,8 +70,10 @@ namespace net {
 			Socket* _sockets[MAX_SOCKET];
 
 		private:
-			Spinlocker _rlocker, _wlocker;
-			std::list<const NetMessage*> _rQueue, _wQueue;
+			Spinlocker _recvlocker;
+			std::list<const NetMessage*> _recvQueue;
+			Spinlocker _sendlocker;
+			std::unordered_map<SOCKET, std::list<const NetMessage*>> _sendQueue;
 	};
 }
 

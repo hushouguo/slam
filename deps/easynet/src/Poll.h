@@ -17,7 +17,6 @@ namespace net {
 
 		public:
 			void stop();
-			void wakeup();
 			void run(int milliseconds);
 			
 		public:

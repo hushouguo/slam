@@ -64,12 +64,8 @@ namespace net {
 	void Poll::stop() {
 		if (!this->_isstop) {
 			this->_isstop = true;
-			this->wakeup();
+			this->addSocket(STDOUT_FILENO);
 		}
-	}
-
-	void Poll::wakeup() {
-		this->addSocket(STDOUT_FILENO);
 	}
 
 	void Poll::run(int milliseconds) {
@@ -104,17 +100,12 @@ namespace net {
 				this->_easynet->socketError(ee->data.fd);
 			}
 			else {
-				//if (ee->data.fd == this->_wakefd) {
-				//	this->removeSocket(this->_wakefd);
-				//}
-				//else {
-					if (ee->events & EPOLLIN) {
-						this->_easynet->socketRead(ee->data.fd);
-					}
-					if (ee->events & EPOLLOUT) {
-						this->_easynet->socketWrite(ee->data.fd);
-					}
-				//}
+				if (ee->events & EPOLLIN) {
+					this->_easynet->socketRead(ee->data.fd);
+				}
+				if (ee->events & EPOLLOUT) {
+					this->_easynet->socketWrite(ee->data.fd);
+				}
 			}
 		}
 	}

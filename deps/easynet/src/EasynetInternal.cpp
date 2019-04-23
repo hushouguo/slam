@@ -42,24 +42,22 @@ namespace net {
 		CHECK_RETURN(this->_sockets[s], false, "Not found socket: %d when send msg", s);
 		NetMessage* netmsg = (NetMessage*) msg;
 		netmsg->fd = s;
-		this->_rlocker.lock();
-		this->_rQueue.push_back(netmsg);
-		this->_rlocker.unlock();
-		//
-		// wakeup epoll_wait
-		this->poll()->wakeup();
-		return true;
+		this->_sendlocker.lock();
+		auto& list = this->_sendQueue[s];
+		list.push_back(netmsg);
+		this->_sendlocker.unlock();
+		return this->poll()->setSocketPollout(s, true);
 	}
 	
 	const void* EasynetInternal::getMessage(SOCKET* s) {
 		const NetMessage* msg = nullptr;
 		while (true) {
-			this->_wlocker.lock();
-			if (!this->_wQueue.empty()) {
-				msg = this->_wQueue.front();
-				this->_wQueue.pop_front();
+			this->_recvlocker.lock();
+			if (!this->_recvQueue.empty()) {
+				msg = this->_recvQueue.front();
+				this->_recvQueue.pop_front();
 			}
-			this->_wlocker.unlock();
+			this->_recvlocker.unlock();
 			//
 			// no more message
 			if (!msg) {
@@ -155,39 +153,9 @@ namespace net {
 	
 	void EasynetInternal::run() {
 		while (!this->isstop()) {
-			//
-			// push message to socket
-			while (true) {
-				const NetMessage* netmsg = nullptr;				
-				this->_rlocker.lock();
-				if (!this->_rQueue.empty()) {
-					netmsg = this->_rQueue.front();
-					this->_rQueue.pop_front();
-				}
-				this->_rlocker.unlock();
-
-				if (!netmsg) {
-					break;
-				}
-
-				assert(VALID_SOCKET(netmsg->fd));
-				Socket* socket = this->_sockets[netmsg->fd];
-				if (!socket) {
-					this->releaseMessage(netmsg);
-					continue;
-				}
-				
-				if (!socket->sendMessage(netmsg)) {
-					this->releaseMessage(netmsg);
-					this->closeSocket(netmsg->fd, "sendMessage error");
-				}				
-			}
-			
-			//
-			// poll
 			this->_poll->run(-1);
 		}
-		Debug("Easynet exit, msgQueue: %ld", this->_msgQueue.size());
+		Debug("Easynet exit, recvQueue: %ld, sendQueue: %ld", this->_recvQueue.size(), this->_sendQueue.size());
 	}
 	
 	void EasynetInternal::stop() {
@@ -202,18 +170,18 @@ namespace net {
 			SafeDelete(this->_threadWorker);
 
 			//
-			// cleanup readQueue
-			for (auto& msg : this->_rQueue) {
+			// cleanup recvQueue
+			for (auto& msg : this->_recvQueue) {
 				releaseNetMessage(msg);
 			}
-			this->_rQueue.clear();
+			this->_recvQueue.clear();
 
 			//
 			// cleanup writeQueue
-			for (auto& msg : this->_wQueue) {
+			for (auto& msg : this->_sendQueue) {
 				releaseNetMessage(msg);
 			}
-			this->_wQueue.clear();
+			this->_sendQueue.clear();
 		}
 	}
 
