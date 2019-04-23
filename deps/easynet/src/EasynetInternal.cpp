@@ -155,7 +155,7 @@ namespace net {
 		while (!this->isstop()) {
 			this->_poll->run(-1);
 		}
-		Debug("Easynet exit, recvQueue: %ld, sendQueue: %ld", this->_recvQueue.size(), this->_sendQueue.size());
+		Trace("Easynet exit, recvQueue: %ld", this->_recvQueue.size());
 	}
 	
 	void EasynetInternal::stop() {
@@ -178,8 +178,11 @@ namespace net {
 
 			//
 			// cleanup writeQueue
-			for (auto& msg : this->_sendQueue) {
-				releaseNetMessage(msg);
+			for (auto& i : this->_sendQueue) {
+				auto& list = i.second;
+				for (auto& msg : list) {
+					releaseNetMessage(msg);
+				}
 			}
 			this->_sendQueue.clear();
 		}

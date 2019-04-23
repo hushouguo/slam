@@ -84,7 +84,7 @@ local fd_client = cc.newclient("client", "0.0.0.0", 12306)
 local playerid = 1000
 cc.log_trace(string.format("[%4s] test `newserver`", fd_server ~= -1 and "OK" or "FAIL"))
 cc.log_trace(string.format("[%4s] test `newclient`", fd_client ~= -1 and "OK" or "FAIL"))
-cc.log_trace(string.format("[%4s] test `response`", cc.response(fd_client, playerid, 1, {value_string = "test_response"}) == nil and "OK" or "FAIL"))
+cc.log_trace(string.format("[%4s] test `response`", cc.response(fd_client, playerid, 1, {value_string = "test_response"}) and "OK" or "FAIL"))
 function msgParser(fd, entityid, msgid, o)
 	cc.log_trace(string.format("[%4s] test `msgParser`", (msgid == 1 and entityid == playerid) and "OK" or "FAIL"))
 	cc.log_trace(string.format("[%4s] test `closesocket`", cc.closesocket(fd) == nil and "OK" or "FAIL"))

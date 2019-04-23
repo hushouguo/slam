@@ -26,6 +26,7 @@
 #include <netinet/tcp.h>
 
 #include <map>
+#include <unordered_map>
 #include <string>
 #include <list>
 #include <thread>
@@ -65,6 +66,7 @@ using Byte	=	unsigned char;
 #else
 #define Debug(MESSAGE, ...)
 #endif
+#define Trace(MESSAGE, ...)	fprintf(stderr, "Easynet-Trace:" MESSAGE "\n", ##__VA_ARGS__)
 #define Alarm(MESSAGE, ...)	fprintf(stderr, "Easynet-Alarm:" MESSAGE "\n", ##__VA_ARGS__)
 #define Error(MESSAGE, ...)	fprintf(stderr, "Easynet-Error:" MESSAGE "\n", ##__VA_ARGS__)
 

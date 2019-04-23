@@ -65,6 +65,7 @@ namespace net {
 		if (!this->_isstop) {
 			this->_isstop = true;
 			this->addSocket(STDOUT_FILENO);
+			this->setSocketPollout(STDOUT_FILENO, true);
 		}
 	}
 
