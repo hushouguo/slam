@@ -113,7 +113,7 @@ BEGIN_NAMESPACE_TNODE {
 	bool EasydbInternal::selectDatabase(std::string database) {
 		CHECK_RETURN(this->_dbhandler, false, "not connectServer");
 		//flush all of dirty
-		if (!this->database.empty()) {
+		if (!this->_database.empty()) {
 			this->flushall(true);
 		}
 		//select database

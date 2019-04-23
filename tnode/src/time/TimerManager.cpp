@@ -3,6 +3,13 @@
  * \brief: Created by hushouguo at 14:05:53 Apr 23 2019
  */
 
+#include "tnode.h"
+#include "tools/Singleton.h"
+#include "lua/luaT.h"
+#include "time/Time.h"
+#include "time/Timer.h"
+#include "time/TimerManager.h"
+
 BEGIN_NAMESPACE_TNODE {
 	u32 TimerManager::createTimer(u32 milliseconds, s32 times, int ref, const luaT_Value& ctx) {
 		CHECK_RETURN(milliseconds > 0, 0, "timer interval MUST greater than 0");
