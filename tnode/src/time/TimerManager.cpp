@@ -40,6 +40,7 @@ BEGIN_NAMESPACE_TNODE {
 	}
 	
 	void TimerManager::removeTimer(u32 timerid) {
+#if false		
 		auto iterator = std::find_if(this->_timerQueue.begin(), this->_timerQueue.end(),
 			[timerid](Timer* timer) -> bool {
 				return timer->id == timerid;
@@ -49,22 +50,29 @@ BEGIN_NAMESPACE_TNODE {
 			this->_timerQueue.erase(iterator);
 			this->resetFirstExpireTime();
 		}
+#else
+		this->setTimerTimes(timerid, 0);
+#endif		
 	}
 
 	void TimerManager::checkExpire(std::function<void(Timer*)> func) {
 		sTime.now();		
 		std::vector<Timer*> v;
 		for (auto timer : this->_timerQueue) {
-			if (timer->next_time_point <= sTime.milliseconds()) {
-				func(timer);
-				if (timer->times > 0) {
-					--timer->times;
-					if (timer->times == 0) {
-						v.push_back(timer);
-						continue;
+			if (timer->times == 0) {
+				v.push_back(timer);
+			}
+			else {
+				if (timer->next_time_point <= sTime.milliseconds()) {
+					func(timer);
+					if (timer->times > 0) {
+						--timer->times;
+						if (timer->times == 0) {
+							v.push_back(timer);
+						}
 					}
+					timer->next_time_point = sTime.milliseconds() + timer->milliseconds;
 				}
-				timer->next_time_point = sTime.milliseconds() + timer->milliseconds;
 			}
 		}
 
