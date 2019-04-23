@@ -53,9 +53,16 @@ cc.log_trace(string.format("[%4s] test `msleep`", (t2 - t1) >= 10 and "OK" or "F
 
 --
 -- timer
-cc.newtimer(10, 1, 1, function(id, ctx)
+local timerid = cc.newtimer(100, -1, 1, function(id, ctx)
 	cc.log_trace(string.format("[%4s] test `newtimer`", ctx == 1 and "OK" or "FAIL"))
+	test_timer()
 end)
+
+function test_timer()
+	cc.log_trace(string.format("[%4s] test `set_timer_interval`", cc.set_timer_interval(timerid, 1000) == nil and "OK" or "FAIL"))
+	cc.log_trace(string.format("[%4s] test `set_timer_times`", cc.set_timer_times(timerid, 10) == nil and "OK" or "FAIL"))
+	cc.log_trace(string.format("[%4s] test `remove_timer`", cc.remove_timer(timerid) == nil and "OK" or "FAIL"))
+end
 
 --
 -- json encode & decode

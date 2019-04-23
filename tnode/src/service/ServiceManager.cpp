@@ -11,8 +11,10 @@
 #include "tools/LockfreeMap.h"
 #include "tools/ThreadPool.h"
 #include "tools/Runnable.h"
+#include "tools/Registry.h"
 #include "message/ServiceMessage.h"
 #include "message/MessageParser.h"
+#include "config/Config.h"
 #include "lua/luaT.h"
 #include "time/Time.h"
 #include "time/Timer.h"
@@ -86,8 +88,8 @@ BEGIN_NAMESPACE_TNODE {
 		CHECK_RETURN(service, false, "Not found dispatch service: %d", sid);
 		CHECK_RETURN(!service->isstop(), false, "dispatch service: %d isstop", sid);
 		
-		service->pushMessage(netmsg);			
-		this->schedule(service);	// schedule service right now
+		service->pushMessage(netmsg);
+		service->schedule();
 
 		return true;
 	}
@@ -104,6 +106,7 @@ BEGIN_NAMESPACE_TNODE {
 	void ServiceManager::schedule() {
 		for (int sid = 0; sid < TNODE_SERVICE_MAX_NUMBER; ++sid) {
 			Service* service = this->_services[sid];
+			if (!service) {	continue; }
 			if (service->isstop()) {
 				if (!service->isrunning()) {
 					this->_services[sid] = nullptr;
