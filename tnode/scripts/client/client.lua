@@ -5,7 +5,7 @@ local sid = _G["cc.SERVICE"]
 --local fd_client = cc.getsocket("client")
 --assert(fd_client ~= -1)
 
-local fd_client = cc.newclient("client" .. tostring(sid), "0.0.0.0", 12306)
+local fd_client = cc.newclient("client" .. tostring(sid), "10.0.0.12", 12306)
 assert(fd_client)
 
 assert(cc.loadmsg("protocol/echo.proto") and cc.regmsg(1, "protocol.EchoRequest"))
