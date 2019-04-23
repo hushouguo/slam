@@ -16,6 +16,7 @@ namespace net {
 			~Poll();
 
 		public:
+			void stop();
 			void wakeup();
 			void run(int milliseconds);
 			
@@ -26,7 +27,8 @@ namespace net {
 			bool setSocketPollout(SOCKET s, bool value);
 
 		private:
-			int _epfd = -1, _wakefd = -1;
+			bool _isstop = false;
+			int _epfd = -1;
 			struct epoll_event _events[NM_POLL_EVENT];
 			EasynetInternal* _easynet = nullptr;
 	};

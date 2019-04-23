@@ -10,11 +10,9 @@ namespace net {
 		this->_easynet = easynet;
 		this->_epfd = epoll_create(NM_POLL_EVENT); /* `NM_POLL_EVENT` is just a hint for the kernel */
 		memset(this->_events, 0, sizeof(this->_events));
-		this->_wakefd = open("/dev/null", O_RDWR);
 	}
 		
 	Poll::~Poll() {
-		SafeClose(this->_wakefd);
 	}
 
 	bool Poll::addSocket(SOCKET s) {
@@ -63,8 +61,15 @@ namespace net {
 		return true;
 	}
 
+	void Poll::stop() {
+		if (!this->_isstop) {
+			this->_isstop = true;
+			this->wakeup();
+		}
+	}
+
 	void Poll::wakeup() {
-		this->addSocket(this->_wakefd);
+		this->addSocket(STDOUT_FILENO);
 	}
 
 	void Poll::run(int milliseconds) {
@@ -99,17 +104,17 @@ namespace net {
 				this->_easynet->socketError(ee->data.fd);
 			}
 			else {
-				if (ee->data.fd == this->_wakefd) {
-					this->removeSocket(this->_wakefd);
-				}
-				else {
+				//if (ee->data.fd == this->_wakefd) {
+				//	this->removeSocket(this->_wakefd);
+				//}
+				//else {
 					if (ee->events & EPOLLIN) {
 						this->_easynet->socketRead(ee->data.fd);
 					}
 					if (ee->events & EPOLLOUT) {
 						this->_easynet->socketWrite(ee->data.fd);
 					}
-				}
+				//}
 			}
 		}
 	}

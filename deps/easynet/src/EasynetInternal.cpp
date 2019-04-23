@@ -158,7 +158,7 @@ namespace net {
 			//
 			// push message to socket
 			while (true) {
-				NetMessage* netmsg = nullptr;				
+				const NetMessage* netmsg = nullptr;				
 				this->_rlocker.lock();
 				if (!this->_rQueue.empty()) {
 					netmsg = this->_rQueue.front();
@@ -193,7 +193,7 @@ namespace net {
 	void EasynetInternal::stop() {
 		if (!this->isstop()) {
 			this->_isstop = true;
-			this->_poll->wakeup();
+			this->_poll->stop();
 			if (this->_threadWorker && this->_threadWorker->joinable()) {
 				this->_threadWorker->join();
 			}
@@ -203,7 +203,7 @@ namespace net {
 
 			//
 			// cleanup readQueue
-			for (auto& msg : this->rQueue) {
+			for (auto& msg : this->_rQueue) {
 				releaseNetMessage(msg);
 			}
 			this->_rQueue.clear();

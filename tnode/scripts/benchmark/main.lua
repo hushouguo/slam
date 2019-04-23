@@ -1,4 +1,4 @@
-require('scripts/helper')
+require('scripts/tools/tools')
 --dump(_G)
 
 local stable = {

@@ -221,9 +221,9 @@ int main(int argc, char* argv[]) {
 
 exit_failure:
 	sConfig.syshalt(0);
+	sThreadPool.stop();
 	sServiceManager.stop();
 	sNetworkManager.stop();
-	sThreadPool.stop();
 	Trace("shutdown system with terminate reason: %d", sConfig.terminate_reason);
 	Easylog::syslog()->stop();
 	// Optional:  Delete all global objects allocated by libprotobuf.

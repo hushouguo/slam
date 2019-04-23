@@ -68,7 +68,7 @@ cc.log_trace(string.format("[%4s] test `json_decode`", (table ~= nil and table.i
 --
 -- xml decode
 local table = cc.xml_decode("conf/conf.xml")
-cc.log_trace(string.format("[%4s] test `xml_decode`", (table ~= nil and table.log.level == 0) and "OK" or "FAIL"))
+cc.log_trace(string.format("[%4s] test `xml_decode`", (table ~= nil and table.log.level == "0") and "OK" or "FAIL"))
 
 --
 -- service
