@@ -26,7 +26,7 @@ namespace net {
 			bool setSocketPollout(SOCKET s, bool value);
 
 		private:
-			int _epfd = -1, _wakefd;
+			int _epfd = -1, _wakefd = -1;
 			struct epoll_event _events[NM_POLL_EVENT];
 			EasynetInternal* _easynet = nullptr;
 	};

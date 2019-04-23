@@ -45,22 +45,54 @@ namespace net {
 		this->_rlocker.lock();
 		this->_rQueue.push_back(netmsg);
 		this->_rlocker.unlock();
+		//
+		// wakeup epoll_wait
 		this->poll()->wakeup();
 		return true;
 	}
 	
 	const void* EasynetInternal::getMessage(SOCKET* s) {
 		const NetMessage* msg = nullptr;
-		this->_wlocker.lock();
-		if (!this->_wQueue.empty()) {
-			msg = this->_wQueue.front();
-			this->_wQueue.pop_front();
+		while (true) {
+			this->_wlocker.lock();
+			if (!this->_wQueue.empty()) {
+				msg = this->_wQueue.front();
+				this->_wQueue.pop_front();
+			}
+			this->_wlocker.unlock();
+			//
+			// no more message
+			if (!msg) {
+				return nullptr;
+			}
+
+			if (!VALID_SOCKET(msg->fd)) {
+				Error("getMessage invalid socket: %d", msg->fd);
+				this->releaseMessage(msg);
+				continue;
+			}
+
+			if (!isValidNetMessage(msg)) {
+				Error("getMessage invalid netmsg");
+				this->releaseMessage(msg);
+				continue;
+			}
+
+			//
+			// lost connection
+			if (this->_sockets[msg->fd] == nullptr) {
+				Alarm("getMessage found lost connection");
+				this->releaseMessage(msg);
+				continue;
+			}
+
+			if (s) {
+				*s = msg->fd;
+			}
+
+			return msg;
 		}
-		this->_wlocker.unlock();
-		if (msg && s) {
-			*s = msg->fd;
-		}
-		return msg;
+		return nullptr;
 	}
 	
 	void EasynetInternal::closeSocket(SOCKET s) {
