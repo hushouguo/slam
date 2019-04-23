@@ -15,6 +15,7 @@ end)
 
 function test_timer()
 	cc.set_timer_interval(t3, 100)
+	cc.set_timer_times(t3, 10)
 	cc.remove_timer(t1)
 end
 

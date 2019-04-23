@@ -109,7 +109,7 @@ BEGIN_NAMESPACE_TNODE {
 				|| !this->_msgQueue.empty()
 				//
 				// timer expire
-				|| this->timerManager().firstExpireTime() >= sTime.milliseconds()
+				|| this->timerManager().firstExpireTime() <= sTime.milliseconds()
 				);
 	}
 }

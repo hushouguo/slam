@@ -21,6 +21,7 @@ BEGIN_NAMESPACE_TNODE {
 		timer->ref = ref;
 		timer->ctx = ctx;
 		timer->next_time_point = sTime.milliseconds() + milliseconds;
+		//Debug << "newtimer: " << timer->id << ", next tick: " << timer->next_time_point;
 		this->pushTimer(timer);		
 		return timer->id;
 	}
@@ -36,16 +37,24 @@ BEGIN_NAMESPACE_TNODE {
 		if (!this->_timerQueue.empty()) {
 			Timer* timer = this->_timerQueue.front();
 			this->_first_expire_time = timer->next_time_point;
+			//Debug << "first expire time: " << this->_first_expire_time << ", id: " << timer->id;
 		}
 	}
 	
 	void TimerManager::removeTimer(u32 timerid) {
-		this->_timerQueue.erase(std::remove_if(this->_timerQueue.begin(), this->_timerQueue.end(), 
+		this->dump();
+		Debug << "prepare to remove : " << timerid;
+		auto iterator = std::find_if(this->_timerQueue.begin(), this->_timerQueue.end(),
 			[timerid](Timer* timer) -> bool {
 				return timer->id == timerid;
-				}), 
-				this->_timerQueue.end());
-		this->resetFirstExpireTime();
+			});
+		if (iterator != this->_timerQueue.end()) {
+			SafeDelete(*iterator);
+			this->_timerQueue.erase(iterator);
+			//Debug << "removeTimer: " << timerid << ", size: " << this->_timerQueue.size();
+			this->resetFirstExpireTime();
+		}
+		this->dump();
 	}
 
 	void TimerManager::tickTimer(Timer* timer) {
@@ -53,13 +62,14 @@ BEGIN_NAMESPACE_TNODE {
 			--timer->times;
 			if (timer->times == 0) {
 				//Debug << "timer: " << timer->id << " exhause times";
-				SafeDelete(timer);
+				SafeDelete(timer);				
 				return;
 			}
 		}
 
 		sTime.now();
 		timer->next_time_point = sTime.milliseconds() + timer->milliseconds;
+		//Debug << "timer: " << timer->id << ", next: " << timer->next_time_point << ", now: " << sTime.milliseconds();
 		
 		this->pushTimer(timer);
 	}
@@ -108,6 +118,7 @@ BEGIN_NAMESPACE_TNODE {
 			[timerid, times](Timer* timer) -> bool {
 				if (timer->id == timerid) {
 					sTime.now();
+					Debug << "timer: " << timer->id << ", times from: " << timer->times << " to " << times;
 					timer->times = times;
 					return true;
 				}
@@ -121,7 +132,7 @@ BEGIN_NAMESPACE_TNODE {
 
 	void TimerManager::dump() {
 		for (auto& timer : this->_timerQueue) {
-			Debug << "	  timer: " << timer->id << ", " << timer->next_time_point << ", milliseconds: " << timer->milliseconds;
+			Debug << "	  timer: " << timer->id << ", " << timer->times << ", milliseconds: " << timer->milliseconds;
 		}
 	}
 }
