@@ -61,7 +61,7 @@ namespace net {
 		public:
 			//
 			// spliter: -1: error occupy, 0: incomplete package, > 0: len of package
-			static Easynet* createInstance(std::function<int(const void*, size_t)> spliter);
+			static Easynet* createInstance(std::function<int(const void*, size_t)> spliter, std::function<void()> notifymsg);
 
 		public:
 			virtual void stop() = 0;

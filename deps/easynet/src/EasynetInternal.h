@@ -11,7 +11,7 @@
 namespace net {
 	class EasynetInternal : public Easynet {
 		public:
-			EasynetInternal(std::function<int(const void*, size_t)> spliter);
+			EasynetInternal(std::function<int(const void*, size_t)> spliter, std::function<void()> notifymsg);
 			~EasynetInternal();
 
 		public:
@@ -42,10 +42,13 @@ namespace net {
 				return this->_spliter;
 			}
 			inline Poll* poll() { return this->_poll; }
+			//
+			// Socket push message to me by this function
 			inline void receiveMessage(const NetMessage* msg) {
 				this->_recvlocker.lock();
 				this->_recvQueue.push_back(msg);
 				this->_recvlocker.unlock();
+				this->_notifymsg();
 			}
 			inline const NetMessage* fetchMessage(SOCKET s) {
 				const NetMessage* netmsg = nullptr;
@@ -64,6 +67,7 @@ namespace net {
 			std::thread* _threadWorker = nullptr;
 			std::function<int(const void*, size_t)> _spliter;
 			void closeSocket(SOCKET, const char* reason);
+			std::function<void()> _notifymsg;
 			
 		private:
 			Poll* _poll = nullptr;

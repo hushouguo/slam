@@ -222,8 +222,9 @@ namespace net {
 		return netmsg->fd;
 	}
 
-	EasynetInternal::EasynetInternal(std::function<int(const void*, size_t)> spliter) {
+	EasynetInternal::EasynetInternal(std::function<int(const void*, size_t)> spliter, std::function<void()> notifymsg) {
 		this->_spliter = spliter;
+		this->_notifymsg = notifymsg;
 		this->_poll = new Poll(this);
 		this->_threadWorker = new std::thread([this]() {
 				this->run();
@@ -235,7 +236,7 @@ namespace net {
 		this->stop();
 	}
 	
-	Easynet* Easynet::createInstance(std::function<int(const void*, size_t)> spliter) {
-		return new EasynetInternal(spliter);
+	Easynet* Easynet::createInstance(std::function<int(const void*, size_t)> spliter, std::function<void()> notifymsg) {
+		return new EasynetInternal(spliter, notifymsg);
 	}
 }
