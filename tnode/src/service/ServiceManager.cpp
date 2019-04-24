@@ -89,7 +89,7 @@ BEGIN_NAMESPACE_TNODE {
 		CHECK_RETURN(!service->isstop(), false, "dispatch service: %d isstop", sid);
 		
 		service->pushMessage(netmsg);
-		service->schedule();
+		//service->schedule();
 
 		return true;
 	}

@@ -5,10 +5,13 @@
 
 #include "tnode.h"
 #include "tools/Singleton.h"
+#include "tools/Spinlocker.h"
+#include "tools/LockfreeMap.h"
 #include "lua/luaT.h"
 #include "time/Time.h"
 #include "time/Timer.h"
 #include "time/TimerManager.h"
+#include "net/NetworkManager.h"
 
 BEGIN_NAMESPACE_TNODE {
 	u32 TimerManager::createTimer(u32 milliseconds, s32 times, int ref, const luaT_Value& ctx) {
@@ -37,6 +40,7 @@ BEGIN_NAMESPACE_TNODE {
 			Timer* timer = this->_timerQueue.front();
 			this->_first_expire_time = timer->next_time_point;
 		}
+		sNetworkManager.wakeup();
 	}
 	
 	void TimerManager::removeTimer(u32 timerid) {

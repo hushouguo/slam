@@ -94,6 +94,7 @@ BEGIN_NAMESPACE_TNODE {
 	}
 
 	bool Service::need_schedule() {
+		sTime.now();
 		return !this->isstop() 
 			&& 
 				//

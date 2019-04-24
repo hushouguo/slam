@@ -28,7 +28,8 @@
 using Clock = std::chrono::high_resolution_clock;
 using Ms = std::chrono::milliseconds;
 using Sec = std::chrono::seconds;
-template<class Duration> using TimePoint = std::chrono::time_point<Clock, Duration>;
+using TimePoint = std::chrono::time_point<Clock>;
+//template<class Duration> using TimePoint = std::chrono::time_point<Clock, Duration>;
 
 BEGIN_NAMESPACE_TNODE {
 	void NetworkManager::init() {
@@ -58,13 +59,10 @@ BEGIN_NAMESPACE_TNODE {
 			this->_cond.wait(locker);
 		}
 		else {
-			sTime.now();
-			TimePoint<Ms> timeout(Ms(sTime.milliseconds() + expireValue));
+			const Clock::duration duration = std::chrono::milliseconds(expireValue);
+			const TimePoint timeout(duration);
 			this->_cond.wait_until(locker, timeout);			
 		}
-
-		Debug << "NetworkManager wakeup: " << expireValue;
-
 		this->dispatchMessage();
 	}
 
