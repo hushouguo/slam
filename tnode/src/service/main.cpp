@@ -42,7 +42,9 @@ void install_signal_handler() {
 			case SIGINT:
 			case SIGTERM:
 			case SIGQUIT: 
-				sConfig.halt = true; break;	// Note: schedule halt
+				sConfig.halt = true;
+				sNetworkManager.wakeup();
+				break;	// Note: schedule halt
 		
 			case SIGHUP: 
 				sConfig.reload = true; break; // NOTE: reload configure file

@@ -13,6 +13,7 @@ BEGIN_NAMESPACE_TNODE {
 			void stop();
 			void run();
 			inline Easynet* easynet() { return this->_easynet; }
+			void wakeup();
 
 		public:
 			SOCKET createServer(const char* name, const char*, int);

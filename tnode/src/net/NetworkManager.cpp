@@ -38,13 +38,17 @@ BEGIN_NAMESPACE_TNODE {
 				return len < sizeof(ServiceMessage) || len < msg->len ? 0 : msg->len;
 				}, 
 			[this]() {
-				this->_cond.notify_all();	
+				this->wakeup();
 				});
 	}
 	
+	void NetworkManager::wakeup() {
+		this->_cond.notify_all();	
+	}
+
 	void NetworkManager::stop() {
+		this->wakeup();
 		this->_easynet->stop();
-		this->_cond.notify_all();
 	}
 
 	void NetworkManager::run() {
@@ -56,7 +60,7 @@ BEGIN_NAMESPACE_TNODE {
 		else {
 			sTime.now();
 			TimePoint<Ms> timeout(Ms(sTime.milliseconds() + expireValue));
-			this->_cond.wait_util(locker, timeout);			
+			this->_cond.wait_until(locker, timeout);			
 		}
 
 		Debug << "NetworkManager wakeup: " << expireValue;
