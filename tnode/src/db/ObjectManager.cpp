@@ -109,7 +109,7 @@ BEGIN_NAMESPACE_TNODE {
 		assert(easydb);
 		assert(easydb->dbhandler());
 
-        auto& objects = this->_objects[table];
+        auto& objects = this->_objects;
         
 		//
 		// remove cache if exists

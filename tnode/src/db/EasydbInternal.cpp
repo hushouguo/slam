@@ -88,7 +88,7 @@ BEGIN_NAMESPACE_TNODE {
 	bool EasydbInternal::createTable(std::string table) {
 		CHECK_RETURN(this->_dbhandler, false, "not connectServer");
         std::ostringstream sql;
-        sql << "CREATE TABLE `" << table << "` (`id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY ";
+        sql << "CREATE TABLE IF NOT EXISTS `" << table << "` (`id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY ";
         sql << ", `data` LONGBLOB NOT NULL ";
         sql << ") ENGINE=InnoDB DEFAULT CHARSET=utf8";
         return this->_dbhandler->runCommand(sql.str());	
