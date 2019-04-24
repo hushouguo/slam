@@ -165,12 +165,12 @@ BEGIN_NAMESPACE_TNODE {
 		// insert object into table
 		u64 objectid = this->addObject(table, id, &buffer);
 		CHECK_RETURN(objectid != 0, 0, "insert object: %ld to table: %s error", id, table.c_str());
-		CHECK_RETURN(objects.find(objectid) == objects.end(), 0, "duplicate entityid: %ld", objectid);
-
+		
 		//
 		// add object to cache
-		db_object* object = new db_object(objectid, false, message);
-		objects[objectid] = object;
+		//CHECK_RETURN(objects.find(objectid) == objects.end(), 0, "duplicate entityid: %ld", objectid);
+		//db_object* object = new db_object(objectid, false, message);
+		//objects[objectid] = object;
 		return objectid;
 	}
 		
