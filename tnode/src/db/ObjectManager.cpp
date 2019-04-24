@@ -19,24 +19,13 @@
 #include "db/ObjectManager.h"
 
 BEGIN_NAMESPACE_TNODE {
-	bool CheckAndCreateTable(EasydbInternal* easydb, std::string table) {
-
-	}
-
 	u64 ObjectManager::createObject(EasydbInternal* easydb, std::string table, u64 id, Message* message) {
 		assert(easydb);
 		assert(easydb->dbhandler());
 
-        //
-        // check if table exists
-        if (this->_objects.find(table) == this->_objects.end()) {
-        	bool rc = this->CreateTable(easydb, table);
-        	CHECK_RETURN(rc, 0, "create table: %s error", table.c_str());
-        }
-
 		//
 		// check if object exists
-		auto& objects = this->_objects[table];
+		auto& objects = this->_objects;
 		CHECK_RETURN(id == 0 || objects.find(id) == objects.end(), 0, "duplicate object.id: %ld, table: %s", id, table.c_str());
 
 		//
@@ -62,7 +51,7 @@ BEGIN_NAMESPACE_TNODE {
 
 		//
 		// create new object
-		db_object* object = new db_object(easydb, objectid, false, message);
+		db_object* object = new db_object(easydb, table, objectid, false, message);
 
 		//
 		// add object to cache
@@ -76,7 +65,7 @@ BEGIN_NAMESPACE_TNODE {
 		assert(easydb);
 		assert(easydb->dbhandler());
 
-		auto& objects = this->_objects[table];
+		auto& objects = this->_objects;
 		
 		//
 		// check cache if exists
@@ -106,7 +95,7 @@ BEGIN_NAMESPACE_TNODE {
 
 		//
 		// create new object
-		db_object* object = new db_object(easydb, id, false, message);
+		db_object* object = new db_object(easydb, table, id, false, message);
 		
 		//
 		// add object to cache
@@ -142,7 +131,7 @@ BEGIN_NAMESPACE_TNODE {
 		assert(easydb);
 		assert(easydb->dbhandler());
 		
-		auto& objects = this->_objects[table];
+		auto& objects = this->_objects;
 
 		db_object* object = nullptr;
 		if (true) {
@@ -182,7 +171,7 @@ BEGIN_NAMESPACE_TNODE {
 		assert(easydb);
 		assert(easydb->dbhandler());
 
-		auto& objects = this->_objects[table];
+		auto& objects = this->_objects;
 
 		//
 		// check object if exist
@@ -218,21 +207,17 @@ BEGIN_NAMESPACE_TNODE {
 		//
 		// flush dirty entity to db & release all of db_objects
 		for (auto& i : this->_objects) {
-			const std::string& table = i.first;
-			auto& objects = i.second;
-			for (auto& iterator : objects) {
-				db_object* object = iterator.second;
-				assert(object);
-				assert(object->message);
-				assert(object->id == iterator.first);
-				if (object->dirty) {
-					object->dirty = !this->FlushObjectToTable(object->easydb, table, object);
-					Debug("flush object: %ld, table:%s [%s]", object->id, table.c_str(), object->dirty ? "FAIL" : "OK");
-				}
-				if (cleanup) {
-					SafeDelete(object->message);
-					SafeDelete(object);
-				}
+			db_object* object = i.second;
+			assert(object);
+			assert(object->message);
+			assert(object->id == i.first);
+			if (object->dirty) {
+				object->dirty = !this->FlushObjectToTable(object->easydb, object->table, object);
+				Debug("flush object: %ld, table:%s [%s]", object->id, object->table.c_str(), object->dirty ? "FAIL" : "OK");
+			}
+			if (cleanup) {
+				SafeDelete(object->message);
+				SafeDelete(object);
 			}
 		}
 		if (cleanup) {
@@ -242,16 +227,6 @@ BEGIN_NAMESPACE_TNODE {
 
 	//-----------------------------------------------------------------------------------------------------
 	//
-	bool ObjectManager::CreateTable(EasydbInternal* easydb, std::string table) {
-		assert(easydb);
-		assert(easydb->dbhandler());
-        std::ostringstream sql;
-        sql << "CREATE TABLE `" << table << "` (`id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY ";
-        sql << ", `data` LONGBLOB NOT NULL ";
-        sql << ") ENGINE=InnoDB DEFAULT CHARSET=utf8";
-        return easydb->dbhandler()->runCommand(sql.str());	
-	}
-
 	u64  ObjectManager::InsertObjectToTable(EasydbInternal* easydb, std::string table, u64 id, const ByteBuffer* buffer) {
 		assert(easydb);
 		assert(easydb->dbhandler());

@@ -655,18 +655,12 @@ BEGIN_NAMESPACE_TNODE {
 		const char* table = lua_tolstring(L, -(args - 1), &len);
 		const char* name = lua_tostring(L, -(args - 2));
 		u32 msgid = hashString(table, len);
-		bool rc = (*db)->tableParser()->RegisteMessage(msgid, name);
+		bool rc = (*db)->createTable(table);
+		if (rc) {
+			rc = (*db)->tableParser()->RegisteMessage(msgid, name);
+		}
 		lua_pushboolean(L, rc);
 		return 1;
-	}
-	
-	//
-	// o db:list_table()
-	static int cc_db_list_table(lua_State* L) {
-		Easydb** db = (Easydb**) luaL_checkudata(L, 1, LUA_METATABLE_DB_NAME);
-		luaL_argcheck(L, db != NULL, 1, "invalid `db` userdata");
-		//TODO:
-		return 0;
 	}
 	
 	//
@@ -1332,9 +1326,6 @@ BEGIN_NAMESPACE_TNODE {
 		//
 		// bool db:regtable(table, name) // table => name of protobuf::Message
 		LUA_REGISTER(L, "regtable", cc_db_regtable);
-		//
-		// o db:list_table()
-		LUA_REGISTER(L, "list_table", cc_db_list_table);
 		//
 		// u64 db:create_object(table, [uint64_t], o)
 		LUA_REGISTER(L, "create_object", cc_db_create_object);

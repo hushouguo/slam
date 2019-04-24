@@ -20,8 +20,7 @@ BEGIN_NAMESPACE_TNODE {
 		public:
 			virtual bool createDatabase(std::string) = 0;
 			virtual bool selectDatabase(std::string) = 0;
-			virtual bool deleteDatabase(std::string) = 0;
-			virtual bool findDatabase(std::string) = 0;
+			virtual bool createTable(std::string) = 0;
 
 		public:
 			virtual MessageParser* tableParser() = 0;

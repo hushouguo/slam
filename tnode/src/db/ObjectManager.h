@@ -36,12 +36,9 @@ BEGIN_NAMESPACE_TNODE {
 			
 		private:
 			Spinlocker _locker;
-			std::set<std::string> _tables;
 			std::unordered_map<u64, db_object*> _objects;
 
 		private:
-			bool CheckAndCreateTable(EasydbInternal* easydb, std::string table);
-		    bool CreateTable(EasydbInternal* easydb, std::string table);
 		    u64  InsertObjectToTable(EasydbInternal* easydb, std::string table, u64 id, const ByteBuffer* buffer);
 		    bool GetObjectFromTable(EasydbInternal* easydb, std::string table, u64 id, ByteBuffer* buffer);
 		    bool DeleteObjectFromTable(EasydbInternal* easydb, std::string table, u64 id);

@@ -18,8 +18,7 @@ BEGIN_NAMESPACE_TNODE {
 		public:
 			bool createDatabase(std::string) override;
 			bool selectDatabase(std::string) override;
-			bool deleteDatabase(std::string) override;
-			bool findDatabase(std::string) override;
+			bool createTable(std::string) override;
 			
 		public:
 			u64 createObject(std::string table, u64 id, Message*) override;

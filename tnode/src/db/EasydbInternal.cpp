@@ -74,25 +74,24 @@ BEGIN_NAMESPACE_TNODE {
 		return true;
 	}
 
-	//
-	// selectDatabase & reload all of tables
 	bool EasydbInternal::selectDatabase(std::string database) {
 		CHECK_RETURN(this->_dbhandler, false, "not connectServer");
-		//select database
+		//
+		// reselect maybe cause data confusion
+		CHECK_RETURN(this->_database.empty(), false, "reselect database is not allow!");
 		bool rc = this->_dbhandler->selectDatabase(database);
 		CHECK_RETURN(rc, false, "select database: %s error", database.c_str());
 		this->_database = database;
 		return true;
 	}
 
-	bool EasydbInternal::deleteDatabase(std::string database) {
+	bool EasydbInternal::createTable(std::string table) {
 		CHECK_RETURN(this->_dbhandler, false, "not connectServer");
-		return this->_dbhandler->deleteDatabase(database);
-	}
-
-	bool EasydbInternal::findDatabase(std::string database) {
-		CHECK_RETURN(this->_dbhandler, false, "not connectServer");
-		return this->_dbhandler->findDatabase(database);
+        std::ostringstream sql;
+        sql << "CREATE TABLE `" << table << "` (`id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY ";
+        sql << ", `data` LONGBLOB NOT NULL ";
+        sql << ") ENGINE=InnoDB DEFAULT CHARSET=utf8";
+        return this->_dbhandler->runCommand(sql.str());	
 	}
 
 	u64 EasydbInternal::createObject(std::string table, u64 id, Message* message) {
