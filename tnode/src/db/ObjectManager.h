@@ -32,7 +32,7 @@ BEGIN_NAMESPACE_TNODE {
 			bool flushObject(EasydbInternal* easydb, std::string table, u64 id);
 
 		public:
-			void FlushAll(bool cleanup);
+			void FlushAll(EasydbInternal* easydb, bool cleanup);
 			
 		private:
 			Spinlocker _locker;

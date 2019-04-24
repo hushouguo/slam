@@ -37,7 +37,7 @@ BEGIN_NAMESPACE_TNODE {
 			if (this->_dbhandler) {
 				//
 				// flush dirty entity to db & release all of db_objects
-				sObjectManager.FlushAll(true);
+				sObjectManager.FlushAll(this, true);
 
 				//
 				// close MySQL handler

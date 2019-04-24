@@ -202,7 +202,8 @@ BEGIN_NAMESPACE_TNODE {
 		return rc;
 	}
 
-	void ObjectManager::FlushAll(bool cleanup) {
+	void ObjectManager::FlushAll(EasydbInternal* easydb, bool cleanup) {
+		std::vector<u64> v;		
 		SpinlockerGuard guard(&this->_locker);
 		//
 		// flush dirty entity to db & release all of db_objects
@@ -211,6 +212,13 @@ BEGIN_NAMESPACE_TNODE {
 			assert(object);
 			assert(object->message);
 			assert(object->id == i.first);
+			if (object->easydb == easydb) {
+				v.push_back(object->id);
+			}
+		}
+
+		for (auto id : v) {
+			db_object* object = this->_objects[id];
 			if (object->dirty) {
 				object->dirty = !this->FlushObjectToTable(object->easydb, object->table, object);
 				Debug("flush object: %ld, table:%s [%s]", object->id, object->table.c_str(), object->dirty ? "FAIL" : "OK");
@@ -218,10 +226,11 @@ BEGIN_NAMESPACE_TNODE {
 			if (cleanup) {
 				SafeDelete(object->message);
 				SafeDelete(object);
+				auto i = this->_objects.find(id);
+				if (i != this->_objects.end()) {
+					this->_objects.erase(i);
+				}
 			}
-		}
-		if (cleanup) {
-			this->_objects.clear();
 		}
 	}
 
