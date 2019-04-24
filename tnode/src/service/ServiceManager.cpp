@@ -119,6 +119,19 @@ BEGIN_NAMESPACE_TNODE {
 			}
 		}
 	}
+
+	u64 ServiceManager::getFirstTimerExpire() {
+		u64 expireValue = TIMER_INFINITE;
+		for (int sid = 0; sid < TNODE_SERVICE_MAX_NUMBER; ++sid) {
+			Service* service = this->_services[sid];
+			if (!service) {	continue; }
+			u64 value = service->timerManager().firstExpireTime();
+			if (value < expireValue) {
+				expireValue = value;
+			}
+		}
+		return expireValue;
+	}
 	
 	INITIALIZE_INSTANCE(ServiceManager);
 }

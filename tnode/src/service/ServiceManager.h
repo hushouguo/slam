@@ -15,6 +15,7 @@ BEGIN_NAMESPACE_TNODE {
 			bool init(const char* entryfile);
 			void stop();
 			void schedule();
+			u64 getFirstTimerExpire();
 			
 		public:
 			bool pushMessage(const void* netmsg);

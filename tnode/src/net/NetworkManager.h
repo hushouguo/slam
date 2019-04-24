@@ -22,6 +22,11 @@ BEGIN_NAMESPACE_TNODE {
 		private:
 			Easynet* _easynet = nullptr;
 			LockfreeMap<std::string, SOCKET> _registeSockets;
+			void dispatchMessage();
+
+		private:
+			std::mutex _mtx;
+			std::condition_variable _cond;
 	};
 }
 

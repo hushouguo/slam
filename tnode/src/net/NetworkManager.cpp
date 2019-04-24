@@ -25,20 +25,46 @@
 #include "service/ServiceManager.h"
 #include "net/NetworkManager.h"
 
+using Clock = std::chrono::high_resolution_clock;
+using Ms = std::chrono::milliseconds;
+using Sec = std::chrono::seconds;
+template<class Duration> using TimePoint = std::chrono::time_point<Clock, Duration>;
+
 BEGIN_NAMESPACE_TNODE {
 	void NetworkManager::init() {
-		this->_easynet = Easynet::createInstance([](const void* buffer, size_t len) -> int {
+		this->_easynet = Easynet::createInstance(
+			[](const void* buffer, size_t len) -> int {
 				ServiceMessage* msg = (ServiceMessage*) buffer;
 				return len < sizeof(ServiceMessage) || len < msg->len ? 0 : msg->len;
+				}, 
+			[this]() {
+				this->_cond.notify_all();	
 				});
 	}
 	
 	void NetworkManager::stop() {
 		this->_easynet->stop();
-		//SafeDelete(this->_easynet);
+		this->_cond.notify_all();
 	}
 
 	void NetworkManager::run() {
+		std::unique_lock<std::mutex> locker(this->_mtx);
+		u64 expireValue = sServiceManager.getFirstTimerExpire();
+		if (expireValue == TIMER_INFINITE) {
+			this->_cond.wait(locker);
+		}
+		else {
+			sTime.now();
+			TimePoint<Ms> timeout(Ms(sTime.milliseconds() + expireValue));
+			this->_cond.wait_util(locker, timeout);			
+		}
+
+		Debug << "NetworkManager wakeup: " << expireValue;
+
+		this->dispatchMessage();
+	}
+
+	void NetworkManager::dispatchMessage() {
 		while (!sConfig.halt) {
 			const void* netmsg = this->_easynet->getMessage(nullptr);
 			if (!netmsg) {

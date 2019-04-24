@@ -6,6 +6,8 @@
 #ifndef __TIMERMANAGER_H__
 #define __TIMERMANAGER_H__
 
+#define TIMER_INFINITE		u64(-1)
+
 BEGIN_NAMESPACE_TNODE {
 	class TimerManager {
 		public:
@@ -20,7 +22,7 @@ BEGIN_NAMESPACE_TNODE {
 			
 		private:
 			u32 _init_timerid = 1;
-			volatile u64 _first_expire_time = u64(-1);
+			volatile u64 _first_expire_time = TIMER_INFINITE;
 			std::list<Timer*> _timerQueue;
 			struct timer_node {
 				bool operator()(Timer* ts1, Timer* ts2) {

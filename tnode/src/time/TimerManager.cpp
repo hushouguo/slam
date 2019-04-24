@@ -32,7 +32,7 @@ BEGIN_NAMESPACE_TNODE {
 	}
 
 	void TimerManager::resetFirstExpireTime() {
-		this->_first_expire_time = u64(-1);
+		this->_first_expire_time = TIMER_INFINITE;
 		if (!this->_timerQueue.empty()) {
 			Timer* timer = this->_timerQueue.front();
 			this->_first_expire_time = timer->next_time_point;

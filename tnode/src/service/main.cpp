@@ -166,11 +166,6 @@ void dump_library_version() {
 
 }
 
-using Clock = std::chrono::high_resolution_clock;
-using Ms = std::chrono::milliseconds;
-using Sec = std::chrono::seconds;
-template<class Duration> using TimePoint = std::chrono::time_point<Clock, Duration>;
-
 int main(int argc, char* argv[]) {
 	// Verify that the version of the library that we linked against is
 	// compatible with the version of the headers we compiled against.
@@ -203,22 +198,6 @@ int main(int argc, char* argv[]) {
 
 	dump_library_version();
 
-	if (true) {
-
-		std::condition_variable cv;
-		std::mutex cv_m;
-		while (true) {
-			sTime.now();
-			TimePoint<Ms> timeout(Ms(sTime.milliseconds() + 200));
-
-			std::unique_lock<std::mutex> lk(cv_m);
-			//auto now = std::chrono::system_clock::now();
-			//std::chrono::time_point<std::chrono::milliseconds> next(std::chrono::milliseconds(sTime.milliseconds() + 200));
-			cv.wait_until(lk, timeout);
-			Debug << "wakeup";
-		}
-	}
-
 	//
 	// init thread pool
 	sThreadPool.init(sConfig.threads);
@@ -236,10 +215,8 @@ int main(int argc, char* argv[]) {
 	// scheduling service
 	// todo: monitor, control server by command line, reload config etc...
 	while (!sConfig.halt) {
-		sTime.now();
 		sNetworkManager.run();
 		sServiceManager.schedule();
-		std::this_thread::sleep_for(std::chrono::milliseconds(1));
 	}
 
 exit_failure:
