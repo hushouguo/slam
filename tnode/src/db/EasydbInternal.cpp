@@ -37,7 +37,7 @@ BEGIN_NAMESPACE_TNODE {
 			if (this->_dbhandler) {
 				//
 				// flush dirty entity to db & release all of db_objects
-				this->flushall(true);
+				//TODO: this->flushall(true);
 
 				//
 				// close MySQL handler
@@ -78,21 +78,9 @@ BEGIN_NAMESPACE_TNODE {
 	// selectDatabase & reload all of tables
 	bool EasydbInternal::selectDatabase(std::string database) {
 		CHECK_RETURN(this->_dbhandler, false, "not connectServer");
-		//flush all of dirty
-		if (!this->_database.empty()) {
-			this->flushall(true);
-		}
 		//select database
 		bool rc = this->_dbhandler->selectDatabase(database);
 		CHECK_RETURN(rc, false, "select database: %s error", database.c_str());
-		//load tables
-		std::set<std::string> tables;
-		rc = this->_dbhandler->loadTable("%", tables);
-		CHECK_RETURN(rc, false, "load table from database: %s error", database.c_str());
-		for (auto& table : tables) {
-			auto& objects = this->_objects[table];
-			Debug << "load table: " << table << ", " << objects.size();
-		}
 		this->_database = database;
 		return true;
 	}

@@ -30,6 +30,7 @@ BEGIN_NAMESPACE_TNODE {
 			bool flushObject(EasydbInternal* easydb, std::string table, u64 id);
 			
 		private:
+			Spinlocker _locker;
 			std::unordered_map<std::string, std::unordered_map<u64, db_object*>> _objects;
 
 		private:

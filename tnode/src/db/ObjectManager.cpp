@@ -47,11 +47,22 @@ BEGIN_NAMESPACE_TNODE {
 		// insert object into table
 		u64 objectid = this->InsertObjectToTable(easydb, table, id, &buffer);
 		CHECK_RETURN(objectid != 0, 0, "insert object: %ld to table: %s error", id, table.c_str());
-		CHECK_RETURN(objects.find(objectid) == objects.end(), 0, "duplicate entityid: %ld", objectid);
+
+		//
+		// check objectid if exists
+		if (true) {
+			SpinlockerGuard guard(&this->_locker);
+			bool exist_objectid = objects.find(objectid) == objects.end();
+			CHECK_RETURN(!exist_objectid, 0, "duplicate entityid: %ld", objectid);
+		}
+
+		//
+		// create new object
+		db_object* object = new db_object(easydb, objectid, false, message);
 
 		//
 		// add object to cache
-		db_object* object = new db_object(easydb, objectid, false, message);
+		SpinlockerGuard guard(&this->_locker);
 		objects[objectid] = object;
 
 		return objectid;
@@ -61,15 +72,19 @@ BEGIN_NAMESPACE_TNODE {
 		assert(easydb);
 		assert(easydb->dbhandler());
 
+		auto& objects = this->_objects[table];
+		
 		//
 		// check cache if exists
-		auto& objects = this->_objects[table];
-		auto iterator = objects.find(id);
-		if (iterator != objects.end()) { 
-			db_object* object = iterator->second;
-			assert(object);
-			assert(object->message);
-			return object->message;
+		if (true) {
+			SpinlockerGuard guard(&this->_locker);			
+			auto iterator = objects.find(id);
+			if (iterator != objects.end()) { 
+				db_object* object = iterator->second;
+				assert(object);
+				assert(object->message);
+				return object->message;
+			}
 		}
 
 		//
@@ -86,8 +101,12 @@ BEGIN_NAMESPACE_TNODE {
 		CHECK_RETURN(message, nullptr, "decode buffer failure: %d", msgid);						
 
 		//
-		// add object to cache
+		// create new object
 		db_object* object = new db_object(easydb, id, false, message);
+		
+		//
+		// add object to cache
+		SpinlockerGuard guard(&this->_locker);
 		objects[id] = object;
 		
 		return message;
@@ -97,39 +116,53 @@ BEGIN_NAMESPACE_TNODE {
 		assert(easydb);
 		assert(easydb->dbhandler());
 
+        auto& objects = this->_objects[table];
+        
 		//
 		// remove cache if exists
-        auto& objects = this->_objects[table];
-        auto iterator = objects.find(id);
-        if (iterator != objects.end()) {
-			db_object* object = iterator->second;
-			SafeDelete(object->message);
-			SafeDelete(object);
-        	objects.erase(iterator);
+		if (true) {
+			SpinlockerGuard guard(&this->_locker);
+	        auto iterator = objects.find(id);
+	        if (iterator != objects.end()) {
+				db_object* object = iterator->second;
+				SafeDelete(object->message);
+				SafeDelete(object);
+	        	objects.erase(iterator);
+	        }
         }
 
 		return this->DeleteObjectFromTable(easydb, table, id);
 	}
 
-	bool ObjectManager::updateObject(EasydbInternal* easydb, std::string table, u64 id, Message* message) {
+	bool ObjectManager::updateObject(EasydbInternal* easydb, std::string table, u64 id, Message* update_msg) {
 		assert(easydb);
 		assert(easydb->dbhandler());
-
-		db_object* object = nullptr;
 		
 		auto& objects = this->_objects[table];
-		auto iterator = objects.find(id);
-		if (iterator != objects.end()) {
-			object = iterator->second;
-		}
-		else {
-			Alarm("updateObject: %ld not cache, table: %s", id, table.c_str());
-			this->retrieveObject(table, id);
+
+		db_object* object = nullptr;
+		if (true) {
 			//
-			// find object again
-			iterator = objects.find(id);
-			CHECK_RETURN(iterator != objects.end(), false, "updateObject: %ld error, table: %s", id, table.c_str());
-			object = iterator->second;
+			// find object from cache
+			this->_locker.lock();
+			auto iterator = objects.find(id);
+			if (iterator != objects.end()) {
+				object = iterator->second;
+				this->_locker.unlock();
+			}
+			else {
+				this->_locker.unlock();
+				
+				Alarm("updateObject: %ld not cache, table: %s", id, table.c_str());
+				this->retrieveObject(table, id);
+				
+				//
+				// find object again
+				SpinlockerGuard guard(&this->_locker);
+				iterator = objects.find(id);
+				CHECK_RETURN(iterator != objects.end(), false, "updateObject: %ld error, table: %s", id, table.c_str());
+				object = iterator->second;
+			}
 		}
 
 		assert(object);
@@ -146,10 +179,20 @@ BEGIN_NAMESPACE_TNODE {
 		assert(easydb->dbhandler());
 
 		auto& objects = this->_objects[table];
-		auto iterator = objects.find(id);
-		CHECK_RETURN(iterator != objects.end(), false, "not found object: %ld, table: %s in cache", id, table.c_str());
 
-		db_object* object = iterator->second;
+		//
+		// check object if exist
+		db_object* object = nullptr;
+		if (true) {
+			SpinlockerGuard guard(&this->_locker);
+			auto iterator = objects.find(id);
+			if (iterator != objects.end()) {
+				object = iterator->second;
+			}
+		}
+		
+		CHECK_RETURN(object, false, "not found object: %ld, table: %s in cache", id, table.c_str());
+
 		assert(object);
 		assert(object->message);
 		assert(object->id == id);
