@@ -19,6 +19,10 @@
 #include "db/ObjectManager.h"
 
 BEGIN_NAMESPACE_TNODE {
+	bool CheckAndCreateTable(EasydbInternal* easydb, std::string table) {
+
+	}
+
 	u64 ObjectManager::createObject(EasydbInternal* easydb, std::string table, u64 id, Message* message) {
 		assert(easydb);
 		assert(easydb->dbhandler());
@@ -52,7 +56,7 @@ BEGIN_NAMESPACE_TNODE {
 		// check objectid if exists
 		if (true) {
 			SpinlockerGuard guard(&this->_locker);
-			bool exist_objectid = objects.find(objectid) == objects.end();
+			bool exist_objectid = objects.find(objectid) != objects.end();
 			CHECK_RETURN(!exist_objectid, 0, "duplicate entityid: %ld", objectid);
 		}
 
@@ -154,7 +158,7 @@ BEGIN_NAMESPACE_TNODE {
 				this->_locker.unlock();
 				
 				Alarm("updateObject: %ld not cache, table: %s", id, table.c_str());
-				this->retrieveObject(table, id);
+				this->retrieveObject(easydb, table, id);
 				
 				//
 				// find object again
@@ -201,12 +205,39 @@ BEGIN_NAMESPACE_TNODE {
 		}
 		//CHECK_ALARM(object->dirty, true, "object: %ld, table: %s not dirty", id, table.c_str());
 		
-		bool rc = this->FlushObjectToTable(table, object);
+		bool rc = this->FlushObjectToTable(easydb, table, object);
 		if (rc) {
 			object->dirty = false;
 		}
 
 		return rc;
+	}
+
+	void ObjectManager::FlushAll(bool cleanup) {
+		SpinlockerGuard guard(&this->_locker);
+		//
+		// flush dirty entity to db & release all of db_objects
+		for (auto& i : this->_objects) {
+			const std::string& table = i.first;
+			auto& objects = i.second;
+			for (auto& iterator : objects) {
+				db_object* object = iterator.second;
+				assert(object);
+				assert(object->message);
+				assert(object->id == iterator.first);
+				if (object->dirty) {
+					object->dirty = !this->FlushObjectToTable(object->easydb, table, object);
+					Debug("flush object: %ld, table:%s [%s]", object->id, table.c_str(), object->dirty ? "FAIL" : "OK");
+				}
+				if (cleanup) {
+					SafeDelete(object->message);
+					SafeDelete(object);
+				}
+			}
+		}
+		if (cleanup) {
+			this->_objects.clear();
+		}
 	}
 
 	//-----------------------------------------------------------------------------------------------------
@@ -373,32 +404,6 @@ BEGIN_NAMESPACE_TNODE {
 		CHECK_RETURN(rc, 0, "execute sql: %s error", sql.c_str());
 
 		return true;
-	}
-
-	void ObjectManager::FlushAll(bool cleanup) {
-		//
-		// flush dirty entity to db & release all of db_objects
-		for (auto& i : this->_objects) {
-			const std::string& table = i.first;
-			auto& objects = i.second;
-			for (auto& iterator : objects) {
-				db_object* object = iterator.second;
-				assert(object);
-				assert(object->message);
-				assert(object->id == iterator.first);
-				if (object->dirty) {
-					object->dirty = !this->FlushObjectToTable(object->easydb, table, object);
-					Debug("flush object: %ld, table:%s [%s]", object->id, table.c_str(), object->dirty ? "FAIL" : "OK");
-				}
-				if (cleanup) {
-					SafeDelete(object->message);
-					SafeDelete(object);
-				}
-			}
-		}
-		if (cleanup) {
-			this->_objects.clear();
-		}
 	}
 
 	INITIALIZE_INSTANCE(ObjectManager);

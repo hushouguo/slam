@@ -37,7 +37,7 @@ BEGIN_NAMESPACE_TNODE {
 			if (this->_dbhandler) {
 				//
 				// flush dirty entity to db & release all of db_objects
-				//TODO: this->flushall(true);
+				sObjectManager.FlushAll(true);
 
 				//
 				// close MySQL handler
@@ -102,25 +102,21 @@ BEGIN_NAMESPACE_TNODE {
 		
 	Message* EasydbInternal::retrieveObject(std::string table, u64 id) {
         CHECK_RETURN(this->_dbhandler, nullptr, "not connectServer");
-        CHECK_RETURN(this->_objects.find(table) != this->_objects.end(), nullptr, "table: %s not exist", table.c_str());
 		return sObjectManager.retrieveObject(this, table, id);
 	}
 	
 	bool EasydbInternal::deleteObject(std::string table, u64 id) {
         CHECK_RETURN(this->_dbhandler, false, "not connectServer");
-        CHECK_RETURN(this->_objects.find(table) != this->_objects.end(), false, "table: %s not exist", table.c_str());	
 		return sObjectManager.deleteObject(this, table, id);
 	}
 	
 	bool EasydbInternal::updateObject(std::string table, u64 id, Message* update_msg) {
         CHECK_RETURN(this->_dbhandler, false, "not connectServer");
-        CHECK_RETURN(this->_objects.find(table) != this->_objects.end(), false, "table: %s not exist", table.c_str());
 		return sObjectManager.updateObject(this, table, id, update_msg);
 	}
 
  	bool EasydbInternal::flushObject(std::string table, u64 id) {
         CHECK_RETURN(this->_dbhandler, false, "not connectServer");
-        CHECK_RETURN(this->_objects.find(table) != this->_objects.end(), false, "table: %s not exist", table.c_str());	
     	return sObjectManager.flushObject(this, table, id);    
  	}
 }
