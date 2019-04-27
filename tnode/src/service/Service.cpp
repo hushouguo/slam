@@ -50,6 +50,10 @@ BEGIN_NAMESPACE_TNODE {
 		this->stop();
 
 		//
+		// call destroy
+		luaT_entry_destroy(this->_L);
+		
+		//
 		// network cleanup
 		while (!this->_msgQueue.empty()) {
 			const void* netmsg = this->_msgQueue.pop_front();
@@ -79,6 +83,10 @@ BEGIN_NAMESPACE_TNODE {
 				this->stop();
 				return; 
 			}
+			if (!luaT_entry_init(this->_L, this->id)) {
+				this->stop();
+				return;
+			}
 		}
 		
 		while (!this->_msgQueue.empty()) {
@@ -97,13 +105,10 @@ BEGIN_NAMESPACE_TNODE {
 		sTime.now();
 		return !this->isstop() 
 			&& 
-				//
 				// still not execute entryfile
 			(!this->_isinit
-				//
 				// network message arrived
 				|| !this->_msgQueue.empty()
-				//
 				// timer expire
 				|| this->timerManager().firstExpireTime() <= sTime.milliseconds()
 				);

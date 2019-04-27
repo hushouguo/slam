@@ -16,6 +16,34 @@
 
 BEGIN_NAMESPACE_TNODE {
 	//
+	// bool init(sid)
+	bool luaT_entry_init(lua_State* L, u32 sid) {
+		luaT_getGlobalFunction(L, "init");
+		CHECK_RETURN(lua_isfunction(L, -1), false, "not found `init` function");
+
+		luaT_Value ret;
+		CHECK_RETURN(
+			luaT_callFunction(L, sid),
+			false, "call `bool init(sid)` failure");
+		luaT_cleanup(L);
+		CHECK_RETURN(ret.isbool(), false, "`init` return error type: %d", ret.type);
+		return ret.value_bool;
+	}
+	
+	//
+	// void destroy()
+	void luaT_entry_destroy(lua_State* L) {
+		luaT_getGlobalFunction(L, "destroy");
+		CHECK_RETURN(lua_isfunction(L, -1), void(0), "not found `destroy` function");
+
+		luaT_Value ret;
+		CHECK_RETURN(
+			luaT_callFunction(L),
+			void(0), "call `void destroy()` failure");
+		luaT_cleanup(L);
+	}
+
+	//
 	// u32 function dispatch(entityid, msgid)
 	u32 luaT_entry_dispatch(lua_State* L, const void* netmsg) {
 		size_t len = 0;
@@ -33,7 +61,7 @@ BEGIN_NAMESPACE_TNODE {
 			ILLEGAL_SERVICE, "call `sid dispatch(entityid, msgid)` failure");
 		luaT_cleanup(L);
 		CHECK_RETURN(ret.isinteger(), ILLEGAL_SERVICE, "`dispatch` return error type: %d", ret.type);
-		return ret.value_integer;		
+		return ret.value_integer;
 	}
 
 	//
@@ -64,6 +92,33 @@ BEGIN_NAMESPACE_TNODE {
 		luaT_cleanup(L);
 		return rc;
 	}
+
+	//
+	// void hotfix_begin()
+	void luaT_entry_hotfix_begin(lua_State* L) {
+		luaT_getGlobalFunction(L, "hotfix_begin");
+		CHECK_RETURN(lua_isfunction(L, -1), void(0), "not found `hotfix_begin` function");
+
+		luaT_Value ret;
+		CHECK_RETURN(
+			luaT_callFunction(L),
+			void(0), "call `void hotfix_begin()` failure");
+		luaT_cleanup(L);
+	}
+	
+	//
+	// void hotfix_end()
+	void luaT_entry_hotfix_end(lua_State* L) {
+		luaT_getGlobalFunction(L, "hotfix_end");
+		CHECK_RETURN(lua_isfunction(L, -1), void(0), "not found `hotfix_end` function");
+
+		luaT_Value ret;
+		CHECK_RETURN(
+			luaT_callFunction(L),
+			void(0), "call `void hotfix_end()` failure");
+		luaT_cleanup(L);
+	}
+
 	
 	//
 	// void (timerid, ctx)

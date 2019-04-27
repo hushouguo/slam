@@ -8,11 +8,23 @@
 
 BEGIN_NAMESPACE_TNODE {
 	//
+	// bool init(sid)
+	bool luaT_entry_init(lua_State* L, u32 sid);
+	//
+	// void destroy()
+	void luaT_entry_destroy(lua_State* L);
+	//
 	// u32 dispatch(entityid, msgid)
 	u32 luaT_entry_dispatch(lua_State* L, const void* netmsg);
 	//
 	// void msgParser(fd, entityid, msgid, o)
 	bool luaT_entry_msgParser(lua_State* L, const void* netmsg, MessageParser* msgParser);
+	//
+	// void hotfix_begin()
+	void luaT_entry_hotfix_begin(lua_State* L);
+	//
+	// void hotfix_end()
+	void luaT_entry_hotfix_end(lua_State* L);
 	
 	//
 	// void timer()
