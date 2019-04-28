@@ -13,12 +13,15 @@
 13. reload config
 14. buildinfo.h : slam
 15. config macro in config.h
-16. main process
 17. APIs and document
 18. random_string的api
+需要csv loader，因为可以reload, 可以把excel导成jason，服务器用 json来读取
 
-19. 把主线程的任务也做成service，主线程
-21. zero-copy, lockfree for easylog
+Note 1: Rank之类的需求需要额外的service来遍历所有数据库对象，生成rank, objectManager需要提供获取所有数据的接口
+Note 2: 分库分表的考虑, 只分库，不分表
+
+
+
 
 
 

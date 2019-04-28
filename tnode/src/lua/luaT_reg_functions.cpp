@@ -112,6 +112,34 @@ BEGIN_NAMESPACE_TNODE {
 	}
 
 	//
+	// string random_string(length, with_digit=true, with_lower=true, with_capital=true
+	static int cc_random_string(lua_State* L) {
+		int args = lua_gettop(L);
+		CHECK_RETURN(args > 0, 0, "`%s` lack args:%d", __FUNCTION__, args);
+		CHECK_RETURN(lua_isnumber(L, -args), 0, "[%s]", lua_typename(L, lua_type(L, -args)));
+		lua_Integer len = lua_tointeger(L, -args);
+		bool with_digit = true;
+		if (args > 1) {
+			CHECK_RETURN(lua_isboolean(L, -(args - 1)), 0, "[%s]", lua_typename(L, lua_type(L, -(args - 1))));
+			with_digit = lua_toboolean(L, -(args - 1));
+		}
+		bool with_lower = true;
+		if (args > 2) {
+			CHECK_RETURN(lua_isboolean(L, -(args - 2)), 0, "[%s]", lua_typename(L, lua_type(L, -(args - 2))));
+			with_lower = lua_toboolean(L, -(args - 2));
+		}
+		bool with_capital = true;
+		if (args > 3) {
+			CHECK_RETURN(lua_isboolean(L, -(args - 3)), 0, "[%s]", lua_typename(L, lua_type(L, -(args - 3))));
+			with_capital = lua_toboolean(L, -(args - 3));
+		}
+		std::string result;
+		randomString(result, len, with_digit, with_lower, with_capital);
+		lua_pushlstring(L, result.data(), result.length());
+		return 1;
+	}
+
+	//
 	// string base64_encode(string)
 	static int cc_base64_encode(lua_State* L) {
 		int args = lua_gettop(L);
@@ -1187,6 +1215,9 @@ BEGIN_NAMESPACE_TNODE {
 		//
 		// int random_between(int min, int max)
 		LUA_REGISTER(L, "random_between", cc_random_between);
+		//
+		// string random_string(length, with_digit=true, with_lower=true, with_capital=true
+		LUA_REGISTER(L, "random_string", cc_random_string);
 
 		//
 		// string base64_encode(string)
