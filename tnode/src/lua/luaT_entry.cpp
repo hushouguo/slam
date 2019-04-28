@@ -23,7 +23,7 @@ BEGIN_NAMESPACE_TNODE {
 
 		luaT_Value ret;
 		CHECK_RETURN(
-			luaT_callFunction(L, sid),
+			luaT_callFunction(L, sid, ret),
 			false, "call `bool init(sid)` failure");
 		luaT_cleanup(L);
 		CHECK_RETURN(ret.isbool(), false, "`init` return error type: %d", ret.type);
@@ -38,7 +38,7 @@ BEGIN_NAMESPACE_TNODE {
 
 		luaT_Value ret;
 		CHECK_RETURN(
-			luaT_callFunction(L),
+			luaT_callFunction(L, ret),
 			void(0), "call `void destroy()` failure");
 		luaT_cleanup(L);
 	}
@@ -101,7 +101,7 @@ BEGIN_NAMESPACE_TNODE {
 
 		luaT_Value ret;
 		CHECK_RETURN(
-			luaT_callFunction(L),
+			luaT_callFunction(L, ret),
 			void(0), "call `void hotfix_begin()` failure");
 		luaT_cleanup(L);
 	}
@@ -114,7 +114,7 @@ BEGIN_NAMESPACE_TNODE {
 
 		luaT_Value ret;
 		CHECK_RETURN(
-			luaT_callFunction(L),
+			luaT_callFunction(L, ret),
 			void(0), "call `void hotfix_end()` failure");
 		luaT_cleanup(L);
 	}
