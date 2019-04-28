@@ -24,18 +24,24 @@ message Player {
 }
 
 enum MSGID {
-	PLAYER_CREATE		=	1;
-	PLAYER_LOGIN		=	2;
-	PLAYER_MATCH		=	3;
-	PLAYER_MOVE			=	4;
-	PLAYER_ATTACK		=	5;
-	PLAYER_DEATH		=	6;
+	MSGID_BASE			=	0;
+	PLAYER_CREATE_REQ	=	1;
+	PLAYER_CREATE_REP	=	2;
+	PLAYER_LOGIN_REQ	=	3;
+	PLAYER_LOGIN_REP	=	4;
+	PLAYER_MATCH_REQ	=	5;
+	PLAYER_MATCH_REP	=	6;
+	PLAYER_MOVE_REQ		=	7;
+	PLAYER_MOVE_REP		=	8;
+	PLAYER_ATTACK_REQ	=	9;
+	PLAYER_ATTACK_REP	=	10;
+	PLAYER_DEATH_REQ	=	11;
+	PLAYER_DEATH_REP	=	12;
 }
 
 //
 // create
 message PlayerCreateRequest {
-	Player newbie = 1;
 }
 
 message PlayerCreateResponse {
@@ -54,7 +60,11 @@ message PlayerLoginResponse {
 	Player player = 2;
 }
 
-//--------------------------------
+//
+// match
+message PlayerMatchRequest {
+	uint64 id = 1;
+}
 
 message PlayerMatchResponse {
 	uint32 matchid = 1;
@@ -68,7 +78,7 @@ message PlayerMoveRequest {
 	Coord coord = 2;	
 }
 
-message PlayerCoordResponse {
+message PlayerMoveResponse {
 	uint64 id = 1;
 	Coord coord = 2;
 }
