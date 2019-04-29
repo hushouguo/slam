@@ -5,7 +5,7 @@ require('scripts/io/protocol/protocol')
 
 -- create robot player
 local sid_robot_init = 0
-local sid_robot_size = 1
+local sid_robot_size = 100
 local stable_robot = {}
 
 function init(sid)

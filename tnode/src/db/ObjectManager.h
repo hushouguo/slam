@@ -44,9 +44,9 @@ BEGIN_NAMESPACE_TNODE {
 		    bool FlushObjectToTable(EasydbInternal* easydb, std::string table, db_object* object);
 
 		private:
-			void InsertObjectToCache(db_object* object);
+			bool InsertObjectToCache(db_object* object);
 			db_object* GetObjectFromCache(u64 id);
-			void DeleteObjectFromCache(u64 id);
+			bool DeleteObjectFromCache(u64 id);
 	};
 }
 
