@@ -111,7 +111,7 @@ BEGIN_NAMESPACE_TNODE {
 	// decode buffer to protobuf::Message
 	Message* MessageParser::DecodeToMessage(u32 msgid, const std::string& in) {
 		Message* message = this->GetMessage(msgid);
-        assert(message->ByteSize() == 0);
+		message->Clear();
         if (!message->ParseFromString(in)) {
             SafeDelete(message);
             CHECK_RETURN(false, nullptr, "DecodeToNewMessage failure, strlen: %ld, msgid: %d", in.length(), msgid);
@@ -121,7 +121,7 @@ BEGIN_NAMESPACE_TNODE {
 	
 	Message* MessageParser::DecodeToMessage(u32 msgid, const void* buf, size_t bufsize) {
 		Message* message = this->GetMessage(msgid);
-        assert(message->ByteSize() == 0);
+		message->Clear();
         if (!message->ParseFromArray(buf, bufsize)) {
             SafeDelete(message);
             CHECK_RETURN(false, nullptr, "DecodeToNewMessage failure, bufsize: %ld, msgid: %d", bufsize, msgid);
