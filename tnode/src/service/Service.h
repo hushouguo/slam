@@ -16,6 +16,7 @@ BEGIN_NAMESPACE_TNODE {
 
 		public:
 			inline bool isstop() { return this->_isstop; }
+			inline bool isinit() { return this->_isinit; }
 			inline lua_State* luaState() { return this->_L; }
 			inline const std::string& entryfile() { return this->_entryfile; }
 			inline TimerManager& timerManager() { return this->_timerManager; }
@@ -25,6 +26,10 @@ BEGIN_NAMESPACE_TNODE {
 			void stop();
 			void run() override;
 			bool need_schedule();
+
+		public:
+			bool entry_init();
+			void entry_destroy();
 
 		private:
 			bool _isstop = false, _isinit = false;

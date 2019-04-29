@@ -80,6 +80,12 @@ BEGIN_NAMESPACE_TNODE {
 		Service* entryservice = this->_services[this->_entrysid];
 		CHECK_RETURN(entryservice, false, "Not found entry service: %d", this->_entrysid);
 
+		//
+		// perhaps entryservice still not complete to init
+		while (!this->isinit()) {
+			std::this_thread::sleep_for(std::chrono::milliseconds(1));
+		}
+		
 		u32 sid = luaT_entry_dispatch(entryservice->luaState(), netmsg);
 		CHECK_RETURN(VALID_SERVICE(sid), false, "entry service: %s call `dispatch` error: %d", entryservice->entryfile().c_str(), sid);
 

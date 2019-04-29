@@ -41,6 +41,20 @@ BEGIN_NAMESPACE_TNODE {
 		return true;
 	}
 
+	bool Service::entry_init() {
+		CHECK_RETURN(!this->_isinit, false, "reentry_init");
+		if (!luaT_execFile(this->_L, this->_entryfile.c_str())) {
+			return false; 
+		}
+		luaT_entry_init(this->_L, this->id);
+		return this->_isinit = true;
+	}
+	
+	void Service::entry_destroy() {
+		assert(this->_L);
+		luaT_entry_destroy(this->_L);
+	}
+
 	Service::~Service() {
 		this->cleanup();
 	}
@@ -50,7 +64,7 @@ BEGIN_NAMESPACE_TNODE {
 
 		//
 		// call destroy
-		luaT_entry_destroy(this->_L);
+		this->entry_destroy();
 		
 		//
 		// network cleanup
@@ -64,7 +78,7 @@ BEGIN_NAMESPACE_TNODE {
 		
 		//
 		// close lua state
-		luaT_close(this->_L);		
+		luaT_close(this->_L);
 	}
 
 	void Service::stop() {
@@ -77,12 +91,10 @@ BEGIN_NAMESPACE_TNODE {
 		}
 
 		if (!this->_isinit) {
-			this->_isinit = true;
-			if (!luaT_execFile(this->_L, this->_entryfile.c_str())) { 
+			if (!this->entry_init()) {
 				this->stop();
 				return; 
 			}
-			luaT_entry_init(this->_L, this->id);
 		}
 		
 		while (!this->_msgQueue.empty()) {
