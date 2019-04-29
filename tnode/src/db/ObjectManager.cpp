@@ -119,14 +119,17 @@ BEGIN_NAMESPACE_TNODE {
 		u32 msgid = hashString(table.c_str(), table.length());
 		
 		//
-		// decode buffer to protobuf::Message
-		Message* message = easydb->tableParser()->DecodeToMessage(msgid, object->data.rbuffer(), object->data.size());
+		// decode buffer to NEW protobuf::Message
+		Message* message = easydb->tableParser()->DecodeToNewMessage(msgid, object->data.rbuffer(), object->data.size());
 		CHECK_RETURN(message, nullptr, "decode buffer failure: %d", msgid);
 
 		//
 		// merge update_msg to message
 		bool rc = easydb->tableParser()->MergeMessage(message, update_msg);
-		CHECK_RETURN(rc, false, "merge message error: %ld, table: %s", id, table.c_str());
+		if (!rc) {
+			SafeDelete(message);
+			CHECK_RETURN(false, false, "merge message error: %ld, table: %s", id, table.c_str());
+		}
 
 		//
 		// reset object->data
@@ -136,9 +139,13 @@ BEGIN_NAMESPACE_TNODE {
 		// serialize protobuf::Message to buffer
 		size_t byteSize = message->ByteSize();
 		rc = message->SerializeToArray(object->data.wbuffer(byteSize), byteSize);
-		CHECK_RETURN(rc, false, "Serialize message:%s failure, byteSize:%ld", message->GetTypeName().c_str(), byteSize);
+		if (!rc) {
+			SafeDelete(message);
+			CHECK_RETURN(false, false, "Serialize message:%s failure, byteSize:%ld", message->GetTypeName().c_str(), byteSize);
+		}
 		object->data.wlength(byteSize);		
 
+		SafeDelete(message);
 		return object->dirty = true;
 	}
 

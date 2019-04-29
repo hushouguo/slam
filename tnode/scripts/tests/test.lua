@@ -1,3 +1,16 @@
+
+function init(sid)
+	return true
+end
+
+function destroy()
+end
+
+function dispatch(entityid, msgid)
+	return 0
+end
+
+--
 --
 -- logger
 cc.log_debug(string.format("[%4s] test `log_debug",	"OK"))
@@ -124,12 +137,5 @@ object = db:unserialize(table, objectid)
 cc.log_trace(string.format("[%4s] test `db:unserialize`", (object ~= nil and object.value_string == "this is a object" and object.value_uint32 == 100) and "OK" or "FAIL"))
 cc.log_trace(string.format("[%4s] test `db:flush_object`", db:flush_object(table, objectid) and "OK" or "FAIL"))
 cc.log_trace(string.format("[%4s] test `db:delete_object`", db:delete_object(table, objectid) and "OK" or "FAIL"))
-
-function init(sid)
-	return true
-end
-
-function destroy()
-end
 
 
