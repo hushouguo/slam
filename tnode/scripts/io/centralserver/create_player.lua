@@ -34,6 +34,8 @@ local init_player = {
 	regtime = cc.timesec()
 }
 
+cc.domsg(entityid, msgid, function(fd, entityid, msgid, o) end)
+
 function msgParser(fd, entityid, msgid, o)
 	if msgid == protocol.PLAYER_CREATE_REQ then
 		local objectid = db:create_object(table, init_player)

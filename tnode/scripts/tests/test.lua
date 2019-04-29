@@ -120,7 +120,7 @@ cc.log_trace(string.format("[%4s] test `message_decode`", (table ~= nil and tabl
 -- db
 local db = cc.newdb("127.0.0.1", "root", "", 3306)
 cc.log_trace(string.format("[%4s] test `newdb`", db ~= nil and "OK" or "FAIL"))
-local database = cc.timesec()
+local database = "test"
 local table = "player"
 cc.log_trace(string.format("[%4s] test `db:create_database`", db:create_database(tostring(database)) and "OK" or "FAIL"))
 cc.log_trace(string.format("[%4s] test `db:select_database`", db:select_database(tostring(database)) and "OK" or "FAIL"))

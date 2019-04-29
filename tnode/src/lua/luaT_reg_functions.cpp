@@ -375,18 +375,6 @@ BEGIN_NAMESPACE_TNODE {
 		return 1;
 	}
 
-	//
-	// fd getsocket(name)
-	static int cc_getsocket(lua_State* L) {
-		int args = lua_gettop(L);
-		CHECK_RETURN(args == 1, 0, "`%s` lack args: %d", __FUNCTION__, args);
-		CHECK_RETURN(lua_isstring(L, -args), 0, "[%s]", lua_typename(L, lua_type(L, -args)));
-		const char* name = lua_tostring(L, -args);
-		SOCKET fd = sNetworkManager.findSocket(name);
-		lua_pushinteger(L, fd);
-		return 1;
-	}
-
 
 	//
 	// bool response(fd, entityid, msgid, o)
@@ -1181,9 +1169,6 @@ BEGIN_NAMESPACE_TNODE {
 		//
 		// void closesocket(fd)
 		LUA_REGISTER(L, "closesocket", cc_closesocket);
-		//
-		// fd getsocket(name)
-		LUA_REGISTER(L, "getsocket", cc_getsocket);
 
 		//
 		// table json_decode(string)
