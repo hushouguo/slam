@@ -9,6 +9,8 @@ local sid_robot_size = 1000
 local stable_robot = {}
 
 function init(sid)
+	cc.dispatch('scripts/io/client/dispatch.lua')
+
 	--
 	-- create services for robotPlayer
 	for i = sid_robot_init, sid_robot_size - 1 do
@@ -25,4 +27,3 @@ end
 function dispatch(entityid, msgid)
 	return entityid
 end
-

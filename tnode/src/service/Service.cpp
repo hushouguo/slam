@@ -82,10 +82,7 @@ BEGIN_NAMESPACE_TNODE {
 				this->stop();
 				return; 
 			}
-			if (!luaT_entry_init(this->_L, this->id)) {
-				this->stop();
-				return;
-			}
+			luaT_entry_init(this->_L, this->id);
 		}
 		
 		while (!this->_msgQueue.empty()) {

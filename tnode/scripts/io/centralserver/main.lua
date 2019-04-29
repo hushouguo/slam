@@ -19,6 +19,8 @@ local stable_login_player = {}
 local sid_match_player = nil
 
 function init(sid)
+	cc.dispatch('scripts/io/centralserver/dispatch.lua')
+
 	--
 	-- create listening
 	fd_server = cc.newserver("0.0.0.0", 12306)
@@ -68,4 +70,3 @@ function dispatch(entityid, msgid)
 	end
 	return sid
 end
-
