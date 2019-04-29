@@ -18,6 +18,11 @@ local stable_login_player = {}
 -- match
 local sid_match_player = nil
 
+-- scene
+local sid_scene_init = 0
+local sid_scene_size = 8
+local stable_scene = {}
+
 function init(sid)
 	--
 	-- create listening
@@ -42,6 +47,13 @@ function init(sid)
 	-- create service for match
 	sid_match_player = cc.newservice("scripts/io/centralserver/match.lua")
 
+	--
+	-- create 8 services for scene
+	for i = sid_scene_init, sid_scene_size - 1, 1 do
+		stable_scene[i] = cc.newservice("scripts/io/centralserver/scene.lua")
+		assert(stable_scene[i])
+	end
+	
 	return true
 end
 
@@ -64,7 +76,9 @@ function dispatch(entityid, msgid)
 		then
 		sid = sid_match_player
 	else
-		cc.log_error("unhandled message: " .. tostring(msgid))
+		sid = entityid	-- entityid is sceneid
+--	else
+--		cc.log_error("unhandled message: " .. tostring(msgid))
 	end
 	return sid
 end
