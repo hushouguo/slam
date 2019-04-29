@@ -397,16 +397,10 @@ BEGIN_NAMESPACE_TNODE {
 		return true;
 	}
 
-	Message* luaT_message_parser_encode(MessageParser* parser, lua_State* L, u32 msgid, bool alloc_new) {
-		Message* message = nullptr;
-		if (alloc_new) {
-			message = parser->NewMessage(msgid);
-		}
-		else {
-			message = parser->GetMessage(msgid);
-			message->Clear();
-		}
+	Message* luaT_message_parser_encode(MessageParser* parser, lua_State* L, u32 msgid) {
+		Message* message = parser->GetMessage(msgid);
 		CHECK_RETURN(message, nullptr, "not register message: %d", msgid);
+		message->Clear();
 				
 		const Descriptor* descriptor = parser->FindMessageDescriptor(message);
 		CHECK_RETURN(descriptor, nullptr, "not found descriptor for message: %s", message->GetTypeName().c_str());
@@ -415,16 +409,10 @@ BEGIN_NAMESPACE_TNODE {
 		try {
 			if (!encodeDescriptor(parser, L, message, descriptor, message->GetReflection())) {
 				Error << "encodeDescriptor failure for message: " << message->GetTypeName();
-				if (alloc_new) {
-					SafeDelete(message);
-				}
 				return nullptr;
 			}
 		}
 		catch(std::exception& e) {
-			if (alloc_new) {
-				SafeDelete(message);
-			}
 			CHECK_RETURN(false, nullptr, "encodeDescriptor message exception: %s", e.what());
 		}
 

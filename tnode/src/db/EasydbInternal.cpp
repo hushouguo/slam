@@ -99,7 +99,7 @@ BEGIN_NAMESPACE_TNODE {
 		return sObjectManager.createObject(this, table, id, message);
 	}
 		
-	Message* EasydbInternal::retrieveObject(std::string table, u64 id) {
+	ByteBuffer* EasydbInternal::retrieveObject(std::string table, u64 id) {
         CHECK_RETURN(this->_dbhandler, nullptr, "not connectServer");
 		return sObjectManager.retrieveObject(this, table, id);
 	}

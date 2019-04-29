@@ -13,20 +13,19 @@ BEGIN_NAMESPACE_TNODE {
 		std::string table;
 		u64 id;
 		bool dirty;
-		Message* message = nullptr;
-		db_object(EasydbInternal* _easydb, std::string _table, u64 _id, bool _dirty, Message* _message) 
+		ByteBuffer data;
+		db_object(EasydbInternal* _easydb, std::string _table, u64 _id, bool _dirty)
 			: easydb(_easydb)
 			, table(_table)
 			, id(_id)
 			, dirty(_dirty)
-			, message(_message) 
 		{}
 	};
 	
 	class ObjectManager {
 		public:
 			u64 createObject(EasydbInternal* easydb, std::string table, u64 id, Message*);
-			Message* retrieveObject(EasydbInternal* easydb, std::string table, u64 id);
+			ByteBuffer* retrieveObject(EasydbInternal* easydb, std::string table, u64 id);
 			bool deleteObject(EasydbInternal* easydb, std::string table, u64 id);
 			bool updateObject(EasydbInternal* easydb, std::string table, u64 id, Message*);
 			bool flushObject(EasydbInternal* easydb, std::string table, u64 id);
@@ -39,11 +38,15 @@ BEGIN_NAMESPACE_TNODE {
 			std::unordered_map<u64, db_object*> _objects;
 
 		private:
-		    u64  InsertObjectToTable(EasydbInternal* easydb, std::string table, u64 id, const ByteBuffer* buffer);
-		    bool GetObjectFromTable(EasydbInternal* easydb, std::string table, u64 id, ByteBuffer* buffer);
+		    bool InsertObjectToTable(EasydbInternal* easydb, std::string table, db_object* object);
+		    bool GetObjectFromTable(EasydbInternal* easydb, std::string table, db_object* object);
 		    bool DeleteObjectFromTable(EasydbInternal* easydb, std::string table, u64 id);
-		    bool FlushObjectToTable(EasydbInternal* easydb, std::string table, db_object* object);			
-		    bool FlushBufferToTable(EasydbInternal* easydb, std::string table, u64 id, const ByteBuffer* buffer);
+		    bool FlushObjectToTable(EasydbInternal* easydb, std::string table, db_object* object);
+
+		private:
+			void InsertObjectToCache(db_object* object);
+			db_object* GetObjectFromCache(u64 id);
+			void DeleteObjectFromCache(u64 id);
 	};
 }
 

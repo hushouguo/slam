@@ -27,7 +27,7 @@ BEGIN_NAMESPACE_TNODE {
 			
 		public:
 			virtual u64 createObject(std::string table, u64 id, Message*) = 0;
-			virtual Message* retrieveObject(std::string table, u64 id) = 0;
+			virtual ByteBuffer* retrieveObject(std::string table, u64 id) = 0;
 			virtual bool deleteObject(std::string table, u64 id) = 0;
 			virtual bool updateObject(std::string table, u64 id, Message*) = 0;
 			virtual bool flushObject(std::string table, u64 id) = 0;

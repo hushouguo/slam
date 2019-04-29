@@ -83,29 +83,51 @@ BEGIN_NAMESPACE_TNODE {
 
 	//
 	// decode buffer to NEW protobuf::Message
-	Message* MessageParser::DecodeToMessage(u32 msgid, const std::string& in) {
+	Message* MessageParser::DecodeToNewMessage(u32 msgid, const std::string& in) {
         //
         // allocate NEW protobuf::Message
 		Message* message = this->NewMessage(msgid);
         assert(message->ByteSize() == 0);
         if (!message->ParseFromString(in)) {
             SafeDelete(message);
-            CHECK_RETURN(false, nullptr, "DecodeToMessage failure, strlen: %ld, msgid: %d", in.length(), msgid);
+            CHECK_RETURN(false, nullptr, "DecodeToNewMessage failure, strlen: %ld, msgid: %d", in.length(), msgid);
         }
         return message;
 	}
 	
-	Message* MessageParser::DecodeToMessage(u32 msgid, const void* buf, size_t bufsize) {
+	Message* MessageParser::DecodeToNewMessage(u32 msgid, const void* buf, size_t bufsize) {
         //
         // allocate NEW protobuf::Message
 		Message* message = this->NewMessage(msgid);
         assert(message->ByteSize() == 0);
         if (!message->ParseFromArray(buf, bufsize)) {
             SafeDelete(message);
-            CHECK_RETURN(false, nullptr, "DecodeToMessage failure, bufsize: %ld, msgid: %d", bufsize, msgid);
+            CHECK_RETURN(false, nullptr, "DecodeToNewMessage failure, bufsize: %ld, msgid: %d", bufsize, msgid);
         }
         return message;
     }
+
+	//
+	// decode buffer to protobuf::Message
+	Message* MessageParser::DecodeToMessage(u32 msgid, const std::string& in) {
+		Message* message = this->GetMessage(msgid);
+        assert(message->ByteSize() == 0);
+        if (!message->ParseFromString(in)) {
+            SafeDelete(message);
+            CHECK_RETURN(false, nullptr, "DecodeToNewMessage failure, strlen: %ld, msgid: %d", in.length(), msgid);
+        }
+        return message;
+	}
+	
+	Message* MessageParser::DecodeToMessage(u32 msgid, const void* buf, size_t bufsize) {
+		Message* message = this->GetMessage(msgid);
+        assert(message->ByteSize() == 0);
+        if (!message->ParseFromArray(buf, bufsize)) {
+            SafeDelete(message);
+            CHECK_RETURN(false, nullptr, "DecodeToNewMessage failure, bufsize: %ld, msgid: %d", bufsize, msgid);
+        }
+        return message;
+	}
     
 	const Descriptor* MessageParser::FindMessageDescriptor(Message* message) {
 		return this->_in->pool()->FindMessageTypeByName(message->GetTypeName());

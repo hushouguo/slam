@@ -32,10 +32,15 @@ BEGIN_NAMESPACE_TNODE {
 
 		public:
 			//
-			// decode buffer to new protobuf::Message
+			// decode buffer to NEW protobuf::Message
+			Message* DecodeToNewMessage(u32 msgid, const std::string& in);
+			Message* DecodeToNewMessage(u32 msgid, const void* buf, size_t bufsize);
+
+			//
+			// decode buffer to protobuf::Message
 			Message* DecodeToMessage(u32 msgid, const std::string& in);
 			Message* DecodeToMessage(u32 msgid, const void* buf, size_t bufsize);
-
+			
 			//
 			// get descriptor of message
 			const Descriptor* FindMessageDescriptor(Message* message);

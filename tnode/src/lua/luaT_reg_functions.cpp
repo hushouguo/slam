@@ -715,15 +715,14 @@ BEGIN_NAMESPACE_TNODE {
 		}
 		
 		//
-		// allocate NEW protobuf::Message, and encode lua's table to Message		
-		Message* message = luaT_message_parser_encode((*db)->tableParser(), L, msgid, true);
+		// encode lua's table to Message		
+		Message* message = luaT_message_parser_encode((*db)->tableParser(), L, msgid);
 		CHECK_RETURN(message, 0, "encode message: %d, %s error", msgid, table);
 
 		//
 		// insert object to db
 		u64 autoid = (*db)->createObject(table, id, message);
 		if (autoid == 0) {
-			SafeDelete(message);
 			CHECK_RETURN(false, 0, "createObject failure, id: %ld, msgid:%d, table:%s", id, msgid, table);
 		}
 
@@ -747,7 +746,7 @@ BEGIN_NAMESPACE_TNODE {
 
 		//
 		// delete object from db
-		bool rc = (*db)->deleteObject(table, id);		
+		bool rc = (*db)->deleteObject(table, id);
 		lua_pushboolean(L, rc);
 		return 1;
 	}
@@ -770,15 +769,14 @@ BEGIN_NAMESPACE_TNODE {
 		u64 id = lua_tointeger(L, -(args - 2));
 
 		//
-		// encode table of lua to NEW protobuf::Message
-		Message* message = luaT_message_parser_encode((*db)->tableParser(), L, msgid, true);
+		// encode table of lua to protobuf::Message
+		Message* message = luaT_message_parser_encode((*db)->tableParser(), L, msgid);
 		CHECK_RETURN(message, 0, "encode message: %d, %s error", msgid, table);
 
 		//
 		// update object to db
 		bool rc = (*db)->updateObject(table, id, message);
 		if (!rc) {
-			SafeDelete(message);
 			CHECK_RETURN(false, 0, "updateObject failure, id: %ld, msgid:%d, table:%s", id, msgid, table);
 		}
 		
@@ -826,13 +824,13 @@ BEGIN_NAMESPACE_TNODE {
 		u64 id = lua_tointeger(L, -(args - 2));
 
 		//
-		// fetch protobuf::Message from db
-		Message* message = (*db)->retrieveObject(table, id);
-		CHECK_RETURN(message, 0, "retrieveObject: %ld from table: %s failure", id, table);
+		// fetch ByteBuffer from db
+		ByteBuffer* buffer = (*db)->retrieveObject(table, id);
+		CHECK_RETURN(buffer, 0, "retrieveObject: %ld from table: %s failure", id, table);
 
 		//
 		// decode protobuf::Message to lua
-		bool rc = luaT_message_parser_decode((*db)->tableParser(), L, message);
+		bool rc = luaT_message_parser_decode((*db)->tableParser(), L, buffer->rbuffer(), buffer->size());
 		CHECK_RETURN(rc, 0, "decode object: %ld, table: %s to lua failure", id, table);
 				
 		return 1;

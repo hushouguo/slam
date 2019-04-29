@@ -22,7 +22,7 @@ BEGIN_NAMESPACE_TNODE {
 			
 		public:
 			u64 createObject(std::string table, u64 id, Message*) override;
-			Message* retrieveObject(std::string table, u64 id) override;
+			ByteBuffer* retrieveObject(std::string table, u64 id) override;
 			bool deleteObject(std::string table, u64 id) override;
 			bool updateObject(std::string table, u64 id, Message*) override;
 			bool flushObject(std::string table, u64 id) override;

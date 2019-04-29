@@ -11,7 +11,7 @@ BEGIN_NAMESPACE_TNODE {
 	// encode lua's table to buffer
 	bool luaT_message_parser_encode(MessageParser* parser, lua_State* L, u32 msgid, std::string& out);
 	bool luaT_message_parser_encode(MessageParser* parser, lua_State* L, u32 msgid, void* buf, size_t& bufsize);
-	Message* luaT_message_parser_encode(MessageParser* parser, lua_State* L, u32 msgid, bool alloc_new);
+	Message* luaT_message_parser_encode(MessageParser* parser, lua_State* L, u32 msgid);
 	
 	//
 	// decode buffer to lua's table
