@@ -411,7 +411,7 @@ BEGIN_NAMESPACE_TNODE {
 
 		//
 		// encode table of lua to protobuf::Message
-		Message* message = luaT_message_parser_encode(sServiceManager.getService(L)->msgParser(), L, msgid, false);
+		Message* message = luaT_message_parser_encode(sServiceManager.getService(L)->msgParser(), L, msgid);
 		CHECK_RETURN(message, 0, "encode message: %d error", msgid);
 
 		//
