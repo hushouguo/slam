@@ -35,11 +35,12 @@ BEGIN_NAMESPACE_TNODE {
 	bool ServiceManager::init(const char* entryfile) {
 		Service* service = this->newservice(entryfile);
 		CHECK_RETURN(service, false, "ServiceManager init failure");
+		this->_entrysid = service->id;
 		return true;
 	}
 	
 	Service* ServiceManager::newservice(const char* entryfile) {		
-		u32 sid = this->_sid_init++;
+		u32 sid = this->_autosid++;
 		CHECK_RETURN(VALID_SERVICE(sid), nullptr, "number of service overflow");
 		assert(this->_services[sid] == nullptr);
 		Service* service = new Service(sid);
@@ -49,16 +50,6 @@ BEGIN_NAMESPACE_TNODE {
 			return nullptr;
 		}
 		this->_services[sid] = service;
-		//
-		// schedule this service right now
-		service->schedule();
-		return service;
-	}
-
-	Service* ServiceManager::dispatch(const char* entryfile) {
-		Service* service = this->newservice(entryfile);
-		CHECK_RETURN(service, nullptr, "dispatch: %s error", entryfile);
-		this->_sid_dispatch = service->id;
 		return service;
 	}
 
@@ -82,12 +73,12 @@ BEGIN_NAMESPACE_TNODE {
 	}
 
 	bool ServiceManager::pushMessage(const void* netmsg) {
-		assert(VALID_SERVICE(this->_sid_dispatch));
-		Service* dispatch_service = this->_services[this->_sid_dispatch];
-		CHECK_RETURN(dispatch_service, false, "Not found dispatch service: %d", this->_sid_dispatch);
+		assert(VALID_SERVICE(this->_entrysid));
+		Service* entryservice = this->_services[this->_entrysid];
+		CHECK_RETURN(entryservice, false, "Not found entry service: %d", this->_entrysid);
 
-		u32 sid = luaT_entry_dispatch(dispatch_service->luaState(), netmsg);
-		CHECK_RETURN(VALID_SERVICE(sid), false, "dispatch service: %s call `dispatch` error: %d", dispatch_service->entryfile().c_str(), sid);
+		u32 sid = luaT_entry_dispatch(entryservice->luaState(), netmsg);
+		CHECK_RETURN(VALID_SERVICE(sid), false, "entry service: %s call `dispatch` error: %d", entryservice->entryfile().c_str(), sid);
 
 		Service* service = this->_services[sid];
 		CHECK_RETURN(service, false, "Not found dispatch service: %d", sid);
