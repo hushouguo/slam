@@ -20,6 +20,8 @@ function msgParser(fd, entityid, msgid, o)
 		cc.response(fd, entityid, protocol.PLAYER_LOGIN_REQ, {id = o.id})
 	elseif msgid == protocol.PLAYER_LOGIN_REP
 		then
+		--dump(o)
+		cc.log_trace("id: " .. tostring(o.id) .. " login OK")
 		cc.response(fd, entityid, protocol.PLAYER_MATCH_REQ, {id = o.id})
 	elseif msgid == protocol.PLAYER_MATCH_REP
 		then

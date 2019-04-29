@@ -50,6 +50,9 @@ namespace net {
 			//
 			// `s` exist and active
 			virtual bool isActive(SOCKET) = 0;
+			//
+			// return receiveQueue size
+			virtual size_t getMessageSize() = 0;
 
 		public:
 			virtual const void* allocateMessage(size_t payload_len) = 0;

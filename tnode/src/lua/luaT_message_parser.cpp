@@ -8,7 +8,7 @@
 #include "message/MessageParser.h"
 #include "lua/luaT_message_parser.h"
 
-#define DEF_NIL_VALUE		1
+#define DEF_NIL_VALUE		0
 
 BEGIN_NAMESPACE_TNODE {
 
@@ -138,7 +138,7 @@ BEGIN_NAMESPACE_TNODE {
 	void decodeFieldDefaultValue(MessageParser* parser, lua_State* L, const Message& message, const FieldDescriptor* field) {
 		if (field->is_repeated()) {
 			lua_pushstring(L, field->name().c_str());
-#ifdef DEF_NIL_VALUE
+#if DEF_NIL_VALUE
 			lua_pushnil(L);
 #else
 			lua_newtable(L);
@@ -154,7 +154,7 @@ BEGIN_NAMESPACE_TNODE {
 					   lua_settable(L, -3);\
 			    } break;
 
-#ifdef DEF_NIL_VALUE
+#if DEF_NIL_VALUE
 				CASE_FIELD_TYPE(INT32, lua_pushnil(L));// TYPE_INT32, TYPE_SINT32, TYPE_SFIXED32
 				CASE_FIELD_TYPE(INT64, lua_pushnil(L));// TYPE_INT64, TYPE_SINT64, TYPE_SFIXED64
 				CASE_FIELD_TYPE(UINT32, lua_pushnil(L));// TYPE_UINT32, TYPE_FIXED32
@@ -179,7 +179,7 @@ BEGIN_NAMESPACE_TNODE {
 
 				case google::protobuf::FieldDescriptor::CPPTYPE_MESSAGE: { // TYPE_MESSAGE, TYPE_GROUP
 					lua_pushstring(L, field->name().c_str()); /* key */
-#ifdef DEF_NIL_VALUE
+#if DEF_NIL_VALUE
 					lua_pushnil(L);
 #else
 					lua_newtable(L);				

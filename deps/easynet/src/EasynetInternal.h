@@ -19,6 +19,9 @@ namespace net {
 			SOCKET createClient(const char*, int) override;
 			bool sendMessage(SOCKET s, const void* msg) override;
 			const void* getMessage(SOCKET*) override;
+			size_t getMessageSize() override {
+				return this->_recvQueue.size();
+			}
 			void closeSocket(SOCKET) override;
 			bool isActive(SOCKET) override;
 			void stop() override;

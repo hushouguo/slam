@@ -22,6 +22,11 @@ function msgParser(fd, entityid, msgid, o)
 	if msgid == protocol.PLAYER_LOGIN_REQ then
 		local object = db:unserialize(table, o.id)
 		assert(object)
+		if object.id == 0
+			then -- first login
+			object.id = o.id
+		end
+		assert(object.id == o.id)
 		cc.log_debug("login player: " .. tostring(o.id))
 		cc.response(fd, entityid, protocol.PLAYER_LOGIN_REP, { id = object.id, player = object })
 	else

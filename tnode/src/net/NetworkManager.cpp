@@ -52,15 +52,17 @@ BEGIN_NAMESPACE_TNODE {
 	}
 
 	void NetworkManager::run() {
-		std::unique_lock<std::mutex> locker(this->_mtx);
 		u64 expireValue = sServiceManager.getFirstTimerExpire();
-		if (expireValue == TIMER_INFINITE) {
-			this->_cond.wait(locker);
-		}
-		else {
-			const Clock::duration duration = std::chrono::milliseconds(expireValue);
-			const TimePoint timeout(duration);
-			this->_cond.wait_until(locker, timeout);			
+		if (this->_easynet->getMessageSize() == 0) {
+			std::unique_lock<std::mutex> locker(this->_mtx);
+			if (expireValue == TIMER_INFINITE) {
+				this->_cond.wait(locker);
+			}
+			else {
+				const Clock::duration duration = std::chrono::milliseconds(expireValue);
+				const TimePoint timeout(duration);
+				this->_cond.wait_until(locker, timeout);			
+			}
 		}
 		this->dispatchMessage();
 	}

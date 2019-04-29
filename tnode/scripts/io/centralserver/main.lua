@@ -7,7 +7,7 @@ local fd_server = nil
 
 -- create player
 local sid_create_player_init = 0
-local sid_create_player_size = 4
+local sid_create_player_size = 4 
 local stable_create_player = {}
 
 -- login player

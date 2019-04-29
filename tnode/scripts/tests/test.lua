@@ -1,4 +1,12 @@
 function init(sid)
+	local t = {}
+	t[1] = 'hello'
+	t['name'] = 'hushouguo'
+	t['age'] = 18
+	cc.log_trace(string.format("#t: %d", #t))
+	for k, v in pairs(t) do
+		cc.log_trace(string.format("\tk: %s, v: %s", k, v))
+	end
 	return true
 end
 
