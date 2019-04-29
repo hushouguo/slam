@@ -82,7 +82,7 @@ BEGIN_NAMESPACE_TNODE {
 
 		//
 		// perhaps entryservice still not complete to init
-		while (!this->isinit()) {
+		while (!entryservice->isinit()) {
 			std::this_thread::sleep_for(std::chrono::milliseconds(1));
 		}
 		
