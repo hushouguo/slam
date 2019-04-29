@@ -10,7 +10,6 @@
 #include "tools/Runnable.h"
 #include "tools/Spinlocker.h"
 #include "tools/LockfreeQueue.h"
-#include "tools/LockfreeMap.h"
 #include "tools/Registry.h"
 #include "message/ServiceMessage.h"
 #include "message/MessageParser.h"
@@ -76,28 +75,6 @@ BEGIN_NAMESPACE_TNODE {
 				this->_easynet->releaseMessage(netmsg);
 			}
 		}
-	}
-
-	SOCKET NetworkManager::createServer(const char* name, const char* address, int port) {
-		CHECK_RETURN(!this->_registeSockets.containKey(name), -1, "duplicate registe server: %s", name);
-		SOCKET fd = this->easynet()->createServer(address, port);
-		if (fd != -1) {
-			this->_registeSockets.insert(name, fd);
-		}
-		return fd;
-	}
-	
-	SOCKET NetworkManager::createClient(const char* name, const char* address, int port) {
-		CHECK_RETURN(!this->_registeSockets.containKey(name), -1, "duplicate registe client: %s", name);
-		SOCKET fd = this->easynet()->createClient(address, port);
-		if (fd != -1) {
-			this->_registeSockets.insert(name, fd);
-		}
-		return fd;
-	}
-
-	SOCKET NetworkManager::findSocket(const char* name) {
-		return this->_registeSockets.containKey(name) ? this->_registeSockets.find(name) : -1;
 	}
 
 	INITIALIZE_INSTANCE(NetworkManager);

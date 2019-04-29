@@ -6,7 +6,6 @@
 #include "tnode.h"
 #include "tools/Singleton.h"
 #include "tools/Spinlocker.h"
-#include "tools/LockfreeMap.h"
 #include "message/ServiceMessage.h"
 #include "message/MessageParser.h"
 #include "lua/luaT.h"

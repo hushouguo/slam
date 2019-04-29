@@ -11,7 +11,6 @@
 #include "tools/Tools.h"
 #include "tools/Spinlocker.h"
 #include "tools/LockfreeQueue.h"
-#include "tools/LockfreeMap.h"
 #include "tools/ThreadPool.h"
 #include "tools/Runnable.h"
 #include "tools/Registry.h"
@@ -342,18 +341,15 @@ BEGIN_NAMESPACE_TNODE {
 	
 
 	//
-	// fd newserver(name, address, port)
+	// fd newserver(address, port)
 	static int cc_newserver(lua_State* L) {
 		int args = lua_gettop(L);
-		CHECK_RETURN(args == 3, 0, "`%s` lack args: %d", __FUNCTION__, args);
+		CHECK_RETURN(args == 2, 0, "`%s` lack args: %d", __FUNCTION__, args);
 		CHECK_RETURN(lua_isstring(L, -args), 0, "[%s]", lua_typename(L, lua_type(L, -args)));
-		CHECK_RETURN(lua_isstring(L, -(args - 1)), 0, "[%s]", lua_typename(L, lua_type(L, -(args - 1))));
-		CHECK_RETURN(lua_isnumber(L, -(args - 2)), 0, "[%s]", lua_typename(L, lua_type(L, -(args - 2))));
-		const char* name = lua_tostring(L, -args);
-		const char* address = lua_tostring(L, -(args - 1));
-		int port = lua_tointeger(L, -(args - 2));
-		//SOCKET fd = sNetworkManager.easynet()->createServer(address, port);
-		SOCKET fd = sNetworkManager.createServer(name, address, port);
+		CHECK_RETURN(lua_isnumber(L, -(args - 1)), 0, "[%s]", lua_typename(L, lua_type(L, -(args - 1))));
+		const char* address = lua_tostring(L, -args);
+		int port = lua_tointeger(L, -(args - 1));
+		SOCKET fd = sNetworkManager.easynet()->createServer(address, port);
 		if (fd == -1) {
 			Error << "newserver: " << address << ", port: " << port << " failure";
 		}		
@@ -363,18 +359,15 @@ BEGIN_NAMESPACE_TNODE {
 
 
 	//
-	// fd newclient(name, address, port)
+	// fd newclient(address, port)
 	static int cc_newclient(lua_State* L) {
 		int args = lua_gettop(L);
-		CHECK_RETURN(args == 3, 0, "`%s` lack args: %d", __FUNCTION__, args);
+		CHECK_RETURN(args == 2, 0, "`%s` lack args: %d", __FUNCTION__, args);
 		CHECK_RETURN(lua_isstring(L, -args), 0, "[%s]", lua_typename(L, lua_type(L, -args)));
-		CHECK_RETURN(lua_isstring(L, -(args - 1)), 0, "[%s]", lua_typename(L, lua_type(L, -(args - 1))));
-		CHECK_RETURN(lua_isnumber(L, -(args - 2)), 0, "[%s]", lua_typename(L, lua_type(L, -(args - 2))));
-		const char* name = lua_tostring(L, -args);
-		const char* address = lua_tostring(L, -(args - 1));
-		int port = lua_tointeger(L, -(args - 2));
-		//SOCKET fd = sNetworkManager.easynet()->createClient(address, port);
-		SOCKET fd = sNetworkManager.createClient(name, address, port);
+		CHECK_RETURN(lua_isnumber(L, -(args - 1)), 0, "[%s]", lua_typename(L, lua_type(L, -(args - 1))));
+		const char* address = lua_tostring(L, -args);
+		int port = lua_tointeger(L, -(args - 1));
+		SOCKET fd = sNetworkManager.easynet()->createClient(address, port);
 		if (fd == -1) {
 			Error << "newclient: " << address << ", port: " << port << " failure";
 		}		
@@ -1171,10 +1164,10 @@ BEGIN_NAMESPACE_TNODE {
 		LUA_REGISTER(L, "exitservice", cc_exitservice);
 
 		//
-		// fd newserver(name, address, port)
+		// fd newserver(address, port)
 		LUA_REGISTER(L, "newserver", cc_newserver);
 		//
-		// fd newclient(name, address, port)
+		// fd newclient(address, port)
 		LUA_REGISTER(L, "newclient", cc_newclient);
 		//
 		// bool response(fd, entityid, msgid, o)

@@ -4,7 +4,7 @@ require('scripts/io/protocol/protocol')
 local fd_robotclient
 
 function init(sid)
-	fd_robotclient = cc.newclient("robotclient-" .. tostring(sid), "127.0.0.1", 12306)
+	fd_robotclient = cc.newclient("127.0.0.1", 12306)
 	assert(fd_robotclient)
 	local rc = init_protocol()
 	assert(rc)

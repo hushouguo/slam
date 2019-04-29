@@ -14,15 +14,9 @@ BEGIN_NAMESPACE_TNODE {
 			void run();
 			inline Easynet* easynet() { return this->_easynet; }
 			void wakeup();
-
-		public:
-			SOCKET createServer(const char* name, const char*, int);
-			SOCKET createClient(const char* name, const char*, int);
-			SOCKET findSocket(const char* name);
 			
 		private:
 			Easynet* _easynet = nullptr;
-			LockfreeMap<std::string, SOCKET> _registeSockets;
 			void dispatchMessage();
 
 		private:

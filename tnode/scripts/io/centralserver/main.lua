@@ -21,7 +21,7 @@ local sid_match_player = nil
 function init(sid)
 	--
 	-- create listening
-	fd_server = cc.newserver("centralserver", "0.0.0.0", 12306)
+	fd_server = cc.newserver("0.0.0.0", 12306)
 	assert(fd_server)
 
 	--

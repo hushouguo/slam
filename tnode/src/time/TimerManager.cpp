@@ -6,7 +6,6 @@
 #include "tnode.h"
 #include "tools/Singleton.h"
 #include "tools/Spinlocker.h"
-#include "tools/LockfreeMap.h"
 #include "lua/luaT.h"
 #include "time/Time.h"
 #include "time/Timer.h"

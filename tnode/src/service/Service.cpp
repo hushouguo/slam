@@ -10,7 +10,6 @@
 #include "tools/Runnable.h"
 #include "tools/Spinlocker.h"
 #include "tools/LockfreeQueue.h"
-#include "tools/LockfreeMap.h"
 #include "tools/Registry.h"
 #include "message/ServiceMessage.h"
 #include "message/MessageParser.h"

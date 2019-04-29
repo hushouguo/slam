@@ -9,7 +9,6 @@
 #include "tools/Tools.h"
 #include "tools/Spinlocker.h"
 #include "tools/LockfreeQueue.h"
-#include "tools/LockfreeMap.h"
 #include "tools/ThreadPool.h"
 #include "tools/Runnable.h"
 #include "tools/Registry.h"
