@@ -338,6 +338,18 @@ BEGIN_NAMESPACE_TNODE {
 		sServiceManager.exitservice(sid);
 		return 0;
 	}
+
+	//
+	// bool dispatch(entryfile)
+	static int cc_dispatch(lua_State* L) {
+		int args = lua_gettop(L);
+		CHECK_RETURN(args == 1, 0, "`%s` lack args: %d", __FUNCTION__, args);
+		CHECK_RETURN(lua_isstring(L, -args), 0, "[%s]", lua_typename(L, lua_type(L, -args)));
+		const char* entryfile = lua_tostring(L, -args);
+		Service* service = sServiceManager.dispatch(entryfile);
+		lua_pushboolean(L, service != nullptr);
+		return 1;
+	}
 	
 
 	//
@@ -1162,6 +1174,9 @@ BEGIN_NAMESPACE_TNODE {
 		//
 		// void exitservice()
 		LUA_REGISTER(L, "exitservice", cc_exitservice);
+		//
+		// bool dispatch(entryfile)
+		LUA_REGISTER(L, "dispatch", cc_dispatch);
 
 		//
 		// fd newserver(address, port)

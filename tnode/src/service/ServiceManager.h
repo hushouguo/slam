@@ -23,9 +23,10 @@ BEGIN_NAMESPACE_TNODE {
 			Service* getService(u32 sid);
 			Service* getService(lua_State* L);
 			bool exitservice(u32 sid);
+			Service* dispatch(const char* entryfile);
 
 		private:
-			int _autosid = 0, _entrysid = -1;
+			int _sid_init = 0, _sid_dispatch = -1;
 			Service* _services[TNODE_SERVICE_MAX_NUMBER];
 	};
 }
