@@ -109,6 +109,15 @@
 #include <codecvt>
 #endif
 
+#include <mysql/mysql.h>
+#include <mysql/errmsg.h>
+
+#include <event.h>
+#include <evhttp.h>
+
+#include <curl/curl.h>
+
+
 #include "Easylog.h"
 #include "Easynet.h"
 
@@ -140,19 +149,6 @@
 #include <google/protobuf/unknown_field_set.h>
 #include <google/protobuf/compiler/importer.h>
 #include <google/protobuf/dynamic_message.h>
-
-// mysql 5.6.37
-//#include <mysql/mysql.h>
-//#include <mysql/errmsg.h>
-#include "mysql.h"
-#include "errmsg.h"
-
-// libevent
-#include "event.h"
-#include "evhttp.h"
-
-// libcurl-7.58.0
-#include <curl/curl.h>
 
 using u8 	=	uint8_t;
 using u16 	=	uint16_t;

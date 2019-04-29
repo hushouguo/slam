@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+
+>>>>>>> 511bb4a526509ae0eeb62c61ab991aed22d1dc9f
 function init(sid)
 	return true
 end
@@ -6,9 +10,16 @@ function destroy()
 end
 
 function dispatch(entityid, msgid)
+<<<<<<< HEAD
 	return 1
 end
 
+=======
+	return 0
+end
+
+--
+>>>>>>> 511bb4a526509ae0eeb62c61ab991aed22d1dc9f
 --
 -- logger
 cc.log_debug(string.format("[%4s] test `log_debug",	"OK"))
@@ -136,5 +147,8 @@ cc.log_trace(string.format("[%4s] test `db:unserialize`", (object ~= nil and obj
 cc.log_trace(string.format("[%4s] test `db:flush_object`", db:flush_object(table, objectid) and "OK" or "FAIL"))
 cc.log_trace(string.format("[%4s] test `db:delete_object`", db:delete_object(table, objectid) and "OK" or "FAIL"))
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> 511bb4a526509ae0eeb62c61ab991aed22d1dc9f
 

@@ -43,7 +43,7 @@ BEGIN_NAMESPACE_TNODE {
 
 		//
 		// insert object into table
-		rc = this->InsertObjectToTable(easydb, table, id, object);
+		rc = this->InsertObjectToTable(easydb, table, object);
 		if (!rc) {
 			SafeDelete(object);
 			CHECK_RETURN(false, 0, "insert object: %ld to table: %s error", id, table.c_str());
@@ -81,7 +81,7 @@ BEGIN_NAMESPACE_TNODE {
 
 		//
 		// get object from db
-		bool rc = this->GetObjectFromTable(easydb, table, id, object);
+		bool rc = this->GetObjectFromTable(easydb, table, object);
 		CHECK_RETURN(rc, nullptr, "retrieveObject: %ld from table: %s error", id, table.c_str());
 				
 		//
@@ -207,9 +207,9 @@ BEGIN_NAMESPACE_TNODE {
 	//-----------------------------------------------------------------------------------------------------
 	//
 
-	void ObjectManager::InsertObjectToCache(db_object* object) {
+	bool ObjectManager::InsertObjectToCache(db_object* object) {
 		SpinlockerGuard guard(&this->_locker);
-		this->_objects[object->id] = object;
+		return this->_objects.insert(std::make_pair(object->id, object)).second;
 	}
 	
 	db_object* ObjectManager::GetObjectFromCache(u64 id) {
@@ -218,14 +218,16 @@ BEGIN_NAMESPACE_TNODE {
 		return iterator != this->_objects.end() ? iterator->second : nullptr;
 	}
 	
-	void ObjectManager::DeleteObjectFromCache(u64 id) {
+	bool ObjectManager::DeleteObjectFromCache(u64 id) {
 		SpinlockerGuard guard(&this->_locker);
 		auto iterator = this->_objects.find(id);
 		if (iterator != this->_objects.end()) {
 			db_object* object = iterator->second;
 			SafeDelete(object);
-			this->_objects.erase(iterator);			
+			this->_objects.erase(iterator);
+			return true;
 		}
+		return false;
 	}
 
 	//-----------------------------------------------------------------------------------------------------
@@ -259,7 +261,7 @@ BEGIN_NAMESPACE_TNODE {
 		MYSQL_BIND params[1];
 		memset(params, 0, sizeof(params));
 		params[0].buffer_type = MYSQL_TYPE_LONG_BLOB;
-		params[0].buffer = buffer->rbuffer();
+		params[0].buffer = buffer.rbuffer();
 		params[0].is_unsigned = true;
 		params[0].length = &lengths[0];
 

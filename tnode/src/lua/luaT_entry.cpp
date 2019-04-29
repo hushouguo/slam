@@ -53,6 +53,7 @@ BEGIN_NAMESPACE_TNODE {
 		CHECK_RETURN(len >= sizeof(ServiceMessage), false, "illegal netmsg.len: %ld, msg->len: %ld", len, msg->len);
 
 		luaT_getGlobalFunction(L, "dispatch");
+		assert(lua_isfunction(L, -1));
 		CHECK_RETURN(lua_isfunction(L, -1), ILLEGAL_SERVICE, "not found `dispatch` function");
 
 		luaT_Value ret;
@@ -76,6 +77,7 @@ BEGIN_NAMESPACE_TNODE {
 		assert(fd != -1);
 		
 		luaT_getGlobalFunction(L, "msgParser");
+		assert(lua_isfunction(L, -1));
 		CHECK_RETURN(lua_isfunction(L, -1), false, "not found `msgParser` function");
 
 		lua_pushinteger(L, fd);
