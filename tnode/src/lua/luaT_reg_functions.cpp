@@ -820,8 +820,11 @@ BEGIN_NAMESPACE_TNODE {
 	
 		CHECK_RETURN(lua_isstring(L, -(args - 1)), 0, "[%s]", lua_typename(L, lua_type(L, -(args - 1))));
 		CHECK_RETURN(lua_isnumber(L, -(args - 2)), 0, "[%s]", lua_typename(L, lua_type(L, -(args - 2))));
-		const char* table = lua_tostring(L, -(args - 1));
+		size_t len = 0;
+		const char* table = lua_tolstring(L, -(args - 1), &len);
 		u64 id = lua_tointeger(L, -(args - 2));
+
+		u32 msgid = hashString(table, len);
 
 		//
 		// fetch ByteBuffer from db
@@ -830,7 +833,7 @@ BEGIN_NAMESPACE_TNODE {
 
 		//
 		// decode protobuf::Message to lua
-		bool rc = luaT_message_parser_decode((*db)->tableParser(), L, buffer->rbuffer(), buffer->size());
+		bool rc = luaT_message_parser_decode((*db)->tableParser(), L, msgid, buffer->rbuffer(), buffer->size());
 		CHECK_RETURN(rc, 0, "decode object: %ld, table: %s to lua failure", id, table);
 				
 		return 1;
