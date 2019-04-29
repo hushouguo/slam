@@ -18,7 +18,11 @@ BEGIN_NAMESPACE_TNODE {
 	// bool init(sid)
 	bool luaT_entry_init(lua_State* L, u32 sid) {
 		luaT_getGlobalFunction(L, "init");
-		CHECK_RETURN(lua_isfunction(L, -1), false, "not found `init` function");
+		//CHECK_RETURN(lua_isfunction(L, -1), false, "not found `init` function");
+		if (!lua_isfunction(L, -1)) {
+			luaT_cleanup(L);
+			return false;
+		}
 
 		luaT_Value ret;
 		CHECK_RETURN(
@@ -33,7 +37,11 @@ BEGIN_NAMESPACE_TNODE {
 	// void destroy()
 	void luaT_entry_destroy(lua_State* L) {
 		luaT_getGlobalFunction(L, "destroy");
-		CHECK_RETURN(lua_isfunction(L, -1), void(0), "not found `destroy` function");
+		//CHECK_RETURN(lua_isfunction(L, -1), void(0), "not found `destroy` function");
+		if (!lua_isfunction(L, -1)) {
+			luaT_cleanup(L);
+			return;
+		}
 
 		luaT_Value ret;
 		CHECK_RETURN(

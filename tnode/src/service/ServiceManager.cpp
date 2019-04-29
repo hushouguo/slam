@@ -39,7 +39,7 @@ BEGIN_NAMESPACE_TNODE {
 		return true;
 	}
 	
-	Service* ServiceManager::newservice(const char* entryfile) {		
+	Service* ServiceManager::newservice(const char* entryfile, bool schedule) {
 		u32 sid = this->_autosid++;
 		CHECK_RETURN(VALID_SERVICE(sid), nullptr, "number of service overflow");
 		assert(this->_services[sid] == nullptr);
@@ -50,6 +50,9 @@ BEGIN_NAMESPACE_TNODE {
 			return nullptr;
 		}
 		this->_services[sid] = service;
+		if (schedule) {
+			service->schedule();
+		}
 		return service;
 	}
 

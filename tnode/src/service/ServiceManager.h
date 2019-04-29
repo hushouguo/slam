@@ -19,7 +19,7 @@ BEGIN_NAMESPACE_TNODE {
 			
 		public:
 			bool pushMessage(const void* netmsg);
-			Service* newservice(const char* entryfile);
+			Service* newservice(const char* entryfile, bool schedule = true);
 			Service* getService(u32 sid);
 			Service* getService(lua_State* L);
 			bool exitservice(u32 sid);

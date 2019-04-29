@@ -216,8 +216,8 @@ int main(int argc, char* argv[]) {
 	// scheduling service
 	// todo: monitor, control server by command line, reload config etc...
 	while (!sConfig.halt) {
-		sNetworkManager.run();
 		sServiceManager.schedule();
+		sNetworkManager.run();
 	}
 
 exit_failure:
