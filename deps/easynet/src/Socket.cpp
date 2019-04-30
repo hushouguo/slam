@@ -68,8 +68,8 @@ namespace net {
 			memcpy(msg->payload, this->_rbuffer.rbuffer(), msg->payload_len);
 			this->_rbuffer.rlength(msglen);
 			//
-			// push message to Easynet instance
-			this->_easynet->receiveMessage(msg);
+			// add message to Easynet instance
+			this->_easynet->addReceiveMessage(msg);
 
 			Debug("Socket: %d receive message: %ld", this->fd(), msglen);
 		}
@@ -95,7 +95,7 @@ namespace net {
 
 		const NetMessage* msg = nullptr;
 		while (true) {
-			msg = this->_easynet->fetchMessage(this->fd());
+			msg = this->_easynet->getSendMessage(this->fd());
 			if (!msg) {
 				// remove EPOLL_OUT when send all messages over
 				this->_easynet->poll()->setSocketPollout(this->fd(), false);

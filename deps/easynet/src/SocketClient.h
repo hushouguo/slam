@@ -12,7 +12,7 @@ namespace net {
 			virtual ~SocketClient() = 0;
 
 		public:
-			virtual bool connect(const char* address, int port) = 0;
+			virtual bool connect(const char* address, int port, int seconds) = 0;
 	};
 
 	class EasynetInternal;

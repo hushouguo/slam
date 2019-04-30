@@ -43,7 +43,7 @@ namespace net {
 			virtual bool sendMessage(SOCKET s, const void* msg) = 0;
 			//
 			// return nullptr when no more Message
-			virtual const void* getMessage(SOCKET*) = 0;
+			virtual const void* receiveMessage(SOCKET*) = 0;
 			//
 			// close Socket right now
 			virtual void closeSocket(SOCKET) = 0;

@@ -14,11 +14,21 @@
 14. buildinfo.h : slam
 15. config macro in config.h
 17. APIs and document
-18. random_string的api
+链接断掉的回调与处理
+
 需要csv loader，因为可以reload, 可以把excel导成jason，服务器用 json来读取
 
 Note 1: Rank之类的需求需要额外的service来遍历所有数据库对象，生成rank, objectManager需要提供获取所有数据的接口
 Note 2: 分库分表的考虑, 只分库，不分表
+Note 3: 通过传递lamda来通知链接的断开是不可以的
+
+			const void* allocateMessage(size_t payload_len) override;
+			void releaseMessage(const void* msg) override;
+			void setMessageContent(const void* msg, const void* data, size_t len) override;
+			const void* getMessageContent(const void* msg, size_t* len) override;
+			SOCKET getMessageSocket(const void* msg) override;
+
+			名字要换一下
 
 
 

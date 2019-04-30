@@ -69,7 +69,7 @@ BEGIN_NAMESPACE_TNODE {
 
 	void NetworkManager::dispatchMessage() {
 		while (!sConfig.halt) {
-			const void* netmsg = this->_easynet->getMessage(nullptr);
+			const void* netmsg = this->_easynet->receiveMessage(nullptr);
 			if (!netmsg) {
 				break;
 			}

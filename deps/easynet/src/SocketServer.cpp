@@ -18,7 +18,6 @@ namespace net {
 			
 		public:
 			bool receive() override { return this->_socket->receive(); }
-			//bool sendMessage(const NetMessage* msg) override { return this->_socket->sendMessage(msg); }
 			bool send() override { return this->_socket->send(); }
 
 		public:
@@ -32,7 +31,7 @@ namespace net {
 	SocketServerInternal::SocketServerInternal(EasynetInternal* easynet) {
 		this->_socket = SocketCreator::create(::socket(AF_INET, SOCK_STREAM, 0), easynet);
 		assert(this->_socket);
-		this->_socket->socket_type(SOCKET_SERVER);		
+		this->_socket->socket_type(SOCKET_SERVER);
 	}
 
 	SocketServer::~SocketServer() {}

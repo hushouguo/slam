@@ -69,7 +69,7 @@ void test_easynet() {
 			uint32_t total = 0;
 			while (true) {
 				SOCKET fd = -1;
-				const void* msg = easynet->getMessage(&fd);
+				const void* msg = easynet->receiveMessage(&fd);
 				if (msg) {
 					size_t len = 0;
 					const void* payload = easynet->getMessageContent(msg, &len);
@@ -102,7 +102,7 @@ void test_easynet() {
 			uint32_t total = 0;
 			while (true) {
 				SOCKET fd = -1;
-				const void* msg = easynet->getMessage(&fd);
+				const void* msg = easynet->receiveMessage(&fd);
 				if (msg) {
 					size_t len = 0;
 					const void* payload = easynet->getMessageContent(msg, &len);

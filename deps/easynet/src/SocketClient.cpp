@@ -22,11 +22,10 @@ namespace net {
 			
 		public:
 			bool receive() override { return this->_socket->receive(); }
-			//bool sendMessage(const NetMessage* msg) override { return this->_socket->sendMessage(msg); }
 			bool send() override { return this->_socket->send(); }
 
 		public:
-			bool connect(const char* address, int port) override;
+			bool connect(const char* address, int port, int seconds) override;
 
 		private:
 			Socket* _socket = nullptr;
@@ -43,9 +42,9 @@ namespace net {
 		SafeDelete(this->_socket);
 	}
 
-	bool SocketClientInternal::connect(const char* address, int port) {
+	bool SocketClientInternal::connect(const char* address, int port, int seconds) {
 		CHECK_RETURN(this->fd() >= 0, false, "create socket failure: %d, %s", errno, strerror(errno));
-		bool rc = connectSignal(this->fd(), address, port, CONNECT_TIMEOUT);
+		bool rc = connectSignal(this->fd(), address, port, seconds <= 0 ? CONNECT_TIMEOUT : seconds);
 		if (rc) {
 			rc = nonblocking(this->fd());
 			CHECK_RETURN(rc, false, "nonblocking failure: %d, %s", errno, strerror(errno));

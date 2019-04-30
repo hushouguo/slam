@@ -11,20 +11,20 @@
 namespace net {
 	class EasynetInternal : public Easynet {
 		public:
-			EasynetInternal(std::function<int(const void*, size_t)> spliter, std::function<void()> notifymsg);
+			EasynetInternal(std::function<int(const void*, size_t)> spliter, std::function<void()> messenger);
 			~EasynetInternal();
 
 		public:
 			SOCKET createServer(const char*, int) override;
-			SOCKET createClient(const char*, int) override;
+			SOCKET createClient(const char*, int, int seconds) override;
 			bool sendMessage(SOCKET s, const void* msg) override;
-			const void* getMessage(SOCKET*) override;
-			size_t getMessageSize() override {
-				return this->_recvQueue.size();
-			}
+			const void* receiveMessage(SOCKET*) override;
 			void closeSocket(SOCKET) override;
 			bool isActive(SOCKET) override;
 			void stop() override;
+			size_t getQueueSize() override;
+			size_t totalConnections() override;
+			SOCKET getSocketState(bool& state) override;
 
 		public:
 			const void* allocateMessage(size_t payload_len) override;
@@ -45,35 +45,19 @@ namespace net {
 				return this->_spliter;
 			}
 			inline Poll* poll() { return this->_poll; }
-			//
-			// Socket push message to me by this function
-			inline void receiveMessage(const NetMessage* msg) {
-				this->_recvlocker.lock();
-				this->_recvQueue.push_back(msg);
-				this->_recvlocker.unlock();
-				this->_notifymsg();
-			}
-			inline const NetMessage* fetchMessage(SOCKET s) {
-				const NetMessage* netmsg = nullptr;
-				this->_sendlocker.lock();
-				auto& list = this->_sendQueue[s];
-				if (!list.empty()) {
-					netmsg = list.front();
-					list.pop_front();
-				}
-				this->_sendlocker.unlock();
-				return netmsg;
-			}
+			void addReceiveMessage(const NetMessage* msg);
+			const NetMessage* getSendMessage(SOCKET s);
 
 		private:
 			bool _isstop = false;
 			std::thread* _threadWorker = nullptr;
 			std::function<int(const void*, size_t)> _spliter;
+			std::function<void()> _messenger;
 			void closeSocket(SOCKET, const char* reason);
-			std::function<void()> _notifymsg;
 			
 		private:
 			Poll* _poll = nullptr;
+			size_t _totalConnections = 0;
 			Socket* _sockets[MAX_SOCKET];
 
 		private:
@@ -81,6 +65,17 @@ namespace net {
 			std::list<const NetMessage*> _recvQueue;
 			Spinlocker _sendlocker;
 			std::unordered_map<SOCKET, std::list<const NetMessage*>> _sendQueue;
+
+		private:
+			struct socket_state {
+				SOCKET socket;
+				bool state;	// true: establish, false: lost
+				socket_state(SOCKET s, bool value) : socket(s), state(value) {}
+			};
+			Spinlocker _statelocker;
+			std::list<socket_state> _socketStates;
+			void establishConnection(SOCKET socket);
+			void lostConnection(SOCKET socket);
 	};
 }
 
