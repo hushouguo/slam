@@ -1,10 +1,11 @@
 cmake_minimum_required (VERSION 2.8)
 
-set(target tnode) 
+set(target GatewayServer) 
 project (${target})
 
 set(CMAKE_CXX_COMPILER "g++")
-set(CMAKE_BUILD_TYPE "Debug")#Release
+set(CMAKE_BUILD_TYPE "Debug")
+#set(CMAKE_BUILD_TYPE "Release")
 
 set(PROJECT_DIR .)
 set(EXECUTABLE_OUTPUT_PATH .)
@@ -31,26 +32,15 @@ include_directories(${RAPIDJSON_DIR})
 include_directories(${LUA_DIR}/include)
 include_directories(${TCMALLOC_DIR}/include)
 
-aux_source_directory(src/config src)
-aux_source_directory(src/json src)
-aux_source_directory(src/xml src)
-aux_source_directory(src/lua src)
-aux_source_directory(src/message src)
-aux_source_directory(src/service src)
-aux_source_directory(src/time src)
-aux_source_directory(src/tools src)
-aux_source_directory(src/net src)
-aux_source_directory(src/db src)
-aux_source_directory(src/db/mysql src)
+aux_source_directory(src src)
 
 link_directories(/usr/lib64)
-link_directories(/usr/lib64/mysql)
 add_executable(${target} ${src})
 
-target_link_libraries(${target} rt dl pthread unwind crypto ssl curl event mysqlclient_r)
+target_link_libraries(${target} rt dl pthread unwind)
 target_link_libraries(${target} ${EASYLOG_DIR}/lib/libeasylog.a)
 target_link_libraries(${target} ${EASYNET_DIR}/lib/libeasynet.a)
 target_link_libraries(${target} ${PROTOBUF_DIR}/lib/libprotobuf.a)
-target_link_libraries(${target} ${LUA_DIR}/lib/libluajit-5.1.a)
+#target_link_libraries(${target} ${LUA_DIR}/lib/libluajit-5.1.a)
 target_link_libraries(${target} ${TCMALLOC_DIR}/lib/libtcmalloc_minimal.a) 
 
