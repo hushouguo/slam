@@ -6,6 +6,8 @@
 #ifndef __CONFIG_H__
 #define __CONFIG_H__
 
+#define CONVERT_CST_TIME		1
+
 BEGIN_NAMESPACE_SLAM {
 	class Config : public Registry {
 		public:

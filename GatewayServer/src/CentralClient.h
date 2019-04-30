@@ -9,13 +9,15 @@
 BEGIN_NAMESPACE_SLAM {
 	class CentralClient {
 		public:
-			bool init();
+			bool init(const char* address, int port);
 			void stop();
 		
 		public:	
 			void run();
+			bool msgParser(CommonMessage* rawmsg);
 
 		private:
+			SOCKET _fd_centralclient = EASYNET_ILLEGAL_SOCKET;
 			Easynet* _easynet = nullptr;
 	};
 }

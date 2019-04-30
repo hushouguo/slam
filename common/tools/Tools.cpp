@@ -9,8 +9,6 @@
 #pragma warning(disable:4996) // disable strdup warning
 #endif
 
-#define CONVERT_CST_TIME
-
 BEGIN_NAMESPACE_SLAM {
 
 	static u32 __sys_cpus = 1;
@@ -34,7 +32,6 @@ BEGIN_NAMESPACE_SLAM {
 
 	static char** __errlist = nullptr;
 
-#ifdef PLATFORM_LINUX
 	__attribute__((constructor)) static void __strerror_init() {
 		if (!__errlist) {
 			__errlist = (char **) ::malloc(SYS_ERRNO * sizeof(char*));
@@ -52,14 +49,10 @@ BEGIN_NAMESPACE_SLAM {
 			SafeFree(__errlist);
 		}
 	}
-#endif
 
 	//
 	// like ::strerror
 	const char* strerror(int err) {
-#ifdef PLATFORM_WINDOWS
-		if (!__errlist) { __strerror_init(); }
-#endif
 		return err >= 0 && err < SYS_ERRNO ? __errlist[err] : ::strerror(err);
 	}
 
@@ -103,7 +96,7 @@ BEGIN_NAMESPACE_SLAM {
 			time_format = "%y/%02m/%02d %02H:%02M:%02S"; // 18/06/29 15:04:18
 		}
 
-#ifdef CONVERT_CST_TIME
+#if CONVERT_CST_TIME
 		// utc -> cst
 		tv.tv_sec += 8 * 3600;
 #endif
@@ -157,7 +150,7 @@ BEGIN_NAMESPACE_SLAM {
 		// Sat, 11 Mar 2017 21:49:51 GMT
 		const char* time_format = "%a, %d %b %Y %H:%M:%S GMT";
 
-#ifdef CONVERT_CST_TIME
+#if CONVERT_CST_TIME
 		// utc -> cst
 		tv.tv_sec += 8 * 3600;
 #endif

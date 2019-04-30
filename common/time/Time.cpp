@@ -27,6 +27,10 @@ BEGIN_NAMESPACE_SLAM {
 	
 	void Time::now() {
 		gettimeofday(&this->_tv, nullptr);
+#if CONVERT_CST_TIME
+		// utc -> cst
+		this->_tv.tv_sec += 8 * 3600;
+#endif
  	}
 
 	void Time::operator = (u64 milliseconds) {
