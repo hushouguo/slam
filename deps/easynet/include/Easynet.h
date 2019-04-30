@@ -22,9 +22,11 @@
 #define SOCKET						int
 #endif
 
-#define EASYNET_ENABLE_DEBUG		0	
-#define EASYNET_REUSE_ADDRESS		1
-#define EASYNET_REUSE_PORT			0
+#define EASYNET_ILLEGAL_SOCKET				-1
+#define EASYNET_ENABLE_DEBUG				0
+#define EASYNET_REUSE_ADDRESS				1
+#define EASYNET_REUSE_PORT					0
+#define EASYNET_RETURN_ACTIVE_MESSAGE		0
 
 namespace net {	
 	class Easynet {
@@ -33,38 +35,55 @@ namespace net {
 
 		public:
 			//
-			// address, port, maxconn
+			// address, port
 			virtual SOCKET createServer(const char*, int) = 0;
 			//
-			// address, port, timeout(seconds), 
-			virtual SOCKET createClient(const char*, int) = 0;
+			// address, port, seconds(connect timeout)
+			virtual SOCKET createClient(const char*, int, int seconds) = 0;
 			//
-			// `msg` MUST be allocated by allocateMessage function
+			// msg MUST be allocated by `allocateMessage` function
 			virtual bool sendMessage(SOCKET s, const void* msg) = 0;
 			//
-			// return nullptr when no more Message
+			// return nullptr when no more message
 			virtual const void* receiveMessage(SOCKET*) = 0;
 			//
-			// close Socket right now
+			// close socket
 			virtual void closeSocket(SOCKET) = 0;
 			//
-			// `s` exist and active
+			// `socket` is exist and active
 			virtual bool isActive(SOCKET) = 0;
 			//
-			// return receiveQueue size
-			virtual size_t getMessageSize() = 0;
+			// return number of receiveQueue
+			virtual size_t getQueueSize() = 0;
+			//
+			// return current total active connections
+			virtual size_t totalConnections() = 0;
+			//
+			// state: true: establish connection, false: lost connection
+			virtual SOCKET getSocketState(bool& state) = 0;
 
 		public:
+			//
+			// allocate new message for special payload_len
 			virtual const void* allocateMessage(size_t payload_len) = 0;
+			//
+			// release message
 			virtual void releaseMessage(const void* msg) = 0;
+			//
+			// copy content to message data
 			virtual void setMessageContent(const void* msg, const void* data, size_t len) = 0;
+			//
+			// return message data
 			virtual const void* getMessageContent(const void* msg, size_t* len) = 0;
+			//
+			// return socket of message
 			virtual SOCKET getMessageSocket(const void* msg) = 0;
 		
 		public:
 			//
 			// spliter: -1: error occupy, 0: incomplete package, > 0: len of package
-			static Easynet* createInstance(std::function<int(const void*, size_t)> spliter, std::function<void()> notifymsg);
+			// messenger: when messages arrives, messenger will be called
+			static Easynet* createInstance(std::function<int(const void*, size_t)> spliter, std::function<void()> messenger);
 
 		public:
 			virtual void stop() = 0;

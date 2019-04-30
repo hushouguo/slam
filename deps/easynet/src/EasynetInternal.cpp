@@ -235,7 +235,7 @@ namespace net {
 		++this->_totalConnections;
 		if (true) {
 			SpinlockerGuard guard(&this->_statelocker);
-			this->_statelocker.push_back(socket_state(socket, true));
+			this->_socketStates.push_back(socket_state(socket, true));
 		}
 	}
 	
@@ -243,7 +243,7 @@ namespace net {
 		--this->_totalConnections;
 		if (true) {
 			SpinlockerGuard guard(&this->_statelocker);
-			this->_statelocker.push_back(socket_state(socket, false));
+			this->_socketStates.push_back(socket_state(socket, false));
 		}
 	}
 

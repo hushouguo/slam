@@ -53,7 +53,7 @@ BEGIN_NAMESPACE_TNODE {
 
 	void NetworkManager::run() {
 		u64 expireValue = sServiceManager.getFirstTimerExpire();
-		if (this->_easynet->getMessageSize() == 0) {
+		if (this->_easynet->getQueueSize() == 0) {
 			std::unique_lock<std::mutex> locker(this->_mtx);
 			if (expireValue == TIMER_INFINITE) {
 				this->_cond.wait(locker);

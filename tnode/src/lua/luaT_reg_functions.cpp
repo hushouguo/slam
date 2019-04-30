@@ -367,7 +367,7 @@ BEGIN_NAMESPACE_TNODE {
 		CHECK_RETURN(lua_isnumber(L, -(args - 1)), 0, "[%s]", lua_typename(L, lua_type(L, -(args - 1))));
 		const char* address = lua_tostring(L, -args);
 		int port = lua_tointeger(L, -(args - 1));
-		SOCKET fd = sNetworkManager.easynet()->createClient(address, port);
+		SOCKET fd = sNetworkManager.easynet()->createClient(address, port, 0);
 		if (fd == -1) {
 			Error << "newclient: " << address << ", port: " << port << " failure";
 		}		
