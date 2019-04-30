@@ -48,7 +48,8 @@ local function match()
 end
 
 function msgParser(fd, entityid, msgid, o)
-	if msgid == protocol.PLAYER_MATCH_REQ then
+	if msgid == protocol.PLAYER_MATCH_REQ 
+		then
 		--dump(o)
 		mtable[o.id] = fd
 		members = members + 1
@@ -58,6 +59,7 @@ function msgParser(fd, entityid, msgid, o)
 			match()
 		end
 	else
+		cc.closesocket(fd)
 		cc.log_error("unhandled message: " .. tostring(msgid))
 	end
 end

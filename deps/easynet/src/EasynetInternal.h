@@ -24,7 +24,7 @@ namespace net {
 			void stop() override;
 			size_t getQueueSize() override;
 			size_t totalConnections() override;
-			SOCKET getSocketState(bool& state) override;
+			SOCKET getSocketState(bool* state) override;
 
 		public:
 			const void* allocateMessage(size_t payload_len) override;

@@ -64,7 +64,19 @@ BEGIN_NAMESPACE_TNODE {
 				this->_cond.wait_until(locker, timeout);			
 			}
 		}
+		this->dispatchSocketState();
 		this->dispatchMessage();
+	}
+
+	void NetworkManager::dispatchSocketState() {
+		while (!sConfig.halt) {
+			bool state = false;
+			SOCKET socket = this->_easynet->getSocketState(&state);
+			if (socket == EASYNET_ILLEGAL_SOCKET) {
+				break;
+			}
+			Debug << "Socket: " << socket << " " << (state ? "establish" : "lost");
+		}
 	}
 
 	void NetworkManager::dispatchMessage() {

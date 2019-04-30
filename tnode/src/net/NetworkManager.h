@@ -17,6 +17,7 @@ BEGIN_NAMESPACE_TNODE {
 			
 		private:
 			Easynet* _easynet = nullptr;
+			void dispatchSocketState();
 			void dispatchMessage();
 
 		private:

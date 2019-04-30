@@ -237,6 +237,7 @@ namespace net {
 			SpinlockerGuard guard(&this->_statelocker);
 			this->_socketStates.push_back(socket_state(socket, true));
 		}
+		this->_messenger();
 	}
 	
 	void EasynetInternal::lostConnection(SOCKET socket) {
@@ -245,14 +246,17 @@ namespace net {
 			SpinlockerGuard guard(&this->_statelocker);
 			this->_socketStates.push_back(socket_state(socket, false));
 		}
+		this->_messenger();
 	}
 
-	SOCKET EasynetInternal::getSocketState(bool& state) {
+	SOCKET EasynetInternal::getSocketState(bool* state) {
 		SpinlockerGuard guard(&this->_statelocker);
 		if (!this->_socketStates.empty()) {
 			socket_state& ss = this->_socketStates.front();
 			this->_socketStates.pop_front();
-			state = ss.state;
+			if (state) {
+				*state = ss.state;
+			}
 			return ss.socket;
 		}
 		return EASYNET_ILLEGAL_SOCKET;

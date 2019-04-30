@@ -60,7 +60,7 @@ namespace net {
 			virtual size_t totalConnections() = 0;
 			//
 			// state: true: establish connection, false: lost connection
-			virtual SOCKET getSocketState(bool& state) = 0;
+			virtual SOCKET getSocketState(bool* state) = 0;
 
 		public:
 			//
