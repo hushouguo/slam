@@ -66,6 +66,7 @@ BEGIN_NAMESPACE_TNODE {
 		}
 		this->dispatchSocketState();
 		this->dispatchMessage();
+		Debug << "totalConnections: " << this->_easynet->totalConnections();
 	}
 
 	void NetworkManager::dispatchSocketState() {

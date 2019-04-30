@@ -42,7 +42,7 @@ local function setup_player()
 	--dump(init_player)
 end
 
-function msgParser(fd, entityid, msgid, o)
+function msgParser(fd, entityid, msgid, o)	
 	if msgid == protocol.PLAYER_CREATE_REQ then
 		setup_player()
 		local objectid = db:create_object(table, init_player)
@@ -52,6 +52,7 @@ function msgParser(fd, entityid, msgid, o)
 	else
 		cc.log_error("unhandled message: " .. tostring(msgid))
 	end
+	cc.closesocket(fd)
 end
 
 function destroy()

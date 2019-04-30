@@ -4,7 +4,8 @@ set(target easylog)
 project (${target})
 
 set(CMAKE_CXX_COMPILER "g++")
-set(CMAKE_BUILD_TYPE "Debug")#Release
+#set(CMAKE_BUILD_TYPE "Debug")
+set(CMAKE_BUILD_TYPE "Release")
 
 set(PROJECT_DIR .)
 set(LIBRARY_OUTPUT_PATH ../lib)

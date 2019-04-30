@@ -113,7 +113,11 @@ namespace net {
 	void EasynetInternal::closeSocket(SOCKET s) {
 		//this->closeSocket(s, "outside");
 		Debug("Easynet, closeSocket: %d, outside", s);
-		SafeClose(s);
+		if (true) {
+			SpinlockerGuard guard(&this->_closelocker);
+			this->_closeSockets.push_back(s);
+		}
+		this->poll()->setSocketPollout(s, true);
 	}
 	
 	bool EasynetInternal::isActive(SOCKET s) {
@@ -182,6 +186,14 @@ namespace net {
 	
 	void EasynetInternal::run() {
 		while (!this->isstop()) {
+			if (true) {
+				SpinlockerGuard guard(&this->_closelocker);
+				while (!this->_closeSockets.empty()) {
+					SOCKET socket = this->_closeSockets.front();
+					this->_closeSockets.pop_front();
+					this->closeSocket(socket, "outside");
+				}
+			}
 			this->_poll->run(-1);
 		}
 		Trace("Easynet exit, recvQueue: %ld", this->_recvQueue.size());

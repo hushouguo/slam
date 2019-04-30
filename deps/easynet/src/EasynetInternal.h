@@ -76,6 +76,10 @@ namespace net {
 			std::list<socket_state> _socketStates;
 			void establishConnection(SOCKET socket);
 			void lostConnection(SOCKET socket);
+
+		private:
+			Spinlocker _closelocker;
+			std::list<SOCKET> _closeSockets;
 	};
 }
 
