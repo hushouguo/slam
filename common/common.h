@@ -207,7 +207,7 @@ using namespace logger;
 
 #include "tools/Singleton.h"
 #include "tools/Callback.h"
-#include "tools/Contructor.h"
+#include "tools/Constructor.h"
 #include "tools/Noncopyable.h"
 #include "tools/base64.h"
 #include "tools/ByteBuffer.h"
@@ -217,8 +217,8 @@ using namespace logger;
 #include "tools/Spinlocker.h"
 #include "tools/LockfreeMap.h"
 #include "tools/LockfreeQueue.h"
-#include "tools/Runnable.h"
 #include "tools/ThreadPool.h"
+#include "tools/Runnable.h"
 #include "tools/HttpParser.h"
 #include "tools/Tools.h"
 #include "xml/XmlParser.h"

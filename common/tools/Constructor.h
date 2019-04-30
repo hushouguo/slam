@@ -9,13 +9,7 @@
 BEGIN_NAMESPACE_SLAM {
 	template <typename T>
 	T* Constructor(T* InPlace)
-#ifdef PLATFORM_LINUX
 	{ return new (InPlace) T();	}
-#endif
-#ifdef PLATFORM_WINDOWS
-	{ return new (InPlace) T;	}
-#endif
-
 
 	template <typename T, typename P>
 		T* Constructor(T* InPlace, P p)
