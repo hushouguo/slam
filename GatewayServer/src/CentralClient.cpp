@@ -25,9 +25,7 @@ BEGIN_NAMESPACE_SLAM {
 	}
 
 	void CentralClient::stop() {
-		if (this->_easynet) {
-			this->_easynet->stop();
-		}
+		SafeDelete(this->_easynet);
 		this->_fd_centralclient = EASYNET_ILLEGAL_SOCKET;
 		sConfig.syshalt(0);
 	}
@@ -63,6 +61,7 @@ BEGIN_NAMESPACE_SLAM {
                 break;
             }
             assert(socket == this->_fd_centralclient);
+            
             size_t len = 0;
             const void* payload = this->_easynet->getMessageContent(netmsg, &len);
             assert(len >= sizeof(CommonMessage));
@@ -71,11 +70,42 @@ BEGIN_NAMESPACE_SLAM {
             if (!this->msgParser(rawmsg)) {
             	this->stop();
             }
+            this->_easynet->releaseMessage(netmsg);
         }
 	}	
 
+	bool CentralClient::sendMessage(u64 entityid, u32 msgid, const google::protobuf::Message* message) {
+		assert(message);
+		assert(this->_easynet);
+		
+        //   
+        // allocate new CommonMessage
+        size_t byteSize = message->ByteSize();
+        const void* netmsg = this->_easynet->allocateMessage(byteSize + sizeof(CommonMessage));
+        size_t len = 0; 
+        CommonMessage* msg = (CommonMessage*) this->_easynet->getMessageContent(netmsg, &len); 
+        assert(len == byteSize + sizeof(CommonMessage));
+     
+        //   
+        // serialize protobuf::Message to ServiceMessage
+        bool rc = message->SerializeToArray(msg->payload, byteSize);
+        if (!rc) {
+            this->_easynet->releaseMessage(netmsg);
+            Error("Serialize message:%s failure, byteSize:%ld", message->GetTypeName().c_str(), byteSize);
+            return false;
+        }
+
+        //   
+        // send CommonMessage to network
+        msg->len = len;
+        msg->entityid = entityid;
+        msg->msgid = msgid;
+        msg->flags = 0;
+        return this->_easynet->sendMessage(this->_fd_centralclient, netmsg);
+	}
+
 	bool CentralClient::msgParser(CommonMessage* rawmsg) {
-		return DISPATCH_MESSAGE(this, this->_fd_centralclient, rawmsg);
+		return DISPATCH_MESSAGE(this->_easynet, this->_fd_centralclient, rawmsg);
 	}
 	
 	INITIALIZE_INSTANCE(CentralClient);

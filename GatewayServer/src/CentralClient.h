@@ -16,6 +16,9 @@ BEGIN_NAMESPACE_SLAM {
 			void run();
 			bool msgParser(CommonMessage* rawmsg);
 
+		public:
+			bool sendMessage(u64 entityid, u32 msgid, const google::protobuf::Message* message);
+
 		private:
 			SOCKET _fd_centralclient = EASYNET_ILLEGAL_SOCKET;
 			Easynet* _easynet = nullptr;

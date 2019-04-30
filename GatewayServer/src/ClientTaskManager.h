@@ -14,11 +14,14 @@ BEGIN_NAMESPACE_SLAM {
 		
 		public:	
 			void run();
-			bool msgParser(SOCKET socket, CommonMessage* rawmsg);
+			bool msgParser(Easynet* easynet, SOCKET socket, CommonMessage* rawmsg);
 
+		public:
+			bool sendMessage(SOCKET socket, u64 entityid, u32 msgid, const google::protobuf::Message* message);
+			
 		private:
-			//SOCKET _fds[];
-			Easynet* _easynet = nullptr;
+			std::vector<Easynet*> _easynets;
+			void run(Easynet* easynet);
 	};
 }
 
