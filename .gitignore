@@ -3,8 +3,8 @@ CMakeCache.txt
 CMakeFiles
 Makefile
 cmake_install.cmake
-tnode/tnode
-tests/test_easylog
-tests/test_easynet
-tests/test_easydb
-tests/test_luaT
+shard/tnode/tnode
+shard/tests/test_easylog
+shard/tests/test_easynet
+shard/tests/test_easydb
+shard/tests/test_luaT
