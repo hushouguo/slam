@@ -22,14 +22,6 @@ Note 1: Rank之类的需求需要额外的service来遍历所有数据库对象�
 Note 2: 分库分表的考虑, 只分库，不分表
 Note 3: 通过传递lamda来通知链接的断开是不可以的
 
-			const void* allocateMessage(size_t payload_len) override;
-			void releaseMessage(const void* msg) override;
-			void setMessageContent(const void* msg, const void* data, size_t len) override;
-			const void* getMessageContent(const void* msg, size_t* len) override;
-			SOCKET getMessageSocket(const void* msg) override;
-
-			名字要换一下
-
 
 StorageServer
 1. 8 threads: 通过entityid来dispatch, 每个线程拥有自己的面对所有数据库的独立连接
