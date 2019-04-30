@@ -34,6 +34,7 @@ namespace net {
 		assert(this->_sockets[socketClient->fd()] == nullptr);
 		this->_sockets[socketClient->fd()] = socketClient;
 		this->_poll->addSocket(socketClient->fd());
+		this->establishConnection(socketClient->fd());
 		++this->_totalConnections;
 		return socketClient->fd();
 	}
