@@ -1,0 +1,13 @@
+syntax = "proto3";
+
+package protocol;
+
+enum GENDER {
+	MALE		=	0;
+	FEMALE		=	1;
+}
+
+message Coord {
+	float x		=	1;
+	float y		=	2;
+}

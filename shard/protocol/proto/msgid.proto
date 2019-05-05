@@ -1,0 +1,9 @@
+syntax = "proto3";
+
+package protocol;
+
+enum MSGID {
+	MSGID_BASE						=	0;
+	MSGID_HEARTBEAT					=	1;
+	
+}
