@@ -3,7 +3,7 @@
  * \brief: Created by hushouguo at 13:43:33 Apr 30 2019
  */
 
-#include "common/common.h"
+#include "common.h"
 #include "CentralClient.h"
 
 DECLARE_MESSAGE();

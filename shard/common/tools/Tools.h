@@ -188,6 +188,7 @@ BEGIN_NAMESPACE_SLAM {
 	const char* getProgramFullName();
 
 
+#if SLAM_SSL_ENABLE	
 	//
 	// openssl.md5
 	void openssl_md5(const std::string& plainString, std::string& digestString);
@@ -214,7 +215,9 @@ BEGIN_NAMESPACE_SLAM {
 	// url encode & decode 
 	bool url_encode(const std::string& url, std::string& url_encoded);
 	bool url_decode(const std::string& url_encoded, std::string& url);
-	
+#endif
+
+
 	//
 	// install signal handler
 	template <typename HANDLER>

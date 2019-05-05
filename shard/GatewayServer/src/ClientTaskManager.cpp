@@ -3,7 +3,7 @@
  * \brief: Created by hushouguo at 13:43:15 Apr 30 2019
  */
 
-#include "common/common.h"
+#include "common.h"
 #include "ClientTask.h"
 #include "ClientTaskManager.h"
 
@@ -78,7 +78,7 @@ BEGIN_NAMESPACE_SLAM {
 			else {
 				ClientTask* task = this->find(socket);
 				if (task) {
-					this->remove(socket);
+					this->remove(task);
 					SafeDelete(task);
 				}
 				Alarm << "lost client task: " << socket;

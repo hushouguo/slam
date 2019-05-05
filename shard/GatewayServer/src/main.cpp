@@ -3,7 +3,7 @@
  * \brief: Created by hushouguo at 15:10:52 Mar 25 2019
  */
 
-#include "common/common.h"
+#include "common.h"
 #include "ClientTask.h"
 #include "ClientTaskManager.h"
 #include "CentralClient.h"
@@ -12,7 +12,7 @@
 #include "GatewayPlayer.h"
 #include "GatewayPlayerManager.h"
 
-using namespace tnode;
+using namespace slam;
 
 void install_signal_handler() {
 	struct sigaction act;
@@ -29,7 +29,6 @@ void install_signal_handler() {
 			case SIGTERM:
 			case SIGQUIT: 
 				sConfig.halt = true;
-				sNetworkManager.wakeup();
 				break;	// Note: schedule halt
 		
 			case SIGHUP: 
@@ -183,7 +182,7 @@ int main(int argc, char* argv[]) {
 		exit_failure, "CentralClient init failure");
 		
 	CHECK_GOTO(sClientTaskManager.init(
-		sConfig.get("Service.address", "0.0.0.0"), sConfig.get("Service.port", 12306u))), 
+		sConfig.get("Service.address", "0.0.0.0"), sConfig.get("Service.port", 12306u)), 
 		exit_failure, "ClientTaskManager init failure");
 	
 	CHECK_GOTO(sSceneClientManager.init(), exit_failure, "SceneClientManager init failure");

@@ -882,6 +882,7 @@ BEGIN_NAMESPACE_SLAM {
 		}
 	}
 
+#if SLAM_SSL_ENABLE
 	
 	struct CurlContext {
 		void* userdata;
@@ -1000,7 +1001,6 @@ BEGIN_NAMESPACE_SLAM {
 		return !url.empty();
 	}
 
-
 	//
 	// openssl.md5
 	void openssl_md5(const std::string& plainString, std::string& digestString) {
@@ -1114,5 +1114,6 @@ BEGIN_NAMESPACE_SLAM {
 
 		return plainString;  		
 	}
+#endif
 }
 

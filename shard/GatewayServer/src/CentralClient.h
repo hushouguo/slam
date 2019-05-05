@@ -11,6 +11,7 @@ BEGIN_NAMESPACE_SLAM {
 		public:
 			CentralClient() : Entry<SOCKET>(EASYNET_ILLEGAL_SOCKET) {
 			}
+			const char* getClassName() override { return "CentralClient"; }
 			
 		public:
 			bool init(const char* address, int port);

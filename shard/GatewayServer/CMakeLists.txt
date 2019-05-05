@@ -46,7 +46,7 @@ aux_source_directory(src src)
 link_directories(/usr/lib64)
 add_executable(${target} ${src})
 
-target_link_libraries(${target} rt dl pthread unwind)
+target_link_libraries(${target} rt dl pthread)
 target_link_libraries(${target} ${EASYLOG_DIR}/lib/libeasylog.a)
 target_link_libraries(${target} ${EASYNET_DIR}/lib/libeasynet.a)
 target_link_libraries(${target} ${PROTOBUF_DIR}/lib/libprotobuf.a)

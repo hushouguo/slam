@@ -30,7 +30,7 @@ BEGIN_NAMESPACE_SLAM {
 #endif	
 	
 #define DECLARE_MESSAGE() \
-		typedef bool (*MESSAGE_ROUTINE)(Easynet* easynet, SOCKET socket, CommonMessage* rawmsg);\
+		typedef bool (*MESSAGE_ROUTINE)(Easynet* easynet, SOCKET socket, slam::CommonMessage* rawmsg);\
 		struct MessageTable {\
 			MESSAGE_ROUTINE table[MAX_MESSAGE_ID];\
 		};\
@@ -41,8 +41,8 @@ BEGIN_NAMESPACE_SLAM {
 		
 	
 #define ON_MSG(MSGID, STRUCTURE) \
-		static bool onMessage_raw_##STRUCTURE(Easynet* easynet, SOCKET socket, CommonMessage* rawmsg);\
-		static void onMessage_##STRUCTURE(Easynet* easynet, SOCKET socket, STRUCTURE* msg, CommonMessage* rawmsg);\
+		static bool onMessage_raw_##STRUCTURE(Easynet* easynet, SOCKET socket, slam::CommonMessage* rawmsg);\
+		static void onMessage_##STRUCTURE(Easynet* easynet, SOCKET socket, STRUCTURE* msg, slam::CommonMessage* rawmsg);\
 		__attribute__((constructor)) static void __##STRUCTURE() {\
 			assert(MSGID >= 0 && MSGID < MAX_MESSAGE_ID);\
 			if (__t.table[MSGID]) {\
@@ -53,14 +53,14 @@ BEGIN_NAMESPACE_SLAM {
 				__t.table[MSGID] = onMessage_raw_##STRUCTURE;\
 			}\
 		}\
-		static bool onMessage_raw_##STRUCTURE(Easynet* easynet, SOCKET socket, CommonMessage* rawmsg) {\
+		static bool onMessage_raw_##STRUCTURE(Easynet* easynet, SOCKET socket, slam::CommonMessage* rawmsg) {\
 			STRUCTURE msg;\
-			bool rc = msg.ParseFromArray(rawmsg->payload, rawmsg->len - sizeof(CommonMessage));\
-			CHECK_RETURN(rc, false, "%s ParseFromArray failure: %d, %ld", #STRUCTURE, rawmsg->len, sizeof(CommonMessage));\
+			bool rc = msg.ParseFromArray(rawmsg->payload, rawmsg->len - sizeof(slam::CommonMessage));\
+			CHECK_RETURN(rc, false, "%s ParseFromArray error: %d, %ld", #STRUCTURE, rawmsg->len, sizeof(slam::CommonMessage));\
 			onMessage_##STRUCTURE(easynet, socket, &msg, rawmsg);\
 			return rc;\
 		}\
-		static void onMessage_##STRUCTURE(Easynet* easynet, SOCKET socket, STRUCTURE* msg, CommonMessage* rawmsg)
+		static void onMessage_##STRUCTURE(Easynet* easynet, SOCKET socket, STRUCTURE* msg, slam::CommonMessage* rawmsg)
 		
 	
 #define DISPATCH_MESSAGE(easynet, socket, rawmsg) \

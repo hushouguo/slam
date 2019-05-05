@@ -3,7 +3,7 @@
  * \brief: Created by hushouguo at 13:43:43 Apr 30 2019
  */
 
-#include "common/common.h"
+#include "common.h"
 #include "SceneClient.h"
 
 
