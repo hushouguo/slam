@@ -187,7 +187,14 @@ BEGIN_NAMESPACE_SLAM {
 	// get the complete execution of the program, like: ./bin/foo
 	const char* getProgramFullName();
 
+	//
+	// verify stack size & open files
+	bool VerifyLimits();
 
+	//
+	// output 3rd libraries version info
+	void DumpLibraryVersion();
+	
 #if SLAM_SSL_ENABLE	
 	//
 	// openssl.md5
