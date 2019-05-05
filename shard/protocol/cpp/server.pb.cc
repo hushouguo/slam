@@ -26,16 +26,16 @@ namespace protobuf_server_2eproto {
 extern PROTOBUF_INTERNAL_EXPORT_protobuf_server_2eproto ::google::protobuf::internal::SCCInfo<0> scc_info_StorageContext;
 }  // namespace protobuf_server_2eproto
 namespace protocol {
-class ServerRegisteRequestDefaultTypeInternal {
+class ServerRegisterRequestDefaultTypeInternal {
  public:
-  ::google::protobuf::internal::ExplicitlyConstructed<ServerRegisteRequest>
+  ::google::protobuf::internal::ExplicitlyConstructed<ServerRegisterRequest>
       _instance;
-} _ServerRegisteRequest_default_instance_;
-class ServerRegisteResponseDefaultTypeInternal {
+} _ServerRegisterRequest_default_instance_;
+class ServerRegisterResponseDefaultTypeInternal {
  public:
-  ::google::protobuf::internal::ExplicitlyConstructed<ServerRegisteResponse>
+  ::google::protobuf::internal::ExplicitlyConstructed<ServerRegisterResponse>
       _instance;
-} _ServerRegisteResponse_default_instance_;
+} _ServerRegisterResponse_default_instance_;
 class ServerRetrieveRequestDefaultTypeInternal {
  public:
   ::google::protobuf::internal::ExplicitlyConstructed<ServerRetrieveRequest>
@@ -73,33 +73,33 @@ class StorageUnserializeResponseDefaultTypeInternal {
 } _StorageUnserializeResponse_default_instance_;
 }  // namespace protocol
 namespace protobuf_server_2eproto {
-static void InitDefaultsServerRegisteRequest() {
+static void InitDefaultsServerRegisterRequest() {
   GOOGLE_PROTOBUF_VERIFY_VERSION;
 
   {
-    void* ptr = &::protocol::_ServerRegisteRequest_default_instance_;
-    new (ptr) ::protocol::ServerRegisteRequest();
+    void* ptr = &::protocol::_ServerRegisterRequest_default_instance_;
+    new (ptr) ::protocol::ServerRegisterRequest();
     ::google::protobuf::internal::OnShutdownDestroyMessage(ptr);
   }
-  ::protocol::ServerRegisteRequest::InitAsDefaultInstance();
+  ::protocol::ServerRegisterRequest::InitAsDefaultInstance();
 }
 
-::google::protobuf::internal::SCCInfo<0> scc_info_ServerRegisteRequest =
-    {{ATOMIC_VAR_INIT(::google::protobuf::internal::SCCInfoBase::kUninitialized), 0, InitDefaultsServerRegisteRequest}, {}};
+::google::protobuf::internal::SCCInfo<0> scc_info_ServerRegisterRequest =
+    {{ATOMIC_VAR_INIT(::google::protobuf::internal::SCCInfoBase::kUninitialized), 0, InitDefaultsServerRegisterRequest}, {}};
 
-static void InitDefaultsServerRegisteResponse() {
+static void InitDefaultsServerRegisterResponse() {
   GOOGLE_PROTOBUF_VERIFY_VERSION;
 
   {
-    void* ptr = &::protocol::_ServerRegisteResponse_default_instance_;
-    new (ptr) ::protocol::ServerRegisteResponse();
+    void* ptr = &::protocol::_ServerRegisterResponse_default_instance_;
+    new (ptr) ::protocol::ServerRegisterResponse();
     ::google::protobuf::internal::OnShutdownDestroyMessage(ptr);
   }
-  ::protocol::ServerRegisteResponse::InitAsDefaultInstance();
+  ::protocol::ServerRegisterResponse::InitAsDefaultInstance();
 }
 
-::google::protobuf::internal::SCCInfo<0> scc_info_ServerRegisteResponse =
-    {{ATOMIC_VAR_INIT(::google::protobuf::internal::SCCInfoBase::kUninitialized), 0, InitDefaultsServerRegisteResponse}, {}};
+::google::protobuf::internal::SCCInfo<0> scc_info_ServerRegisterResponse =
+    {{ATOMIC_VAR_INIT(::google::protobuf::internal::SCCInfoBase::kUninitialized), 0, InitDefaultsServerRegisterResponse}, {}};
 
 static void InitDefaultsServerRetrieveRequest() {
   GOOGLE_PROTOBUF_VERIFY_VERSION;
@@ -206,8 +206,8 @@ static void InitDefaultsStorageUnserializeResponse() {
       &protobuf_server_2eproto::scc_info_StorageContext.base,}};
 
 void InitDefaults() {
-  ::google::protobuf::internal::InitSCC(&scc_info_ServerRegisteRequest.base);
-  ::google::protobuf::internal::InitSCC(&scc_info_ServerRegisteResponse.base);
+  ::google::protobuf::internal::InitSCC(&scc_info_ServerRegisterRequest.base);
+  ::google::protobuf::internal::InitSCC(&scc_info_ServerRegisterResponse.base);
   ::google::protobuf::internal::InitSCC(&scc_info_ServerRetrieveRequest.base);
   ::google::protobuf::internal::InitSCC(&scc_info_ServerRetrieveResponse.base);
   ::google::protobuf::internal::InitSCC(&scc_info_StorageContext.base);
@@ -222,20 +222,20 @@ const ::google::protobuf::EnumDescriptor* file_level_enum_descriptors[2];
 
 const ::google::protobuf::uint32 TableStruct::offsets[] GOOGLE_PROTOBUF_ATTRIBUTE_SECTION_VARIABLE(protodesc_cold) = {
   ~0u,  // no _has_bits_
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::protocol::ServerRegisteRequest, _internal_metadata_),
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::protocol::ServerRegisterRequest, _internal_metadata_),
   ~0u,  // no _extensions_
   ~0u,  // no _oneof_case_
   ~0u,  // no _weak_field_map_
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::protocol::ServerRegisteRequest, svrtype_),
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::protocol::ServerRegisteRequest, port_),
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::protocol::ServerRegisteRequest, shardid_),
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::protocol::ServerRegisterRequest, svrtype_),
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::protocol::ServerRegisterRequest, port_),
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::protocol::ServerRegisterRequest, shardid_),
   ~0u,  // no _has_bits_
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::protocol::ServerRegisteResponse, _internal_metadata_),
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::protocol::ServerRegisterResponse, _internal_metadata_),
   ~0u,  // no _extensions_
   ~0u,  // no _oneof_case_
   ~0u,  // no _weak_field_map_
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::protocol::ServerRegisteResponse, rc_),
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::protocol::ServerRegisteResponse, svrtype_),
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::protocol::ServerRegisterResponse, rc_),
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::protocol::ServerRegisterResponse, svrtype_),
   ~0u,  // no _has_bits_
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::protocol::ServerRetrieveRequest, _internal_metadata_),
   ~0u,  // no _extensions_
@@ -299,8 +299,8 @@ const ::google::protobuf::uint32 TableStruct::offsets[] GOOGLE_PROTOBUF_ATTRIBUT
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::protocol::StorageUnserializeResponse, rc_),
 };
 static const ::google::protobuf::internal::MigrationSchema schemas[] GOOGLE_PROTOBUF_ATTRIBUTE_SECTION_VARIABLE(protodesc_cold) = {
-  { 0, -1, sizeof(::protocol::ServerRegisteRequest)},
-  { 8, -1, sizeof(::protocol::ServerRegisteResponse)},
+  { 0, -1, sizeof(::protocol::ServerRegisterRequest)},
+  { 8, -1, sizeof(::protocol::ServerRegisterResponse)},
   { 15, -1, sizeof(::protocol::ServerRetrieveRequest)},
   { 21, -1, sizeof(::protocol::ServerRetrieveResponse)},
   { 28, -1, sizeof(::protocol::StorageContext)},
@@ -311,8 +311,8 @@ static const ::google::protobuf::internal::MigrationSchema schemas[] GOOGLE_PROT
 };
 
 static ::google::protobuf::Message const * const file_default_instances[] = {
-  reinterpret_cast<const ::google::protobuf::Message*>(&::protocol::_ServerRegisteRequest_default_instance_),
-  reinterpret_cast<const ::google::protobuf::Message*>(&::protocol::_ServerRegisteResponse_default_instance_),
+  reinterpret_cast<const ::google::protobuf::Message*>(&::protocol::_ServerRegisterRequest_default_instance_),
+  reinterpret_cast<const ::google::protobuf::Message*>(&::protocol::_ServerRegisterResponse_default_instance_),
   reinterpret_cast<const ::google::protobuf::Message*>(&::protocol::_ServerRetrieveRequest_default_instance_),
   reinterpret_cast<const ::google::protobuf::Message*>(&::protocol::_ServerRetrieveResponse_default_instance_),
   reinterpret_cast<const ::google::protobuf::Message*>(&::protocol::_StorageContext_default_instance_),
@@ -343,47 +343,47 @@ void protobuf_RegisterTypes(const ::std::string&) {
 void AddDescriptorsImpl() {
   InitDefaults();
   static const char descriptor[] GOOGLE_PROTOBUF_ATTRIBUTE_SECTION_VARIABLE(protodesc_cold) = {
-      "\n\014server.proto\022\010protocol\032\014entity.proto\"]"
-      "\n\024ServerRegisteRequest\022&\n\007svrtype\030\001 \001(\0162"
-      "\025.protocol.SERVER_TYPE\022\014\n\004port\030\002 \001(\005\022\017\n\007"
-      "shardid\030\003 \001(\005\"K\n\025ServerRegisteResponse\022\n"
-      "\n\002rc\030\001 \001(\010\022&\n\007svrtype\030\002 \001(\0162\025.protocol.S"
-      "ERVER_TYPE\"\?\n\025ServerRetrieveRequest\022&\n\007s"
-      "vrtype\030\001 \001(\0162\025.protocol.SERVER_TYPE\"Q\n\026S"
-      "erverRetrieveResponse\022&\n\007svrtype\030\001 \001(\0162\025"
-      ".protocol.SERVER_TYPE\022\017\n\007servers\030\002 \003(\004\"["
-      "\n\016StorageContext\022\016\n\006client\030\001 \001(\r\022\025\n\rgate"
-      "wayserver\030\002 \001(\r\022\023\n\013sceneserver\030\003 \001(\r\022\r\n\005"
-      "flags\030\004 \001(\r\"\204\001\n\027StorageSerializeRequest\022"
-      "\r\n\005shard\030\001 \001(\r\022\r\n\005table\030\002 \001(\t\022 \n\006entity\030"
-      "\003 \001(\0132\020.protocol.Entity\022)\n\007context\030\004 \001(\013"
-      "2\030.protocol.StorageContext\"\201\001\n\030StorageSe"
-      "rializeResponse\022\r\n\005shard\030\001 \001(\r\022\r\n\005table\030"
-      "\002 \001(\t\022\020\n\010entityid\030\003 \001(\004\022)\n\007context\030\004 \001(\013"
-      "2\030.protocol.StorageContext\022\n\n\002rc\030\005 \001(\010\"v"
-      "\n\031StorageUnserializeRequest\022\r\n\005shard\030\001 \001"
-      "(\r\022\r\n\005table\030\002 \001(\t\022\020\n\010entityid\030\003 \001(\004\022)\n\007c"
-      "ontext\030\004 \001(\0132\030.protocol.StorageContext\"\245"
-      "\001\n\032StorageUnserializeResponse\022\r\n\005shard\030\001"
-      " \001(\r\022\r\n\005table\030\002 \001(\t\022\020\n\010entityid\030\003 \001(\004\022 \n"
-      "\006entity\030\004 \001(\0132\020.protocol.Entity\022)\n\007conte"
-      "xt\030\005 \001(\0132\030.protocol.StorageContext\022\n\n\002rc"
-      "\030\006 \001(\010*\263\002\n\006SMSGID\022\017\n\013SMSGID_BASE\020\000\022\037\n\031SM"
-      "SGID_SERVER_REGISTE_REQ\020\340\324\003\022\037\n\031SMSGID_SE"
-      "RVER_REGISTE_REP\020\341\324\003\022 \n\032SMSGID_SERVER_RE"
-      "TRIEVE_REQ\020\342\324\003\022 \n\032SMSGID_SERVER_RETRIEVE"
-      "_REP\020\343\324\003\022\"\n\034SMSGID_STORAGE_SERIALIZE_REQ"
-      "\020\352\324\003\022\"\n\034SMSGID_STORAGE_SERIALIZE_REP\020\353\324\003"
-      "\022$\n\036SMSGID_STORAGE_UNSERIALIZE_REQ\020\354\324\003\022$"
-      "\n\036SMSGID_STORAGE_UNSERIALIZE_REP\020\355\324\003*\263\001\n"
-      "\013SERVER_TYPE\022\024\n\020SERVER_TYPE_NONE\020\000\022\027\n\023SE"
-      "RVER_TYPE_GATEWAY\020\001\022\025\n\021SERVER_TYPE_SCENE"
-      "\020\002\022\027\n\023SERVER_TYPE_CENTRAL\020\003\022\027\n\023SERVER_TY"
-      "PE_STORAGE\020\004\022\025\n\021SERVER_TYPE_ROBOT\020\005\022\025\n\021S"
-      "ERVER_TYPE_ORDER\020\006b\006proto3"
+      "\n\014server.proto\022\010protocol\032\014entity.proto\"^"
+      "\n\025ServerRegisterRequest\022&\n\007svrtype\030\001 \001(\016"
+      "2\025.protocol.SERVER_TYPE\022\014\n\004port\030\002 \001(\005\022\017\n"
+      "\007shardid\030\003 \001(\005\"L\n\026ServerRegisterResponse"
+      "\022\n\n\002rc\030\001 \001(\010\022&\n\007svrtype\030\002 \001(\0162\025.protocol"
+      ".SERVER_TYPE\"\?\n\025ServerRetrieveRequest\022&\n"
+      "\007svrtype\030\001 \001(\0162\025.protocol.SERVER_TYPE\"Q\n"
+      "\026ServerRetrieveResponse\022&\n\007svrtype\030\001 \001(\016"
+      "2\025.protocol.SERVER_TYPE\022\017\n\007servers\030\002 \003(\004"
+      "\"[\n\016StorageContext\022\016\n\006client\030\001 \001(\r\022\025\n\rga"
+      "tewayserver\030\002 \001(\r\022\023\n\013sceneserver\030\003 \001(\r\022\r"
+      "\n\005flags\030\004 \001(\r\"\204\001\n\027StorageSerializeReques"
+      "t\022\r\n\005shard\030\001 \001(\r\022\r\n\005table\030\002 \001(\t\022 \n\006entit"
+      "y\030\003 \001(\0132\020.protocol.Entity\022)\n\007context\030\004 \001"
+      "(\0132\030.protocol.StorageContext\"\201\001\n\030Storage"
+      "SerializeResponse\022\r\n\005shard\030\001 \001(\r\022\r\n\005tabl"
+      "e\030\002 \001(\t\022\020\n\010entityid\030\003 \001(\004\022)\n\007context\030\004 \001"
+      "(\0132\030.protocol.StorageContext\022\n\n\002rc\030\005 \001(\010"
+      "\"v\n\031StorageUnserializeRequest\022\r\n\005shard\030\001"
+      " \001(\r\022\r\n\005table\030\002 \001(\t\022\020\n\010entityid\030\003 \001(\004\022)\n"
+      "\007context\030\004 \001(\0132\030.protocol.StorageContext"
+      "\"\245\001\n\032StorageUnserializeResponse\022\r\n\005shard"
+      "\030\001 \001(\r\022\r\n\005table\030\002 \001(\t\022\020\n\010entityid\030\003 \001(\004\022"
+      " \n\006entity\030\004 \001(\0132\020.protocol.Entity\022)\n\007con"
+      "text\030\005 \001(\0132\030.protocol.StorageContext\022\n\n\002"
+      "rc\030\006 \001(\010*\265\002\n\006SMSGID\022\017\n\013SMSGID_BASE\020\000\022 \n\032"
+      "SMSGID_SERVER_REGISTER_REQ\020\340\324\003\022 \n\032SMSGID"
+      "_SERVER_REGISTER_REP\020\341\324\003\022 \n\032SMSGID_SERVE"
+      "R_RETRIEVE_REQ\020\342\324\003\022 \n\032SMSGID_SERVER_RETR"
+      "IEVE_REP\020\343\324\003\022\"\n\034SMSGID_STORAGE_SERIALIZE"
+      "_REQ\020\352\324\003\022\"\n\034SMSGID_STORAGE_SERIALIZE_REP"
+      "\020\353\324\003\022$\n\036SMSGID_STORAGE_UNSERIALIZE_REQ\020\354"
+      "\324\003\022$\n\036SMSGID_STORAGE_UNSERIALIZE_REP\020\355\324\003"
+      "*\263\001\n\013SERVER_TYPE\022\024\n\020SERVER_TYPE_NONE\020\000\022\027"
+      "\n\023SERVER_TYPE_GATEWAY\020\001\022\025\n\021SERVER_TYPE_S"
+      "CENE\020\002\022\027\n\023SERVER_TYPE_CENTRAL\020\003\022\027\n\023SERVE"
+      "R_TYPE_STORAGE\020\004\022\025\n\021SERVER_TYPE_ROBOT\020\005\022"
+      "\025\n\021SERVER_TYPE_ORDER\020\006b\006proto3"
   };
   ::google::protobuf::DescriptorPool::InternalAddGeneratedFile(
-      descriptor, 1506);
+      descriptor, 1510);
   ::google::protobuf::MessageFactory::InternalRegisterGeneratedFile(
     "server.proto", &protobuf_RegisterTypes);
   ::protobuf_entity_2eproto::AddDescriptors();
@@ -444,61 +444,61 @@ bool SERVER_TYPE_IsValid(int value) {
 
 // ===================================================================
 
-void ServerRegisteRequest::InitAsDefaultInstance() {
+void ServerRegisterRequest::InitAsDefaultInstance() {
 }
 #if !defined(_MSC_VER) || _MSC_VER >= 1900
-const int ServerRegisteRequest::kSvrtypeFieldNumber;
-const int ServerRegisteRequest::kPortFieldNumber;
-const int ServerRegisteRequest::kShardidFieldNumber;
+const int ServerRegisterRequest::kSvrtypeFieldNumber;
+const int ServerRegisterRequest::kPortFieldNumber;
+const int ServerRegisterRequest::kShardidFieldNumber;
 #endif  // !defined(_MSC_VER) || _MSC_VER >= 1900
 
-ServerRegisteRequest::ServerRegisteRequest()
+ServerRegisterRequest::ServerRegisterRequest()
   : ::google::protobuf::Message(), _internal_metadata_(NULL) {
   ::google::protobuf::internal::InitSCC(
-      &protobuf_server_2eproto::scc_info_ServerRegisteRequest.base);
+      &protobuf_server_2eproto::scc_info_ServerRegisterRequest.base);
   SharedCtor();
-  // @@protoc_insertion_point(constructor:protocol.ServerRegisteRequest)
+  // @@protoc_insertion_point(constructor:protocol.ServerRegisterRequest)
 }
-ServerRegisteRequest::ServerRegisteRequest(const ServerRegisteRequest& from)
+ServerRegisterRequest::ServerRegisterRequest(const ServerRegisterRequest& from)
   : ::google::protobuf::Message(),
       _internal_metadata_(NULL) {
   _internal_metadata_.MergeFrom(from._internal_metadata_);
   ::memcpy(&svrtype_, &from.svrtype_,
     static_cast<size_t>(reinterpret_cast<char*>(&shardid_) -
     reinterpret_cast<char*>(&svrtype_)) + sizeof(shardid_));
-  // @@protoc_insertion_point(copy_constructor:protocol.ServerRegisteRequest)
+  // @@protoc_insertion_point(copy_constructor:protocol.ServerRegisterRequest)
 }
 
-void ServerRegisteRequest::SharedCtor() {
+void ServerRegisterRequest::SharedCtor() {
   ::memset(&svrtype_, 0, static_cast<size_t>(
       reinterpret_cast<char*>(&shardid_) -
       reinterpret_cast<char*>(&svrtype_)) + sizeof(shardid_));
 }
 
-ServerRegisteRequest::~ServerRegisteRequest() {
-  // @@protoc_insertion_point(destructor:protocol.ServerRegisteRequest)
+ServerRegisterRequest::~ServerRegisterRequest() {
+  // @@protoc_insertion_point(destructor:protocol.ServerRegisterRequest)
   SharedDtor();
 }
 
-void ServerRegisteRequest::SharedDtor() {
+void ServerRegisterRequest::SharedDtor() {
 }
 
-void ServerRegisteRequest::SetCachedSize(int size) const {
+void ServerRegisterRequest::SetCachedSize(int size) const {
   _cached_size_.Set(size);
 }
-const ::google::protobuf::Descriptor* ServerRegisteRequest::descriptor() {
+const ::google::protobuf::Descriptor* ServerRegisterRequest::descriptor() {
   ::protobuf_server_2eproto::protobuf_AssignDescriptorsOnce();
   return ::protobuf_server_2eproto::file_level_metadata[kIndexInFileMessages].descriptor;
 }
 
-const ServerRegisteRequest& ServerRegisteRequest::default_instance() {
-  ::google::protobuf::internal::InitSCC(&protobuf_server_2eproto::scc_info_ServerRegisteRequest.base);
+const ServerRegisterRequest& ServerRegisterRequest::default_instance() {
+  ::google::protobuf::internal::InitSCC(&protobuf_server_2eproto::scc_info_ServerRegisterRequest.base);
   return *internal_default_instance();
 }
 
 
-void ServerRegisteRequest::Clear() {
-// @@protoc_insertion_point(message_clear_start:protocol.ServerRegisteRequest)
+void ServerRegisterRequest::Clear() {
+// @@protoc_insertion_point(message_clear_start:protocol.ServerRegisterRequest)
   ::google::protobuf::uint32 cached_has_bits = 0;
   // Prevent compiler warnings about cached_has_bits being unused
   (void) cached_has_bits;
@@ -509,11 +509,11 @@ void ServerRegisteRequest::Clear() {
   _internal_metadata_.Clear();
 }
 
-bool ServerRegisteRequest::MergePartialFromCodedStream(
+bool ServerRegisterRequest::MergePartialFromCodedStream(
     ::google::protobuf::io::CodedInputStream* input) {
 #define DO_(EXPRESSION) if (!GOOGLE_PREDICT_TRUE(EXPRESSION)) goto failure
   ::google::protobuf::uint32 tag;
-  // @@protoc_insertion_point(parse_start:protocol.ServerRegisteRequest)
+  // @@protoc_insertion_point(parse_start:protocol.ServerRegisterRequest)
   for (;;) {
     ::std::pair<::google::protobuf::uint32, bool> p = input->ReadTagWithCutoffNoLastTag(127u);
     tag = p.first;
@@ -574,17 +574,17 @@ bool ServerRegisteRequest::MergePartialFromCodedStream(
     }
   }
 success:
-  // @@protoc_insertion_point(parse_success:protocol.ServerRegisteRequest)
+  // @@protoc_insertion_point(parse_success:protocol.ServerRegisterRequest)
   return true;
 failure:
-  // @@protoc_insertion_point(parse_failure:protocol.ServerRegisteRequest)
+  // @@protoc_insertion_point(parse_failure:protocol.ServerRegisterRequest)
   return false;
 #undef DO_
 }
 
-void ServerRegisteRequest::SerializeWithCachedSizes(
+void ServerRegisterRequest::SerializeWithCachedSizes(
     ::google::protobuf::io::CodedOutputStream* output) const {
-  // @@protoc_insertion_point(serialize_start:protocol.ServerRegisteRequest)
+  // @@protoc_insertion_point(serialize_start:protocol.ServerRegisterRequest)
   ::google::protobuf::uint32 cached_has_bits = 0;
   (void) cached_has_bits;
 
@@ -608,13 +608,13 @@ void ServerRegisteRequest::SerializeWithCachedSizes(
     ::google::protobuf::internal::WireFormat::SerializeUnknownFields(
         (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()), output);
   }
-  // @@protoc_insertion_point(serialize_end:protocol.ServerRegisteRequest)
+  // @@protoc_insertion_point(serialize_end:protocol.ServerRegisterRequest)
 }
 
-::google::protobuf::uint8* ServerRegisteRequest::InternalSerializeWithCachedSizesToArray(
+::google::protobuf::uint8* ServerRegisterRequest::InternalSerializeWithCachedSizesToArray(
     bool deterministic, ::google::protobuf::uint8* target) const {
   (void)deterministic; // Unused
-  // @@protoc_insertion_point(serialize_to_array_start:protocol.ServerRegisteRequest)
+  // @@protoc_insertion_point(serialize_to_array_start:protocol.ServerRegisterRequest)
   ::google::protobuf::uint32 cached_has_bits = 0;
   (void) cached_has_bits;
 
@@ -638,12 +638,12 @@ void ServerRegisteRequest::SerializeWithCachedSizes(
     target = ::google::protobuf::internal::WireFormat::SerializeUnknownFieldsToArray(
         (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()), target);
   }
-  // @@protoc_insertion_point(serialize_to_array_end:protocol.ServerRegisteRequest)
+  // @@protoc_insertion_point(serialize_to_array_end:protocol.ServerRegisterRequest)
   return target;
 }
 
-size_t ServerRegisteRequest::ByteSizeLong() const {
-// @@protoc_insertion_point(message_byte_size_start:protocol.ServerRegisteRequest)
+size_t ServerRegisterRequest::ByteSizeLong() const {
+// @@protoc_insertion_point(message_byte_size_start:protocol.ServerRegisterRequest)
   size_t total_size = 0;
 
   if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
@@ -676,23 +676,23 @@ size_t ServerRegisteRequest::ByteSizeLong() const {
   return total_size;
 }
 
-void ServerRegisteRequest::MergeFrom(const ::google::protobuf::Message& from) {
-// @@protoc_insertion_point(generalized_merge_from_start:protocol.ServerRegisteRequest)
+void ServerRegisterRequest::MergeFrom(const ::google::protobuf::Message& from) {
+// @@protoc_insertion_point(generalized_merge_from_start:protocol.ServerRegisterRequest)
   GOOGLE_DCHECK_NE(&from, this);
-  const ServerRegisteRequest* source =
-      ::google::protobuf::internal::DynamicCastToGenerated<const ServerRegisteRequest>(
+  const ServerRegisterRequest* source =
+      ::google::protobuf::internal::DynamicCastToGenerated<const ServerRegisterRequest>(
           &from);
   if (source == NULL) {
-  // @@protoc_insertion_point(generalized_merge_from_cast_fail:protocol.ServerRegisteRequest)
+  // @@protoc_insertion_point(generalized_merge_from_cast_fail:protocol.ServerRegisterRequest)
     ::google::protobuf::internal::ReflectionOps::Merge(from, this);
   } else {
-  // @@protoc_insertion_point(generalized_merge_from_cast_success:protocol.ServerRegisteRequest)
+  // @@protoc_insertion_point(generalized_merge_from_cast_success:protocol.ServerRegisterRequest)
     MergeFrom(*source);
   }
 }
 
-void ServerRegisteRequest::MergeFrom(const ServerRegisteRequest& from) {
-// @@protoc_insertion_point(class_specific_merge_from_start:protocol.ServerRegisteRequest)
+void ServerRegisterRequest::MergeFrom(const ServerRegisterRequest& from) {
+// @@protoc_insertion_point(class_specific_merge_from_start:protocol.ServerRegisterRequest)
   GOOGLE_DCHECK_NE(&from, this);
   _internal_metadata_.MergeFrom(from._internal_metadata_);
   ::google::protobuf::uint32 cached_has_bits = 0;
@@ -709,29 +709,29 @@ void ServerRegisteRequest::MergeFrom(const ServerRegisteRequest& from) {
   }
 }
 
-void ServerRegisteRequest::CopyFrom(const ::google::protobuf::Message& from) {
-// @@protoc_insertion_point(generalized_copy_from_start:protocol.ServerRegisteRequest)
+void ServerRegisterRequest::CopyFrom(const ::google::protobuf::Message& from) {
+// @@protoc_insertion_point(generalized_copy_from_start:protocol.ServerRegisterRequest)
   if (&from == this) return;
   Clear();
   MergeFrom(from);
 }
 
-void ServerRegisteRequest::CopyFrom(const ServerRegisteRequest& from) {
-// @@protoc_insertion_point(class_specific_copy_from_start:protocol.ServerRegisteRequest)
+void ServerRegisterRequest::CopyFrom(const ServerRegisterRequest& from) {
+// @@protoc_insertion_point(class_specific_copy_from_start:protocol.ServerRegisterRequest)
   if (&from == this) return;
   Clear();
   MergeFrom(from);
 }
 
-bool ServerRegisteRequest::IsInitialized() const {
+bool ServerRegisterRequest::IsInitialized() const {
   return true;
 }
 
-void ServerRegisteRequest::Swap(ServerRegisteRequest* other) {
+void ServerRegisterRequest::Swap(ServerRegisterRequest* other) {
   if (other == this) return;
   InternalSwap(other);
 }
-void ServerRegisteRequest::InternalSwap(ServerRegisteRequest* other) {
+void ServerRegisterRequest::InternalSwap(ServerRegisterRequest* other) {
   using std::swap;
   swap(svrtype_, other->svrtype_);
   swap(port_, other->port_);
@@ -739,7 +739,7 @@ void ServerRegisteRequest::InternalSwap(ServerRegisteRequest* other) {
   _internal_metadata_.Swap(&other->_internal_metadata_);
 }
 
-::google::protobuf::Metadata ServerRegisteRequest::GetMetadata() const {
+::google::protobuf::Metadata ServerRegisterRequest::GetMetadata() const {
   protobuf_server_2eproto::protobuf_AssignDescriptorsOnce();
   return ::protobuf_server_2eproto::file_level_metadata[kIndexInFileMessages];
 }
@@ -747,60 +747,60 @@ void ServerRegisteRequest::InternalSwap(ServerRegisteRequest* other) {
 
 // ===================================================================
 
-void ServerRegisteResponse::InitAsDefaultInstance() {
+void ServerRegisterResponse::InitAsDefaultInstance() {
 }
 #if !defined(_MSC_VER) || _MSC_VER >= 1900
-const int ServerRegisteResponse::kRcFieldNumber;
-const int ServerRegisteResponse::kSvrtypeFieldNumber;
+const int ServerRegisterResponse::kRcFieldNumber;
+const int ServerRegisterResponse::kSvrtypeFieldNumber;
 #endif  // !defined(_MSC_VER) || _MSC_VER >= 1900
 
-ServerRegisteResponse::ServerRegisteResponse()
+ServerRegisterResponse::ServerRegisterResponse()
   : ::google::protobuf::Message(), _internal_metadata_(NULL) {
   ::google::protobuf::internal::InitSCC(
-      &protobuf_server_2eproto::scc_info_ServerRegisteResponse.base);
+      &protobuf_server_2eproto::scc_info_ServerRegisterResponse.base);
   SharedCtor();
-  // @@protoc_insertion_point(constructor:protocol.ServerRegisteResponse)
+  // @@protoc_insertion_point(constructor:protocol.ServerRegisterResponse)
 }
-ServerRegisteResponse::ServerRegisteResponse(const ServerRegisteResponse& from)
+ServerRegisterResponse::ServerRegisterResponse(const ServerRegisterResponse& from)
   : ::google::protobuf::Message(),
       _internal_metadata_(NULL) {
   _internal_metadata_.MergeFrom(from._internal_metadata_);
   ::memcpy(&rc_, &from.rc_,
     static_cast<size_t>(reinterpret_cast<char*>(&svrtype_) -
     reinterpret_cast<char*>(&rc_)) + sizeof(svrtype_));
-  // @@protoc_insertion_point(copy_constructor:protocol.ServerRegisteResponse)
+  // @@protoc_insertion_point(copy_constructor:protocol.ServerRegisterResponse)
 }
 
-void ServerRegisteResponse::SharedCtor() {
+void ServerRegisterResponse::SharedCtor() {
   ::memset(&rc_, 0, static_cast<size_t>(
       reinterpret_cast<char*>(&svrtype_) -
       reinterpret_cast<char*>(&rc_)) + sizeof(svrtype_));
 }
 
-ServerRegisteResponse::~ServerRegisteResponse() {
-  // @@protoc_insertion_point(destructor:protocol.ServerRegisteResponse)
+ServerRegisterResponse::~ServerRegisterResponse() {
+  // @@protoc_insertion_point(destructor:protocol.ServerRegisterResponse)
   SharedDtor();
 }
 
-void ServerRegisteResponse::SharedDtor() {
+void ServerRegisterResponse::SharedDtor() {
 }
 
-void ServerRegisteResponse::SetCachedSize(int size) const {
+void ServerRegisterResponse::SetCachedSize(int size) const {
   _cached_size_.Set(size);
 }
-const ::google::protobuf::Descriptor* ServerRegisteResponse::descriptor() {
+const ::google::protobuf::Descriptor* ServerRegisterResponse::descriptor() {
   ::protobuf_server_2eproto::protobuf_AssignDescriptorsOnce();
   return ::protobuf_server_2eproto::file_level_metadata[kIndexInFileMessages].descriptor;
 }
 
-const ServerRegisteResponse& ServerRegisteResponse::default_instance() {
-  ::google::protobuf::internal::InitSCC(&protobuf_server_2eproto::scc_info_ServerRegisteResponse.base);
+const ServerRegisterResponse& ServerRegisterResponse::default_instance() {
+  ::google::protobuf::internal::InitSCC(&protobuf_server_2eproto::scc_info_ServerRegisterResponse.base);
   return *internal_default_instance();
 }
 
 
-void ServerRegisteResponse::Clear() {
-// @@protoc_insertion_point(message_clear_start:protocol.ServerRegisteResponse)
+void ServerRegisterResponse::Clear() {
+// @@protoc_insertion_point(message_clear_start:protocol.ServerRegisterResponse)
   ::google::protobuf::uint32 cached_has_bits = 0;
   // Prevent compiler warnings about cached_has_bits being unused
   (void) cached_has_bits;
@@ -811,11 +811,11 @@ void ServerRegisteResponse::Clear() {
   _internal_metadata_.Clear();
 }
 
-bool ServerRegisteResponse::MergePartialFromCodedStream(
+bool ServerRegisterResponse::MergePartialFromCodedStream(
     ::google::protobuf::io::CodedInputStream* input) {
 #define DO_(EXPRESSION) if (!GOOGLE_PREDICT_TRUE(EXPRESSION)) goto failure
   ::google::protobuf::uint32 tag;
-  // @@protoc_insertion_point(parse_start:protocol.ServerRegisteResponse)
+  // @@protoc_insertion_point(parse_start:protocol.ServerRegisterResponse)
   for (;;) {
     ::std::pair<::google::protobuf::uint32, bool> p = input->ReadTagWithCutoffNoLastTag(127u);
     tag = p.first;
@@ -862,17 +862,17 @@ bool ServerRegisteResponse::MergePartialFromCodedStream(
     }
   }
 success:
-  // @@protoc_insertion_point(parse_success:protocol.ServerRegisteResponse)
+  // @@protoc_insertion_point(parse_success:protocol.ServerRegisterResponse)
   return true;
 failure:
-  // @@protoc_insertion_point(parse_failure:protocol.ServerRegisteResponse)
+  // @@protoc_insertion_point(parse_failure:protocol.ServerRegisterResponse)
   return false;
 #undef DO_
 }
 
-void ServerRegisteResponse::SerializeWithCachedSizes(
+void ServerRegisterResponse::SerializeWithCachedSizes(
     ::google::protobuf::io::CodedOutputStream* output) const {
-  // @@protoc_insertion_point(serialize_start:protocol.ServerRegisteResponse)
+  // @@protoc_insertion_point(serialize_start:protocol.ServerRegisterResponse)
   ::google::protobuf::uint32 cached_has_bits = 0;
   (void) cached_has_bits;
 
@@ -891,13 +891,13 @@ void ServerRegisteResponse::SerializeWithCachedSizes(
     ::google::protobuf::internal::WireFormat::SerializeUnknownFields(
         (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()), output);
   }
-  // @@protoc_insertion_point(serialize_end:protocol.ServerRegisteResponse)
+  // @@protoc_insertion_point(serialize_end:protocol.ServerRegisterResponse)
 }
 
-::google::protobuf::uint8* ServerRegisteResponse::InternalSerializeWithCachedSizesToArray(
+::google::protobuf::uint8* ServerRegisterResponse::InternalSerializeWithCachedSizesToArray(
     bool deterministic, ::google::protobuf::uint8* target) const {
   (void)deterministic; // Unused
-  // @@protoc_insertion_point(serialize_to_array_start:protocol.ServerRegisteResponse)
+  // @@protoc_insertion_point(serialize_to_array_start:protocol.ServerRegisterResponse)
   ::google::protobuf::uint32 cached_has_bits = 0;
   (void) cached_has_bits;
 
@@ -916,12 +916,12 @@ void ServerRegisteResponse::SerializeWithCachedSizes(
     target = ::google::protobuf::internal::WireFormat::SerializeUnknownFieldsToArray(
         (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()), target);
   }
-  // @@protoc_insertion_point(serialize_to_array_end:protocol.ServerRegisteResponse)
+  // @@protoc_insertion_point(serialize_to_array_end:protocol.ServerRegisterResponse)
   return target;
 }
 
-size_t ServerRegisteResponse::ByteSizeLong() const {
-// @@protoc_insertion_point(message_byte_size_start:protocol.ServerRegisteResponse)
+size_t ServerRegisterResponse::ByteSizeLong() const {
+// @@protoc_insertion_point(message_byte_size_start:protocol.ServerRegisterResponse)
   size_t total_size = 0;
 
   if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
@@ -945,23 +945,23 @@ size_t ServerRegisteResponse::ByteSizeLong() const {
   return total_size;
 }
 
-void ServerRegisteResponse::MergeFrom(const ::google::protobuf::Message& from) {
-// @@protoc_insertion_point(generalized_merge_from_start:protocol.ServerRegisteResponse)
+void ServerRegisterResponse::MergeFrom(const ::google::protobuf::Message& from) {
+// @@protoc_insertion_point(generalized_merge_from_start:protocol.ServerRegisterResponse)
   GOOGLE_DCHECK_NE(&from, this);
-  const ServerRegisteResponse* source =
-      ::google::protobuf::internal::DynamicCastToGenerated<const ServerRegisteResponse>(
+  const ServerRegisterResponse* source =
+      ::google::protobuf::internal::DynamicCastToGenerated<const ServerRegisterResponse>(
           &from);
   if (source == NULL) {
-  // @@protoc_insertion_point(generalized_merge_from_cast_fail:protocol.ServerRegisteResponse)
+  // @@protoc_insertion_point(generalized_merge_from_cast_fail:protocol.ServerRegisterResponse)
     ::google::protobuf::internal::ReflectionOps::Merge(from, this);
   } else {
-  // @@protoc_insertion_point(generalized_merge_from_cast_success:protocol.ServerRegisteResponse)
+  // @@protoc_insertion_point(generalized_merge_from_cast_success:protocol.ServerRegisterResponse)
     MergeFrom(*source);
   }
 }
 
-void ServerRegisteResponse::MergeFrom(const ServerRegisteResponse& from) {
-// @@protoc_insertion_point(class_specific_merge_from_start:protocol.ServerRegisteResponse)
+void ServerRegisterResponse::MergeFrom(const ServerRegisterResponse& from) {
+// @@protoc_insertion_point(class_specific_merge_from_start:protocol.ServerRegisterResponse)
   GOOGLE_DCHECK_NE(&from, this);
   _internal_metadata_.MergeFrom(from._internal_metadata_);
   ::google::protobuf::uint32 cached_has_bits = 0;
@@ -975,36 +975,36 @@ void ServerRegisteResponse::MergeFrom(const ServerRegisteResponse& from) {
   }
 }
 
-void ServerRegisteResponse::CopyFrom(const ::google::protobuf::Message& from) {
-// @@protoc_insertion_point(generalized_copy_from_start:protocol.ServerRegisteResponse)
+void ServerRegisterResponse::CopyFrom(const ::google::protobuf::Message& from) {
+// @@protoc_insertion_point(generalized_copy_from_start:protocol.ServerRegisterResponse)
   if (&from == this) return;
   Clear();
   MergeFrom(from);
 }
 
-void ServerRegisteResponse::CopyFrom(const ServerRegisteResponse& from) {
-// @@protoc_insertion_point(class_specific_copy_from_start:protocol.ServerRegisteResponse)
+void ServerRegisterResponse::CopyFrom(const ServerRegisterResponse& from) {
+// @@protoc_insertion_point(class_specific_copy_from_start:protocol.ServerRegisterResponse)
   if (&from == this) return;
   Clear();
   MergeFrom(from);
 }
 
-bool ServerRegisteResponse::IsInitialized() const {
+bool ServerRegisterResponse::IsInitialized() const {
   return true;
 }
 
-void ServerRegisteResponse::Swap(ServerRegisteResponse* other) {
+void ServerRegisterResponse::Swap(ServerRegisterResponse* other) {
   if (other == this) return;
   InternalSwap(other);
 }
-void ServerRegisteResponse::InternalSwap(ServerRegisteResponse* other) {
+void ServerRegisterResponse::InternalSwap(ServerRegisterResponse* other) {
   using std::swap;
   swap(rc_, other->rc_);
   swap(svrtype_, other->svrtype_);
   _internal_metadata_.Swap(&other->_internal_metadata_);
 }
 
-::google::protobuf::Metadata ServerRegisteResponse::GetMetadata() const {
+::google::protobuf::Metadata ServerRegisterResponse::GetMetadata() const {
   protobuf_server_2eproto::protobuf_AssignDescriptorsOnce();
   return ::protobuf_server_2eproto::file_level_metadata[kIndexInFileMessages];
 }
@@ -3491,11 +3491,11 @@ void StorageUnserializeResponse::InternalSwap(StorageUnserializeResponse* other)
 }  // namespace protocol
 namespace google {
 namespace protobuf {
-template<> GOOGLE_PROTOBUF_ATTRIBUTE_NOINLINE ::protocol::ServerRegisteRequest* Arena::CreateMaybeMessage< ::protocol::ServerRegisteRequest >(Arena* arena) {
-  return Arena::CreateInternal< ::protocol::ServerRegisteRequest >(arena);
+template<> GOOGLE_PROTOBUF_ATTRIBUTE_NOINLINE ::protocol::ServerRegisterRequest* Arena::CreateMaybeMessage< ::protocol::ServerRegisterRequest >(Arena* arena) {
+  return Arena::CreateInternal< ::protocol::ServerRegisterRequest >(arena);
 }
-template<> GOOGLE_PROTOBUF_ATTRIBUTE_NOINLINE ::protocol::ServerRegisteResponse* Arena::CreateMaybeMessage< ::protocol::ServerRegisteResponse >(Arena* arena) {
-  return Arena::CreateInternal< ::protocol::ServerRegisteResponse >(arena);
+template<> GOOGLE_PROTOBUF_ATTRIBUTE_NOINLINE ::protocol::ServerRegisterResponse* Arena::CreateMaybeMessage< ::protocol::ServerRegisterResponse >(Arena* arena) {
+  return Arena::CreateInternal< ::protocol::ServerRegisterResponse >(arena);
 }
 template<> GOOGLE_PROTOBUF_ATTRIBUTE_NOINLINE ::protocol::ServerRetrieveRequest* Arena::CreateMaybeMessage< ::protocol::ServerRetrieveRequest >(Arena* arena) {
   return Arena::CreateInternal< ::protocol::ServerRetrieveRequest >(arena);

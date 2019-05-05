@@ -204,7 +204,6 @@ using Byte	=	unsigned char;
 
 using namespace net;
 using namespace logger;
-using namespace protocol;
 
 #include "tools/Singleton.h"
 #include "tools/Callback.h"
@@ -230,5 +229,9 @@ using namespace protocol;
 #include "time/Time.h"
 #include "time/Timer.h"
 #include "message/CommonMessage.h"
+#include "entity.pb.h"
+#include "server.pb.h"
+
+using namespace protocol;
 
 #endif

@@ -6,8 +6,8 @@ import "entity.proto";
 
 enum SMSGID {
 	SMSGID_BASE						=	0;
-	SMSGID_SERVER_REGISTE_REQ		=	60000;
-	SMSGID_SERVER_REGISTE_REP		=	60001;
+	SMSGID_SERVER_REGISTER_REQ		=	60000;
+	SMSGID_SERVER_REGISTER_REP		=	60001;
 	SMSGID_SERVER_RETRIEVE_REQ		=	60002;
 	SMSGID_SERVER_RETRIEVE_REP		=	60003;
 	SMSGID_STORAGE_SERIALIZE_REQ	=	60010;
@@ -28,13 +28,13 @@ enum SERVER_TYPE {
 	SERVER_TYPE_ORDER				=	6;
 }
 
-message ServerRegisteRequest {
+message ServerRegisterRequest {
 	SERVER_TYPE svrtype				=	1;
 	int32 port						=	2;
 	int32 shardid					=	3;
 }
 
-message ServerRegisteResponse {
+message ServerRegisterResponse {
 	bool rc							=	1;
 	SERVER_TYPE svrtype				=	2;
 }

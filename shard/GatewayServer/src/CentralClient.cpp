@@ -5,8 +5,8 @@
 
 #include "common.h"
 #include "CentralClient.h"
-#include "entity.pb.h"
-#include "server.pb.h"
+#include "SceneClient.h"
+#include "SceneClientManager.h"
 
 DECLARE_MESSAGE();
 

@@ -6,9 +6,6 @@
 #include "common.h"
 #include "ClientTask.h"
 #include "ClientTaskManager.h"
-#include "entity.pb.h"
-#include "server.pb.h"
-
 
 DECLARE_MESSAGE();
 
