@@ -8,8 +8,9 @@
 
 
 BEGIN_NAMESPACE_SLAM {
-	SceneClient::SceneClient(Easynet* easynet, SOCKET socket) 
+	SceneClient::SceneClient(Easynet* easynet, SOCKET socket, u64 sceneServerid) 
 		: Entry<SOCKET>(socket) 
+		, _sceneServerid(sceneServerid)
 		, _easynet(easynet)
 	{
 	}

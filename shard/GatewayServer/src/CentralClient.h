@@ -26,6 +26,9 @@ BEGIN_NAMESPACE_SLAM {
 
 		private:
 			Easynet* _easynet = nullptr;
+
+		private:
+			void registerServer();
 	};
 }
 

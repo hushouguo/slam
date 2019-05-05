@@ -35,6 +35,13 @@ BEGIN_NAMESPACE_SLAM {
 		sConfig.syshalt(0);
 	}
 
+	void CentralClient::registerServer() {
+		ServerRegisterRequest request;
+		request.set_svrtype(SERVER_TYPE_GATEWAY);
+		request.set_port(sConfig.get("Service.port", 12306u));
+		this->sendMessage(0, SMSGID_SERVER_REGISTER_REQ, &request);
+	}
+
 	void CentralClient::run() {
 		CHECK_RETURN(this->_easynet && this->id != EASYNET_ILLEGAL_SOCKET, void(0), "centralClient not initiated");
 
@@ -49,6 +56,7 @@ BEGIN_NAMESPACE_SLAM {
             assert(socket == this->id);
             if (state) {
 				Debug << "CentralClient successful connect";
+				this->registerServer();
             }
             else {
             	Error << "lost connection with CentralServer";
@@ -122,6 +130,7 @@ ON_MSG(SMSGID_SERVER_RETRIEVE_REP, ServerRetrieveResponse)
 {
 	switch (msg->svrtype()) {
 		case SERVER_TYPE_SCENE:
+			Debug << "retrieve SceneServer: " << msg->servers_size();
 			for (int n = 0; n < msg->servers_size(); ++n) {
 				sSceneClientManager.init(msg->servers(n));
 			}

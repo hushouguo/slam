@@ -9,13 +9,15 @@
 BEGIN_NAMESPACE_SLAM {
 	class SceneClient : public Entry<SOCKET> {
 		public:
-			SceneClient(Easynet* easynet, SOCKET socket);
+			SceneClient(Easynet* easynet, SOCKET socket, u64 sceneServerid);
 			const char* getClassName() override { return "SceneClient"; }
+			inline u64 sceneServerid() { return this->_sceneServerid; }
 	
 		public:
 			bool sendMessage(u64 entityid, u32 msgid, const google::protobuf::Message* message);
 
 		private:
+			u64 _sceneServerid = 0;
 			Easynet* _easynet = nullptr;
 	};
 }

@@ -6,6 +6,9 @@
 #include "common.h"
 #include "SceneClient.h"
 #include "SceneClientManager.h"
+#include "GatewayPlayer.h"
+#include "GatewayPlayerManager.h"
+#include "CentralClient.h"
 
 DECLARE_MESSAGE();
 
@@ -21,23 +24,36 @@ BEGIN_NAMESPACE_SLAM {
 	}
 	
 	bool SceneClientManager::init() {	
-#if false	
-		NetData::ServerRetrieveRequest request;
-		request.set_stype(SERVER_TYPE_SCENE);
-		return sCentralClient.sendMessage(MSGID_SERVER_RETRIEVE_REQ, &request, 0);
-#endif	
-
-		return false;
+		ServerRetrieveRequest request;
+		request.set_svrtype(SERVER_TYPE_SCENE);
+		return sCentralClient.sendMessage(0, SMSGID_SERVER_RETRIEVE_REQ, &request);
 	}
 
 	bool SceneClientManager::init(u64 sceneServerid) {
-		//NOTE: check sceneServerid if exists
+		CHECK_RETURN(this->findSceneClient(sceneServerid) == nullptr, false, "duplicate register sceneServer: %ld", sceneServerid);
 		std::pair<std::string, int> pair = splitNetworkEndpoint(sceneServerid);
 		SOCKET socket = this->_easynet->createClient(pair.first.c_str(), pair.second, 0);
 		CHECK_RETURN(socket != EASYNET_ILLEGAL_SOCKET, false, "illegal address: (%s:%d)", pair.first.c_str(), pair.second);
-		SceneClient* sceneClient = new SceneClient(this->_easynet, socket);
-		Debug("connect to SceneServer: %s:%d", pair.first.c_str(), pair.second);		
+		SceneClient* sceneClient = new SceneClient(this->_easynet, socket, sceneServerid);
+		Debug("connect to SceneServer: %s:%d", pair.first.c_str(), pair.second);
 		return this->add(sceneClient);
+	}
+
+	SceneClient* SceneClientManager::findSceneClient(u64 sceneServerid) {
+		struct SceneClientCallback : public Callback<SceneClient> {
+			SceneClient* sceneClient = nullptr;
+			u64 sceneServerid = 0;
+			SceneClientCallback(u64 _sceneServerid) : sceneServerid(_sceneServerid) {}
+			bool invoke(SceneClient* entry) {
+				if (entry->sceneServerid() == this->sceneServerid) {
+					this->sceneClient = entry;
+					return false;
+				}
+				return true;
+			}
+		}eee(sceneServerid);
+		this->traverse(eee);
+		return eee.sceneClient;
 	}
 
 	void SceneClientManager::stop() {
@@ -67,12 +83,13 @@ BEGIN_NAMESPACE_SLAM {
 				break;
 			}
 			if (!state) {
+				Alarm << "lost SceneClient: " << socket;
 				SceneClient* client = this->find(socket);
 				if (client) {
+					sGatewayPlayerManager.lostSceneServer(client);					
 					this->remove(client);
 					SafeDelete(client);
 				}
-				Alarm << "lost SceneClient: " << socket;
 			}
 		}
 
@@ -85,10 +102,16 @@ BEGIN_NAMESPACE_SLAM {
 				break;
 			}
 			assert(socket != EASYNET_ILLEGAL_SOCKET);
-			
-            CommonMessage* rawmsg = CastCommonMessage(this->_easynet, netmsg);
-			if (!this->msgParser(socket, rawmsg)) {
+			SceneClient* client = this->find(socket);
+			if (!client) {
+				Error << "illegal socket: " << socket;
 				this->_easynet->closeSocket(socket);
+			}
+			else {
+	            CommonMessage* rawmsg = CastCommonMessage(this->_easynet, netmsg);
+				if (!this->msgParser(socket, rawmsg)) {
+					this->_easynet->closeSocket(socket);
+				}
 			}
 			this->_easynet->releaseMessage(netmsg);
 		}
@@ -111,7 +134,7 @@ BEGIN_NAMESPACE_SLAM {
 // 	 ON_MSG(Easynet* easynet, SOCKET socket, STRUCTURE* msg, CommonMessage* rawmsg)
 //
 
-#if false
+#if 0
 ON_MSG(MSGID_HEARTBEAT, Heartbeat) {
 	Heartbeat res;
 	//res.set_systime(sTime.milliseconds());

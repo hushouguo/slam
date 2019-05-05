@@ -6,6 +6,8 @@
 #include "common.h"
 #include "ClientTask.h"
 #include "ClientTaskManager.h"
+#include "GatewayPlayer.h"
+#include "GatewayPlayerManager.h"
 
 DECLARE_MESSAGE();
 
@@ -75,12 +77,13 @@ BEGIN_NAMESPACE_SLAM {
 				Debug << "new client task arrived: " << socket;
 			}
 			else {
+				Alarm << "lost client task: " << socket;
 				ClientTask* task = this->find(socket);
 				if (task) {
+					sGatewayPlayerManager.lostClient(task);					
 					this->remove(task);
 					SafeDelete(task);
 				}
-				Alarm << "lost client task: " << socket;
 			}
 		}
 
@@ -93,10 +96,16 @@ BEGIN_NAMESPACE_SLAM {
 				break;
 			}
 			assert(socket != EASYNET_ILLEGAL_SOCKET);
-			
-            CommonMessage* rawmsg = CastCommonMessage(easynet, netmsg);
-			if (!this->msgParser(easynet, socket, rawmsg)) {
+			ClientTask* task = this->find(socket);
+			if (!task) {
+				Error << "illegal socket: " << socket;
 				easynet->closeSocket(socket);
+			}
+			else {
+	            CommonMessage* rawmsg = CastCommonMessage(easynet, netmsg);
+				if (!this->msgParser(easynet, socket, rawmsg)) {
+					easynet->closeSocket(socket);
+				}
 			}
 			easynet->releaseMessage(netmsg);
 		}
@@ -120,14 +129,15 @@ BEGIN_NAMESPACE_SLAM {
 // 	 ON_MSG(Easynet* easynet, SOCKET socket, STRUCTURE* msg, CommonMessage* rawmsg)
 //
 
-#if false
 ON_MSG(MSGID_HEARTBEAT, Heartbeat) {
+#if 0
 	Heartbeat res;
 	//res.set_systime(sTime.milliseconds());
 	res.set_systime(msg->systime());
 	task->sendMessage(fd, MSGID_HEARTBEAT, &res, 0);
-	//log_trace("receive heartbeat: %ld, systime: %ld", msg->systime(), res.systime());
-}
 #endif	
+	sTime.now();
+	Debug("receive heartbeat: %ld, systime: %ld", msg->milliseconds(), sTime.milliseconds());
+}
 
 
