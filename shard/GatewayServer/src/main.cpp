@@ -177,19 +177,21 @@ int main(int argc, char* argv[]) {
 
 	dump_library_version();
 
+#if 0
 	CHECK_GOTO(sCentralClient.init(
 		sConfig.get("CentralServer.address", "127.0.0.1"), sConfig.get("CentralServer.port", 9000u)), 
 		exit_failure, "CentralClient init failure");
-		
+#endif
+
 	CHECK_GOTO(sClientTaskManager.init(
 		sConfig.get("Service.address", "0.0.0.0"), sConfig.get("Service.port", 12306u)), 
 		exit_failure, "ClientTaskManager init failure");
 	
-	CHECK_GOTO(sSceneClientManager.init(), exit_failure, "SceneClientManager init failure");
+//	CHECK_GOTO(sSceneClientManager.init(), exit_failure, "SceneClientManager init failure");
 
 	while (!sConfig.halt) {
 		sClientTaskManager.run();
-		sCentralClient.run();
+		//sCentralClient.run();
 		sSceneClientManager.run();
 		std::this_thread::yield();
 	}

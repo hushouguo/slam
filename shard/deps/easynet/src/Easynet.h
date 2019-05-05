@@ -24,8 +24,8 @@
 
 #define EASYNET_ILLEGAL_SOCKET				-1
 #define EASYNET_ENABLE_DEBUG				0	
-#define EASYNET_REUSE_ADDRESS				1
-#define EASYNET_REUSE_PORT					0
+#define EASYNET_REUSE_ADDRESS				0
+#define EASYNET_REUSE_PORT					1
 #define EASYNET_RETURN_ACTIVE_MESSAGE		0
 
 namespace net {	
