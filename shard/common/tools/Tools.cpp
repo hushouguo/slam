@@ -425,12 +425,12 @@ BEGIN_NAMESPACE_SLAM {
 		return u.value;
 	}
 
-	std::tuple<std::string, int> splitNetworkEndpoint(u64 value) {
+	std::pair<std::string, int> splitNetworkEndpoint(u64 value) {
 		NetworkEndpoint u;
 		u.value = value;		
 		struct in_addr inp;
 		inp.s_addr = u.address;
-		return std::make_tuple(inet_ntoa(inp), ntohs(u.port));
+		return std::make_pair(inet_ntoa(inp), ntohs(u.port));
 	}
 
 	//

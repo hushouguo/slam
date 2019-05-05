@@ -21,6 +21,8 @@ BEGIN_NAMESPACE_SLAM {
 			
 		private:
 			std::vector<Easynet*> _easynets;
+
+		private:
 			void run(Easynet* easynet);
 	};
 }

@@ -7,7 +7,11 @@
 #define __CENTRALCLIENT_H__
 
 BEGIN_NAMESPACE_SLAM {
-	class CentralClient {
+	class CentralClient : public Entry<SOCKET> {
+		public:
+			CentralClient() : Entry<SOCKET>(EASYNET_ILLEGAL_SOCKET) {
+			}
+			
 		public:
 			bool init(const char* address, int port);
 			void stop();
@@ -20,7 +24,6 @@ BEGIN_NAMESPACE_SLAM {
 			bool sendMessage(u64 entityid, u32 msgid, const google::protobuf::Message* message);
 
 		private:
-			SOCKET _fd_centralclient = EASYNET_ILLEGAL_SOCKET;
 			Easynet* _easynet = nullptr;
 	};
 }

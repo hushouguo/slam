@@ -3,27 +3,14 @@
  * \brief: Created by hushouguo at 15:10:52 Mar 25 2019
  */
 
-#include "tnode.h"
-#include "tools/Singleton.h"
-#include "tools/Entry.h"
-#include "tools/Tools.h"
-#include "tools/Spinlocker.h"
-#include "tools/LockfreeQueue.h"
-#include "tools/ThreadPool.h"
-#include "tools/Runnable.h"
-#include "tools/Registry.h"
-#include "config/Config.h"
-#include "message/ServiceMessage.h"
-#include "message/MessageParser.h"
-#include "lua/luaT.h"
-#include "time/Time.h"
-#include "time/Timer.h"
-#include "time/TimerManager.h"
-#include "lua/luaT_message_parser.h"
-#include "db/Easydb.h"
-#include "service/Service.h"
-#include "service/ServiceManager.h"
-#include "net/NetworkManager.h"
+#include "common/common.h"
+#include "ClientTask.h"
+#include "ClientTaskManager.h"
+#include "CentralClient.h"
+#include "SceneClient.h"
+#include "SceneClientManager.h"
+#include "GatewayPlayer.h"
+#include "GatewayPlayerManager.h"
 
 using namespace tnode;
 
@@ -89,21 +76,13 @@ bool verify_limits() {
 
 	//
 	// verify lua version
-	CHECK_RETURN(sizeof(lua_Integer) == 8, false, "require right version for lua");
-	CHECK_RETURN(sizeof(lua_Number) == 8, false, "require right version for lua");
+	//CHECK_RETURN(sizeof(lua_Integer) == 8, false, "require right version for lua");
+	//CHECK_RETURN(sizeof(lua_Number) == 8, false, "require right version for lua");
 
 	return true;
 }
 
 void dump_library_version() {
-	//
-	// tnode
-	//
-#ifdef DEBUG		
-	Trace("tnode: %d.%d.%d, threads: %d, run as %s, %s, debug", TNODE_VERSION_MAJOR, TNODE_VERSION_MINOR, TNODE_VERSION_PATCH, sConfig.threads, sConfig.runasdaemon ? "daemon" : "console", sConfig.guard ? "with guard" : "no guard");
-#else		
-	Trace("tnode: %d.%d.%d, threads: %d, run as %s, %s, release", TNODE_VERSION_MAJOR, TNODE_VERSION_MINOR, TNODE_VERSION_PATCH, sConfig.threads, sConfig.runasdaemon ? "daemon" : "console", sConfig.guard ? "with guard" : "no guard");
-#endif
 
 	//
 	// Config information
@@ -199,32 +178,28 @@ int main(int argc, char* argv[]) {
 
 	dump_library_version();
 
-	//
-	// init thread pool
-	sThreadPool.init(sConfig.threads);
+	CHECK_GOTO(sCentralClient.init(
+		sConfig.get("CentralServer.address", "127.0.0.1"), sConfig.get("CentralServer.port", 9000u)), 
+		exit_failure, "CentralClient init failure");
+		
+	CHECK_GOTO(sClientTaskManager.init(
+		sConfig.get("Service.address", "0.0.0.0"), sConfig.get("Service.port", 12306u))), 
+		exit_failure, "ClientTaskManager init failure");
+	
+	CHECK_GOTO(sSceneClientManager.init(), exit_failure, "SceneClientManager init failure");
 
-	//
-	// init Easynet
-	sNetworkManager.init();
-
-	//
-	// init Service
-	CHECK_GOTO(sServiceManager.init(sConfig.entryfile.c_str()), exit_failure, "ServiceManager init failure");
-
-	//
-	// delivery message to service
-	// scheduling service
-	// todo: monitor, control server by command line, reload config etc...
 	while (!sConfig.halt) {
-		sNetworkManager.run();
-		sServiceManager.schedule();
+		sClientTaskManager.run();
+		sCentralClient.run();
+		sSceneClientManager.run();
+		std::this_thread::yield();
 	}
 
 exit_failure:
 	sConfig.syshalt(0);
-	sThreadPool.stop();
-	sServiceManager.stop();
-	sNetworkManager.stop();
+	sClientTaskManager.stop();
+	sCentralClient.stop();
+	sSceneClientManager.stop();
 	Trace("shutdown system with terminate reason: %d", sConfig.terminate_reason);
 	Easylog::syslog()->stop();
 	// Optional:  Delete all global objects allocated by libprotobuf.

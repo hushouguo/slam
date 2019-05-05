@@ -53,7 +53,7 @@ BEGIN_NAMESPACE_SLAM {
 	//
 	// network address and u64 convert each other
 	u64 combineNetworkEndpoint(const char* address, int port);
-	std::tuple<std::string, int> splitNetworkEndpoint(u64 value);
+	std::pair<std::string, int> splitNetworkEndpoint(u64 value);
 
 	//
 	// gethostname c function simple wrapping

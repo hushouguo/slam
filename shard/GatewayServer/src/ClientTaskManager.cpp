@@ -3,6 +3,11 @@
  * \brief: Created by hushouguo at 13:43:15 Apr 30 2019
  */
 
+#include "common/common.h"
+#include "ClientTask.h"
+#include "ClientTaskManager.h"
+
+
 DECLARE_MESSAGE();
 
 BEGIN_NAMESPACE_SLAM {
@@ -28,11 +33,23 @@ BEGIN_NAMESPACE_SLAM {
 	}
 
 	void ClientTaskManager::stop() {
-		for (auto& easynet : this->_easynets) {			
-			SafeDelete(easynet);			
+		//
+		// cleanup ClientTask
+		struct ClientTaskCallback : public Callback<ClientTask> {
+			bool invoke(ClientTask* entry) {
+				SafeDelete(entry);
+				return true;
+			}
+		}eee;
+		this->traverse(eee);
+		this->clear();
+
+		//
+		// cleanup Easynet
+		for (auto& easynet : this->_easynets) {
+			SafeDelete(easynet);
 		}
 		this->_easynets.clear();
-		//TODO: cleanup client tasks
 	}
 
 	void ClientTaskManager::run() {
@@ -84,15 +101,16 @@ BEGIN_NAMESPACE_SLAM {
 			CommonMessage* rawmsg = (CommonMessage*) payload;
 			assert(rawmsg->len >= sizeof(CommonMessage));
 			if (!this->msgParser(easynet, socket, rawmsg)) {
-				this->stop();
+				easynet->closeSocket(socket);
 			}
 			easynet->releaseMessage(netmsg);
 		}
 	}
 
 	bool ClientTaskManager::sendMessage(SOCKET socket, u64 entityid, u32 msgid, const google::protobuf::Message* message) {
-		//TODO:
-		return false;
+		ClientTask* task = this->find(socket);
+		CHECK_RETURN(task, false, "not found ClientTask: %d", socket);
+		return task->sendMessage(entityid, msgid, message);
 	}
 	
 	bool ClientTaskManager::msgParser(Easynet* easynet, SOCKET socket, CommonMessage* rawmsg) {

@@ -6,7 +6,7 @@
 #include "common.h"
 
 BEGIN_NAMESPACE_SLAM {
-	bool sendMessage(Easynet* easynet, SOCKET socket, u64 entityid, u32 msgid, const google::protobuf::Message* message) {
+	bool SendMessage(Easynet* easynet, SOCKET socket, u64 entityid, u32 msgid, const google::protobuf::Message* message) {
 		assert(message);
 		assert(easynet);
 		

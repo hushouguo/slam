@@ -3,6 +3,9 @@
  * \brief: Created by hushouguo at 13:43:33 Apr 30 2019
  */
 
+#include "common/common.h"
+#include "CentralClient.h"
+
 DECLARE_MESSAGE();
 
 BEGIN_NAMESPACE_SLAM {
@@ -15,8 +18,8 @@ BEGIN_NAMESPACE_SLAM {
 			[this]() {
 				});
 
-		this->_fd_centralclient = this->_easynet->createClient(address, port, 0);
-		if (this->_fd_centralclient == EASYNET_ILLEGAL_SOCKET) {
+		this->id = this->_easynet->createClient(address, port, 0);
+		if (this->id == EASYNET_ILLEGAL_SOCKET) {
 			this->stop();
 			return false;
 		}
@@ -26,13 +29,12 @@ BEGIN_NAMESPACE_SLAM {
 
 	void CentralClient::stop() {
 		SafeDelete(this->_easynet);
-		this->_fd_centralclient = EASYNET_ILLEGAL_SOCKET;
+		this->id = EASYNET_ILLEGAL_SOCKET;
 		sConfig.syshalt(0);
 	}
 
 	void CentralClient::run() {
-		CHECK_RETURN(this->_easynet && this->_fd_centralclient != EASYNET_ILLEGAL_SOCKET, 
-			void(0), "centralClient not initiated");
+		CHECK_RETURN(this->_easynet && this->id != EASYNET_ILLEGAL_SOCKET, void(0), "centralClient not initiated");
 
 		//
 		// handle connection state
@@ -42,9 +44,9 @@ BEGIN_NAMESPACE_SLAM {
             if (socket == EASYNET_ILLEGAL_SOCKET) {
                 break;
             }
-            assert(socket == this->_fd_centralclient);
+            assert(socket == this->id);
             if (state) {
-				Debug << "CentralClient successful connection";
+				Debug << "CentralClient successful connect";
             }
             else {
             	Error << "lost connection with CentralServer";
@@ -60,7 +62,7 @@ BEGIN_NAMESPACE_SLAM {
             if (!netmsg) {
                 break;
             }
-            assert(socket == this->_fd_centralclient);
+            assert(socket == this->id);
             
             size_t len = 0;
             const void* payload = this->_easynet->getMessageContent(netmsg, &len);
@@ -75,37 +77,11 @@ BEGIN_NAMESPACE_SLAM {
 	}	
 
 	bool CentralClient::sendMessage(u64 entityid, u32 msgid, const google::protobuf::Message* message) {
-		assert(message);
-		assert(this->_easynet);
-		
-        //   
-        // allocate new CommonMessage
-        size_t byteSize = message->ByteSize();
-        const void* netmsg = this->_easynet->allocateMessage(byteSize + sizeof(CommonMessage));
-        size_t len = 0; 
-        CommonMessage* msg = (CommonMessage*) this->_easynet->getMessageContent(netmsg, &len); 
-        assert(len == byteSize + sizeof(CommonMessage));
-     
-        //   
-        // serialize protobuf::Message to ServiceMessage
-        bool rc = message->SerializeToArray(msg->payload, byteSize);
-        if (!rc) {
-            this->_easynet->releaseMessage(netmsg);
-            Error("Serialize message:%s failure, byteSize:%ld", message->GetTypeName().c_str(), byteSize);
-            return false;
-        }
-
-        //   
-        // send CommonMessage to network
-        msg->len = len;
-        msg->entityid = entityid;
-        msg->msgid = msgid;
-        msg->flags = 0;
-        return this->_easynet->sendMessage(this->_fd_centralclient, netmsg);
+		return SendMessage(this->_easynet, this->id, entityid, msgid, message);
 	}
 
 	bool CentralClient::msgParser(CommonMessage* rawmsg) {
-		return DISPATCH_MESSAGE(this->_easynet, this->_fd_centralclient, rawmsg);
+		return DISPATCH_MESSAGE(this->_easynet, this->id, rawmsg);
 	}
 	
 	INITIALIZE_INSTANCE(CentralClient);

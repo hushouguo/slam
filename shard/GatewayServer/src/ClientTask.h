@@ -14,7 +14,7 @@ BEGIN_NAMESPACE_SLAM {
 
 		public:
 			inline u64 entityid() { return this->_entityid; }
-			inline void entityid(u64 value) { this->_entityid = value; }
+			inline void set_entityid(u64 value) { this->_entityid = value; }
 			inline Easynet* easynet() { return this->_easynet; }
 		
 		public:	
