@@ -15,7 +15,7 @@
 
 using namespace slam;
 
-void install_signal_handler() {
+void install_signal_handler(std::function<void(int sig)> handler) {
 	struct sigaction act;
 	sigemptyset(&act.sa_mask);
 	act.sa_flags = SA_INTERRUPT; //The system call that is interrupted by this signal will not be restarted automatically
@@ -77,7 +77,24 @@ int main(int argc, char* argv[]) {
 	//
 	// install signal handler
 	//
-	install_signal_handler();
+	InstallSignalHandler([](int sig) {
+		switch (sig) {
+			case SIGINT: case SIGTERM: case SIGQUIT: 
+				sConfig.halt = true;
+				sMainProcess.wakeup();
+				break;	// Note: schedule halt		
+			case SIGHUP: 
+				sConfig.reload = true; break; // NOTE: reload configure file		
+			case SIGUSR1:
+			case SIGUSR2:
+				//dump system runtime information
+				//tc_malloc_stats();
+				break;			
+			case SIGWINCH: break;	// the window size change, ignore
+			//case SIGALRM: break;	// timer expire			
+			default: sConfig.syshalt(sig); break;
+		}
+	});
 
 	//
 	// config Easylog

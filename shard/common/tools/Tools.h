@@ -192,6 +192,10 @@ BEGIN_NAMESPACE_SLAM {
 	bool VerifyLimits();
 
 	//
+	// setup signal handler
+	void InstallSignalHandler(std::function<void(int sig)> handler);
+	
+	//
 	// output 3rd libraries version info
 	void DumpLibraryVersion();
 	
