@@ -4,6 +4,8 @@
  */
 
 #include "common.h"
+#include "ClientTask.h"
+#include "ClientTaskManager.h"
 #include "SceneClient.h"
 #include "SceneClientManager.h"
 #include "GatewayPlayer.h"

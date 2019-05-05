@@ -231,6 +231,9 @@ using namespace logger;
 #include "message/CommonMessage.h"
 #include "entity.pb.h"
 #include "server.pb.h"
+#include "msgid.pb.h"
+#include "common.pb.h"
+#include "client.pb.h"
 
 using namespace protocol;
 
