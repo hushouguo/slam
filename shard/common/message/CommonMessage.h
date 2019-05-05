@@ -21,6 +21,7 @@ BEGIN_NAMESPACE_SLAM {
 	};
 #pragma pack(pop)
 
+	bool sendMessage(Easynet* easynet, SOCKET socket, u64 entityid, u32 msgid, const google::protobuf::Message* message);
 	
 #if false
 #define NEW_MSG(STRUCTURE, ...)	\
