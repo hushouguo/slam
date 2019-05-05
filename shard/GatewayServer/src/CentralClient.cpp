@@ -5,6 +5,8 @@
 
 #include "common.h"
 #include "CentralClient.h"
+#include "entity.pb.h"
+#include "server.pb.h"
 
 DECLARE_MESSAGE();
 
@@ -63,12 +65,8 @@ BEGIN_NAMESPACE_SLAM {
                 break;
             }
             assert(socket == this->id);
-            
-            size_t len = 0;
-            const void* payload = this->_easynet->getMessageContent(netmsg, &len);
-            assert(len >= sizeof(CommonMessage));
-            CommonMessage* rawmsg = (CommonMessage*) payload;
-            assert(rawmsg->len >= sizeof(CommonMessage));
+
+            CommonMessage* rawmsg = CastCommonMessage(this->_easynet, netmsg);
             if (!this->msgParser(rawmsg)) {
             	this->stop();
             }
@@ -92,13 +90,45 @@ BEGIN_NAMESPACE_SLAM {
 //		ON_MSG(Easynet* easynet, SOCKET socket, STRUCTURE* msg, CommonMessage* rawmsg)
 //
 
-#if false
-ON_MSG(MSGID_HEARTBEAT, Heartbeat) {
-	Heartbeat res;
-	//res.set_systime(sTime.milliseconds());
-	res.set_systime(msg->systime());
-	task->sendMessage(fd, MSGID_HEARTBEAT, &res, 0);
-	//log_trace("receive heartbeat: %ld, systime: %ld", msg->systime(), res.systime());
+//RegisterServerResponse
+ON_MSG(SMSGID_SERVER_REGISTER_REP, ServerRegisterResponse)
+{
+	switch (msg->svrtype()) {
+		case SERVER_TYPE_SCENE:
+			if (msg->rc()) {
+				Debug << "register to SceneServer OK";
+			}
+			else {
+				Panic << "register to SceneServer failure, try to reboot process";
+			}
+			break;
+
+		case SERVER_TYPE_CENTRAL:
+			if (msg->rc()) {
+				Debug << "register to CentralServer OK";
+			}
+			else {
+				Panic << "register to CentralServer failure, try to reboot process";
+			}
+			break;
+
+		default:
+			CHECK_BREAK(false, "illegal server type: %d", msg->svrtype());
+	}
 }
-#endif	
+
+//ServerRetrieveResponse
+ON_MSG(SMSGID_SERVER_RETRIEVE_REP, ServerRetrieveResponse)
+{
+	switch (msg->svrtype()) {
+		case SERVER_TYPE_SCENE:
+			for (int n = 0; n < msg->servers_size(); ++n) {
+				sSceneClientManager.init(msg->servers(n));
+			}
+			break;
+
+		default:
+			CHECK_BREAK(false, "illegal server type: %d", msg->svrtype());
+	}
+}
 

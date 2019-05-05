@@ -204,6 +204,7 @@ using Byte	=	unsigned char;
 
 using namespace net;
 using namespace logger;
+using namespace protocol;
 
 #include "tools/Singleton.h"
 #include "tools/Callback.h"

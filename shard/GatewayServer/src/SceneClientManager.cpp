@@ -6,6 +6,8 @@
 #include "common.h"
 #include "SceneClient.h"
 #include "SceneClientManager.h"
+#include "entity.pb.h"
+#include "server.pb.h"
 
 
 DECLARE_MESSAGE();
@@ -87,11 +89,7 @@ BEGIN_NAMESPACE_SLAM {
 			}
 			assert(socket != EASYNET_ILLEGAL_SOCKET);
 			
-			size_t len = 0;
-			const void* payload = this->_easynet->getMessageContent(netmsg, &len);
-			assert(len >= sizeof(CommonMessage));
-			CommonMessage* rawmsg = (CommonMessage*) payload;
-			assert(rawmsg->len >= sizeof(CommonMessage));
+            CommonMessage* rawmsg = CastCommonMessage(this->_easynet, netmsg);
 			if (!this->msgParser(socket, rawmsg)) {
 				this->_easynet->closeSocket(socket);
 			}

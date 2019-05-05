@@ -22,6 +22,16 @@ BEGIN_NAMESPACE_SLAM {
 #pragma pack(pop)
 
 	bool SendMessage(Easynet* easynet, SOCKET socket, u64 entityid, u32 msgid, const google::protobuf::Message* message);
+
+#define CastCommonMessage(easynet, netmsg)	\
+	({\
+		size_t len = 0;\
+		const void* payload = easynet->getMessageContent(netmsg, &len);\
+		assert(len >= sizeof(CommonMessage));\
+		CommonMessage* rawmsg = (CommonMessage*) payload;\
+		assert(rawmsg->len >= sizeof(CommonMessage));\
+		rawmsg;\
+	})
 	
 #if false
 #define NEW_MSG(STRUCTURE, ...)	\
