@@ -11,6 +11,7 @@
 #include "SceneClientManager.h"
 #include "GatewayPlayer.h"
 #include "GatewayPlayerManager.h"
+#include "MainProcess.h"
 
 using namespace slam;
 
@@ -29,6 +30,7 @@ void install_signal_handler() {
 			case SIGTERM:
 			case SIGQUIT: 
 				sConfig.halt = true;
+				sMainProcess.wakeup();
 				break;	// Note: schedule halt
 		
 			case SIGHUP: 
@@ -189,12 +191,7 @@ int main(int argc, char* argv[]) {
 	
 //	CHECK_GOTO(sSceneClientManager.init(), exit_failure, "SceneClientManager init failure");
 
-	while (!sConfig.halt) {
-		sClientTaskManager.run();
-		//sCentralClient.run();
-		sSceneClientManager.run();
-		std::this_thread::yield();
-	}
+	sMainProcess.run();
 
 exit_failure:
 	sConfig.syshalt(0);

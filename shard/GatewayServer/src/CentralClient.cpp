@@ -7,6 +7,7 @@
 #include "CentralClient.h"
 #include "SceneClient.h"
 #include "SceneClientManager.h"
+#include "MainProcess.h"
 
 DECLARE_MESSAGE();
 
@@ -17,7 +18,8 @@ BEGIN_NAMESPACE_SLAM {
 				CommonMessage* msg = (CommonMessage*) buffer;
 				return len < sizeof(CommonMessage) || len < msg->len ? 0 : msg->len;
 				}, 
-			[this]() {
+			[]() {
+				sMainProcess.wakeup();
 				});
 
 		this->id = this->_easynet->createClient(address, port, 0);

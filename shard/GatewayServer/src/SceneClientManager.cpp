@@ -11,6 +11,7 @@
 #include "GatewayPlayer.h"
 #include "GatewayPlayerManager.h"
 #include "CentralClient.h"
+#include "MainProcess.h"
 
 DECLARE_MESSAGE();
 
@@ -21,7 +22,8 @@ BEGIN_NAMESPACE_SLAM {
 				CommonMessage* msg = (CommonMessage*) buffer;
 				return len < sizeof(CommonMessage) || len < msg->len ? 0 : msg->len;
 				}, 
-			[this]() {
+			[]() {
+				sMainProcess.wakeup();
 				});
 	}
 	

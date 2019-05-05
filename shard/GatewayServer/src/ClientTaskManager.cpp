@@ -10,6 +10,7 @@
 #include "SceneClientManager.h"
 #include "GatewayPlayer.h"
 #include "GatewayPlayerManager.h"
+#include "MainProcess.h"
 
 DECLARE_MESSAGE();
 
@@ -25,7 +26,8 @@ BEGIN_NAMESPACE_SLAM {
 						CommonMessage* msg = (CommonMessage*) buffer;
 						return len < sizeof(CommonMessage) || len < msg->len ? 0 : msg->len;
 					}, 
-					[this]() {
+					[]() {
+						sMainProcess.wakeup();
 					});
 			SOCKET fd = easynet->createServer(address, port);
 			CHECK_RETURN(fd != EASYNET_ILLEGAL_SOCKET, false, "createServer:(%s:%d) failure", address, port);
