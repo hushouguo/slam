@@ -1,0 +1,91 @@
+syntax = "proto3";
+
+package protocol;
+
+import "entity.proto";
+
+enum SMSGID {
+	SMSGID_BASE						=	0;
+	SMSGID_SERVER_REGISTE_REQ		=	60000;
+	SMSGID_SERVER_REGISTE_REP		=	60001;
+	SMSGID_SERVER_RETRIEVE_REQ		=	60002;
+	SMSGID_SERVER_RETRIEVE_REP		=	60003;
+	SMSGID_STORAGE_SERIALIZE_REQ	=	60010;
+	SMSGID_STORAGE_SERIALIZE_REP	=	60011;
+	SMSGID_STORAGE_UNSERIALIZE_REQ	=	60012;
+	SMSGID_STORAGE_UNSERIALIZE_REP	=	60013;
+}
+
+//
+//----------------------------------------
+enum SERVER_TYPE {
+	SERVER_TYPE_NONE				=	0;
+	SERVER_TYPE_GATEWAY				=	1;
+	SERVER_TYPE_SCENE				=	2;
+	SERVER_TYPE_CENTRAL				=	3;
+	SERVER_TYPE_STORAGE				=	4;
+	SERVER_TYPE_ROBOT				=	5;
+	SERVER_TYPE_ORDER				=	6;
+}
+
+message ServerRegisteRequest {
+	SERVER_TYPE svrtype				=	1;
+	int32 port						=	2;
+	int32 shardid					=	3;
+}
+
+message ServerRegisteResponse {
+	bool rc							=	1;
+	SERVER_TYPE svrtype				=	2;
+}
+
+message ServerRetrieveRequest {
+	SERVER_TYPE svrtype				=	1;
+}
+
+message ServerRetrieveResponse {
+	SERVER_TYPE svrtype				=	1;
+	repeated uint64 servers			=	2;
+}
+
+//
+//-------------------------------------------
+message StorageContext {
+	uint32 client					=	1;
+	uint32 gatewayserver			=	2;
+	uint32 sceneserver				=	3;
+	uint32 flags					=	4;
+}
+
+message StorageSerializeRequest {
+	uint32 shard					=	1;
+	string table					=	2;
+	Entity entity					=	3;
+	StorageContext context			=	4;
+}
+
+message StorageSerializeResponse {
+	uint32 shard					=	1;
+	string table					=	2;
+	uint64 entityid					=	3;	
+	StorageContext context			=	4;
+	bool rc							=	5;
+}
+
+message StorageUnserializeRequest {
+	uint32 shard					=	1;
+	string table					=	2;
+	uint64 entityid					=	3;	
+	StorageContext context			=	4;
+}
+
+message StorageUnserializeResponse {
+	uint32 shard					=	1;
+	string table					=	2;
+	uint64 entityid					=	3;	
+	Entity entity					=	4;
+	StorageContext context			=	5;
+	bool rc							=	6;
+}
+
+
