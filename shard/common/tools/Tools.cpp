@@ -915,10 +915,28 @@ BEGIN_NAMESPACE_SLAM {
 		act.sa_handler = [](int sig) {
 			//fprintf(stderr, "receive signal: %d\n", sig);
 			// Don't call Non reentrant function, just like malloc, free etc, i/o function also cannot call.
+			//
+			switch (sig) {
+				case SIGINT: case SIGTERM: case SIGQUIT: 
+					sConfig.halt = true; break;
+				case SIGHUP: 
+					sConfig.reload = true; break;
+				case SIGUSR1:
+				case SIGUSR2:
+					//dump system runtime information
+					tc_malloc_stats(); break;			
+				default: sConfig.syshalt(sig); break;
+			}
 			if (__signal_handler) {
 				(*__signal_handler)(sig);
 			}
 		};
+		sigs |= (1 << SIGINT);
+		sigs |= (1 << SIGTERM);
+		sigs |= (1 << SIGQUIT);
+		sigs |= (1 << SIGHUP);
+		sigs |= (1 << SIGUSR1);
+		sigs |= (1 << SIGUSR2);
 		for (int sig = SIGHUP; sig < SIGRTMAX; ++sig) {
 			if (sigs & (1 << sig)) {
 				sigaction(sig, &act, nullptr);
