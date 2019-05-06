@@ -7,24 +7,20 @@
 #define __STORAGESERVICE_H__
 
 BEGIN_NAMESPACE_SLAM {
-	class StorageService : public Entry<SOCKET> {
-		public:
-			StorageService() : Entry<SOCKET>(EASYNET_ILLEGAL_SOCKET) {
-			}
-			const char* getClassName() override { return "StorageService"; }
-		
+	class StorageService {
 		public:
 			bool init(const char* address, int port);
 			void stop();
 
 		public:
 			void run();
+			bool sendMessage(SOCKET socket, u64 entityid, u32 msgid, const google::protobuf::Message* message);
 
 		private:
 			Easynet* _easynet = nullptr;
 	};
 }
 
-#define sStorageServiceManager slam::Singleton<slam::StorageServiceManager>::getInstance()
+#define sStorageService slam::Singleton<slam::StorageService>::getInstance()
 
 #endif

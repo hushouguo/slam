@@ -3,9 +3,19 @@
  * \brief: Created by hushouguo at 11:24:37 May 06 2019
  */
 
+#include "common.h"
+#include "CentralTask.h"
+#include "CentralTaskManager.h"
+#include "SceneTask.h"
+#include "SceneTaskManager.h"
+#include "StorageService.h"
+#include "MainProcess.h"
+
+DECLARE_MESSAGE();
+
 BEGIN_NAMESPACE_SLAM {
 	bool StorageService::init(const char* address, int port) {
-		if (this->_easynet) { return true; }
+		assert(this->_easynet == nullptr);
 		this->_easynet = Easynet::createInstance(
 				[](const void* buffer, size_t len) -> int {
 					CommonMessage* msg = (CommonMessage*) buffer;
@@ -13,18 +23,17 @@ BEGIN_NAMESPACE_SLAM {
 				}, 
 				[]() {
 				});
-		this->id = this->_easynet->createServer(address, port);
-		CHECK_RETURN(this->id != EASYNET_ILLEGAL_SOCKET, false, "createServer:(%s:%d) failure", address, port);
+		SOCKET socket = this->_easynet->createServer(address, port);
+		CHECK_RETURN(!ILLEGAL_SOCKET(socket), false, "createServer:(%s:%d) failure", address, port);
 		return true;
 	}
 
 	void StorageService::stop() {
 		SafeDelete(this->_easynet);
-		this->id = EASYNET_ILLEGAL_SOCKET;
 	}
 
 	void StorageService::run() {
-		CHECK_RETURN(this->_easynet && this->id != EASYNET_ILLEGAL_SOCKET, void(0), "StorageService not initiated");
+		CHECK_RETURN(this->_easynet, void(0), "StorageService not initiated");
 
 		//
 		// handle connection state
@@ -35,11 +44,20 @@ BEGIN_NAMESPACE_SLAM {
                 break;
             }
             assert(socket == this->id);
-            if (state) {
-				Debug << "CentralClient successful connect";
-            }
-            else {
-            	Error << "lost connection with CentralServer";
+            if (!state) {
+            	CentralTask* centralTask = sCentralTaskManager.find(socket);
+            	if (centralTask) {
+					Error << "lost CentralTask: " << socket;
+            		sCentralTaskManager.remove(centralTask);
+            		SafeDelete(centralTask);
+            	}
+            	
+            	SceneTask* sceneTask = sSceneTaskManager.find(socket);
+            	if (sceneTask) {
+					Error << "lost SceneTask: " << socket;
+            		sSceneTaskManager.remove(sceneTask);
+            		SafeDelete(sceneTask);
+            	}            	
             }
         }
 
@@ -51,16 +69,67 @@ BEGIN_NAMESPACE_SLAM {
             if (!netmsg) {
                 break;
             }
-            assert(socket == this->id);
-#if false
+            assert(!ILLEGAL_SOCKET(socket));
+            
             CommonMessage* rawmsg = CastCommonMessage(this->_easynet, netmsg);
-            if (!this->msgParser(rawmsg)) {
-            	this->stop();
+            if (sCentralTaskManager.find(socket) != nullptr) {
+            	if (!sCentralTaskManager.msgParser(this->_easynet, socket, rawmsg)) {
+            		this->_easynet->closeSocket(socket);
+            	}
             }
-#endif			
+            else if (sSceneTaskManager.find(socket) != nullptr) {
+            	if (!sSceneTaskManager.msgParser(this->_easynet, socket, rawmsg)) {
+            		this->_easynet->closeSocket(socket);
+            	}
+            }
+            else {
+            	if (!DISPATCH_MESSAGE(this->_easynet, socket, rawmsg)) {
+					this->_easynet->closeSocket(socket);
+            	}
+            }
             this->_easynet->releaseMessage(netmsg);
         }
 	}
 
-	INITIALIZE_INSTANCE(StorageServiceManager);
+	INITIALIZE_INSTANCE(StorageService);
 }
+
+
+//Note: ON_MSG(MSGID, STRUCTURE) 
+// 	 ON_MSG(Easynet* easynet, SOCKET socket, STRUCTURE* msg, CommonMessage* rawmsg)
+//
+
+ON_MSG(SMSGID_SERVER_REGISTER_REQ, ServerRegisterRequest) {
+	switch (msg->svrtype()) {
+		case SERVER_TYPE_CENTRAL: {
+				CentralTask* centralTask = new CentralTask(easynet, socket);
+				bool rc = sCentralTaskManager.add(centralTask);
+				Debug("register CentralServer: %d, %d, %s", msg->shard(), msg->port(), rc ? "OK" : "failure");
+
+				ServerRegisterResponse response;
+				response.set_rc(rc);
+				response.set_svrtype(SERVER_TYPE_STORAGE);
+				SendMessage(easynet, socket, 0, SMSGID_SERVER_REGISTER_REP, &response);
+			}
+			break;
+
+		case SERVER_TYPE_SCENE: {
+				SceneTask* sceneTask = new SceneTask(easynet, socket);
+				bool rc = sSceneTaskManager.add(sceneTask);
+				Debug("register SceneServer: %d, %d, %s", msg->shard(), msg->port(), rc ? "OK" : "failure");
+
+				ServerRegisterResponse response;
+				response.set_rc(rc);
+				response.set_svrtype(SERVER_TYPE_STORAGE);
+				SendMessage(easynet, socket, 0, SMSGID_SERVER_REGISTER_REP, &response);
+			}
+			break;
+
+		default:
+			CHECK_BREAK(false, "illegal register server type: %d", msg->svrtype());
+	}
+}
+
+ON_MSG(SMSGID_SERVER_RETRIEVE_REQ, ServerRetrieveRequest) {
+}
+

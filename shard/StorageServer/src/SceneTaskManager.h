@@ -8,22 +8,8 @@
 
 BEGIN_NAMESPACE_SLAM {
 	class SceneTaskManager : public Manager<SceneTask> {
-		public:
-			SceneTaskManager();
-			
-		public:
-			bool init();
-			void stop();
-		
 		public:	
-			void run();
 			bool msgParser(SOCKET socket, CommonMessage* rawmsg);
-
-		public:
-			bool sendMessage(SOCKET socket, u64 entityid, u32 msgid, const google::protobuf::Message* message);
-
-		private:
-			Easynet* _easynet = nullptr;
 	};
 }
 

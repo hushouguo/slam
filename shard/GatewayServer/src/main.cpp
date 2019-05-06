@@ -56,7 +56,7 @@ int main(int argc, char* argv[]) {
 
 	CHECK_GOTO(sGatewayService.init(
 		sConfig.get("Service.address", "0.0.0.0"), sConfig.get("Service.port", 12306u)), 
-		exit_failure, "ClientTaskManager init failure");
+		exit_failure, "GatewayService init failure");
 	
 	CHECK_GOTO(sSceneClientManager.init(), exit_failure, "SceneClientManager init failure");
 
