@@ -112,7 +112,7 @@ BEGIN_NAMESPACE_SLAM {
 			}
 			else {
 	            CommonMessage* rawmsg = CastCommonMessage(this->_easynet, netmsg);
-				if (!this->msgParser(socket, rawmsg)) {
+	            if (!DISPATCH_MESSAGE(this->_easynet, socket, rawmsg)) {
 					this->_easynet->closeSocket(socket);
 				}
 			}
@@ -124,10 +124,6 @@ BEGIN_NAMESPACE_SLAM {
 		SceneClient* client = this->find(socket);
 		CHECK_RETURN(client, false, "not found SceneClient: %d", socket);
 		return client->sendMessage(entityid, msgid, message);
-	}
-
-	bool SceneClientManager::msgParser(SOCKET socket, CommonMessage* rawmsg) {
-		return DISPATCH_MESSAGE(this->_easynet, socket, rawmsg);
 	}
 
 	INITIALIZE_INSTANCE(SceneClientManager);

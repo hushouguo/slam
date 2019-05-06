@@ -15,12 +15,6 @@
 DECLARE_MESSAGE();
 
 BEGIN_NAMESPACE_SLAM {
-	bool ClientTaskManager::sendMessage(SOCKET socket, u64 entityid, u32 msgid, const google::protobuf::Message* message) {
-		ClientTask* task = this->find(socket);
-		CHECK_RETURN(task, false, "not found ClientTask: %d", socket);
-		return task->sendMessage(entityid, msgid, message);
-	}
-	
 	bool ClientTaskManager::msgParser(Easynet* easynet, SOCKET socket, CommonMessage* rawmsg) {
 		return DISPATCH_MESSAGE(easynet, socket, rawmsg);
 	}

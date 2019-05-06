@@ -9,8 +9,7 @@
 BEGIN_NAMESPACE_SLAM {
 	class ClientTaskManager : public Manager<ClientTask> {
 		public:	
-			bool msgParser(Easynet* easynet, SOCKET socket, CommonMessage* rawmsg);
-			bool sendMessage(SOCKET socket, u64 entityid, u32 msgid, const google::protobuf::Message* message);
+			bool msgParser(Easynet* easynet, SOCKET socket, CommonMessage* rawmsg);			
 	};
 }
 

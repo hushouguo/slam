@@ -74,7 +74,7 @@ BEGIN_NAMESPACE_SLAM {
             assert(socket == this->_socket);
 
             CommonMessage* rawmsg = CastCommonMessage(this->_easynet, netmsg);
-            if (!this->msgParser(rawmsg)) {
+            if (!DISPATCH_MESSAGE(this->_easynet, this->_socket, rawmsg)) {
             	this->stop();
             }
             this->_easynet->releaseMessage(netmsg);
@@ -83,10 +83,6 @@ BEGIN_NAMESPACE_SLAM {
 
 	bool CentralClient::sendMessage(u64 entityid, u32 msgid, const google::protobuf::Message* message) {
 		return SendMessage(this->_easynet, this->_socket, entityid, msgid, message);
-	}
-
-	bool CentralClient::msgParser(CommonMessage* rawmsg) {
-		return DISPATCH_MESSAGE(this->_easynet, this->_socket, rawmsg);
 	}
 	
 	INITIALIZE_INSTANCE(CentralClient);

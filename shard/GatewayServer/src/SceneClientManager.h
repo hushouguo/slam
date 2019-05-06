@@ -15,7 +15,6 @@ BEGIN_NAMESPACE_SLAM {
 		
 		public:	
 			void run();
-			bool msgParser(SOCKET socket, CommonMessage* rawmsg);
 			bool sendMessage(SOCKET socket, u64 entityid, u32 msgid, const google::protobuf::Message* message);
 
 		private:

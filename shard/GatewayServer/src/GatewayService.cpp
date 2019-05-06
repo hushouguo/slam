@@ -103,6 +103,12 @@ BEGIN_NAMESPACE_SLAM {
 		}
 	}
 
+	bool GatewayService::sendMessage(SOCKET socket, u64 entityid, u32 msgid, const google::protobuf::Message* message) {
+		ClientTask* task = sClientTaskManager.find(socket);
+		CHECK_RETURN(task, false, "not found ClientTask: %d", socket);
+		return task->sendMessage(entityid, msgid, message);
+	}
+	
 	INITIALIZE_INSTANCE(GatewayService);
 }
 
