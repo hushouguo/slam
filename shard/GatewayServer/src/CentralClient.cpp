@@ -23,11 +23,7 @@ BEGIN_NAMESPACE_SLAM {
 				});
 
 		this->id = this->_easynet->createClient(address, port, 0);
-		if (this->id == EASYNET_ILLEGAL_SOCKET) {
-			this->stop();
-			return false;
-		}
-
+		CHECK_RETURN(this->id != EASYNET_ILLEGAL_SOCKET, false, "createServer:(%s:%d) failure", address, port);
 		return true;
 	}
 

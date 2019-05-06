@@ -20,8 +20,7 @@ BEGIN_NAMESPACE_SLAM {
 			bool sendMessage(SOCKET socket, u64 entityid, u32 msgid, const google::protobuf::Message* message);
 			
 		private:
-			std::vector<Easynet*> _easynets;
-			void run(Easynet* easynet);
+			Easynet* _easynet = nullptr;
 	};
 }
 
