@@ -10,6 +10,10 @@
 #include "SceneTaskManager.h"
 #include "StorageService.h"
 #include "MainProcess.h"
+#include "StorageEntity.h"
+#include "StorageEntityManager.h"
+#include "StorageProcess.h"
+#include "StorageProcessManager.h"
 
 DECLARE_MESSAGE();
 

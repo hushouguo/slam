@@ -10,6 +10,10 @@
 #include "SceneTaskManager.h"
 #include "StorageService.h"
 #include "MainProcess.h"
+#include "StorageEntity.h"
+#include "StorageEntityManager.h"
+#include "StorageProcess.h"
+#include "StorageProcessManager.h"
 
 using namespace slam;
 int main(int argc, char* argv[]) {

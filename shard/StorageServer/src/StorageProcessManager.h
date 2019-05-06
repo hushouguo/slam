@@ -9,6 +9,9 @@
 BEGIN_NAMESPACE_SLAM {
 	class StorageProcessManager : public Manager<StorageProcess> {
 		public:
+			inline int size() { return this->_size; }
+
+		public:
 			bool init(int number);
 			void stop();
 		

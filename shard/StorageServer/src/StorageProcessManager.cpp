@@ -3,6 +3,18 @@
  * \brief: Created by hushouguo at 10:21:48 May 06 2019
  */
 
+#include "common.h"
+#include "CentralTask.h"
+#include "CentralTaskManager.h"
+#include "SceneTask.h"
+#include "SceneTaskManager.h"
+#include "StorageService.h"
+#include "MainProcess.h"
+#include "StorageEntity.h"
+#include "StorageEntityManager.h"
+#include "StorageProcess.h"
+#include "StorageProcessManager.h"
+
 BEGIN_NAMESPACE_SLAM {
 	bool StorageProcessManager::init(int number) {
 		this->_size = number;
