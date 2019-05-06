@@ -33,23 +33,19 @@ int main(int argc, char* argv[]) {
 	//
 	// install signal handler
 	//
-	InstallSignalHandler([](int sig) {
+	InstallSignalHandler((1 << SIGINT)|(1 << SIGTERM)|(1 << SIGQUIT)|(1 << SIGHUP)|(1 << SIGUSR1)|(1 << SIGUSR2), [](int sig) {
 		switch (sig) {
 			case SIGINT: case SIGTERM: case SIGQUIT: 
-				sConfig.halt = true;
-				sMainProcess.wakeup();
-				break;	// Note: schedule halt		
+				sConfig.halt = true; break;
 			case SIGHUP: 
-				sConfig.reload = true; break; // NOTE: reload configure file		
+				sConfig.reload = true; break;
 			case SIGUSR1:
 			case SIGUSR2:
 				//dump system runtime information
-				//tc_malloc_stats();
-				break;			
-			case SIGWINCH: break;	// the window size change, ignore
-			//case SIGALRM: break;	// timer expire			
+				tc_malloc_stats(); break;			
 			default: sConfig.syshalt(sig); break;
 		}
+		sMainProcess.wakeup();
 	});
 
 	//

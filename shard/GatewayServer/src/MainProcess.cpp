@@ -19,6 +19,10 @@ BEGIN_NAMESPACE_SLAM {
 			std::unique_lock<std::mutex> locker(this->_mtx);
 			this->_cond.wait(locker);
 
+			if (sConfig.reload) {
+				//NOTE: reload config & data files
+				Debug << "Need reload config files and data files";
+			}
 			sClientTaskManager.run();
 			//sCentralClient.run();
 			sSceneClientManager.run();

@@ -193,7 +193,7 @@ BEGIN_NAMESPACE_SLAM {
 
 	//
 	// setup signal handler
-	void InstallSignalHandler(std::function<void(int sig)> handler);
+	void InstallSignalHandler(uint64_t sigs, std::function<void(int sig)> handler);
 	
 	//
 	// output 3rd libraries version info

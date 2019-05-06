@@ -5,5 +5,9 @@
  
 #ifndef __STORAGEPROCESS_H__
 #define __STORAGEPROCESS_H__
- 
+
+BEGIN_NAMESPACE_SLAM {
+
+}
+
 #endif

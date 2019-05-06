@@ -906,50 +906,24 @@ BEGIN_NAMESPACE_SLAM {
 		return true;
 	}
 
-	void InstallSignalHandler(std::function<void(int sig)> handler) {
+	static std::function<void(int)> * __signal_handler = nullptr;
+	void InstallSignalHandler(uint64_t sigs, std::function<void(int)> signal_handler) {
+		__signal_handler = &signal_handler;
 		struct sigaction act;
 		sigemptyset(&act.sa_mask);
 		act.sa_flags = SA_INTERRUPT; //The system call that is interrupted by this signal will not be restarted automatically
-		act.sa_handler = handler;
-#if 0		
 		act.sa_handler = [](int sig) {
 			//fprintf(stderr, "receive signal: %d\n", sig);
 			// Don't call Non reentrant function, just like malloc, free etc, i/o function also cannot call.
-			//if (sig == SIGRTMIN) {		// SIGRTMIN: Wake up thread, nothing to do
-			//	return; // SIGRTMIN: #define SIGRTMIN		 (__libc_current_sigrtmin ())
-			//}
-			switch (sig) {
-				case SIGINT:
-				case SIGTERM:
-				case SIGQUIT: 
-					sConfig.halt = true;
-					sMainProcess.wakeup();
-					break;	// Note: schedule halt
-			
-				case SIGHUP: 
-					sConfig.reload = true; break; // NOTE: reload configure file
-	
-				case SIGUSR1:
-				case SIGUSR2:
-					//dump system runtime information
-					//tc_malloc_stats();
-					break;
-				
-				case SIGWINCH: break;	// the window size change, ignore
-				//case SIGALRM: break;	// timer expire
-				
-				default: sConfig.syshalt(sig); break;
+			if (__signal_handler) {
+				(*__signal_handler)(sig);
 			}
 		};
-#endif	
-		sigaction(SIGINT, &act, nullptr);
-		sigaction(SIGTERM, &act, nullptr);
-		sigaction(SIGQUIT, &act, nullptr);
-		sigaction(SIGHUP, &act, nullptr);
-		sigaction(SIGUSR1, &act, nullptr);
-		sigaction(SIGUSR2, &act, nullptr);
-		//sigaction(SIGALRM, &act, nullptr);
-		//sigaction(SIGRTMIN, &act, nullptr);
+		for (int sig = SIGHUP; sig < SIGRTMAX; ++sig) {
+			if (sigs & (1 << sig)) {
+				sigaction(sig, &act, nullptr);
+			}
+		}
 	}
 
 	void DumpLibraryVersion() {
@@ -1013,7 +987,6 @@ BEGIN_NAMESPACE_SLAM {
 #endif
 
 		Trace("    gcc version: %d.%d.%d", __GNUC__, __GNUC_MINOR__, __GNUC_PATCHLEVEL__);
-
 	}
 
 #if SLAM_SSL_ENABLE
