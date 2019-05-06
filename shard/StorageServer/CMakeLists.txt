@@ -1,6 +1,6 @@
 cmake_minimum_required (VERSION 2.8)
 
-set(target GatewayServer) 
+set(target StorageServer) 
 project (${target})
 
 set(CMAKE_CXX_COMPILER "g++")
@@ -13,6 +13,7 @@ set(EXECUTABLE_OUTPUT_PATH .)
 set(ROOT_DIR ${PROJECT_SOURCE_DIR}) 
 set(DEPS_DIR ${PROJECT_SOURCE_DIR}/../deps)
 set(COMMON_DIR ${PROJECT_SOURCE_DIR}/../common)
+set(PROTOCOL_DIR ${PROJECT_SOURCE_DIR}/../protocol)
 
 set(EASYLOG_DIR ${DEPS_DIR}/easylog)
 set(EASYNET_DIR ${DEPS_DIR}/easynet)
@@ -32,6 +33,7 @@ include_directories(${RAPIDXML_DIR})
 include_directories(${RAPIDJSON_DIR})
 include_directories(${LUA_DIR}/include)
 include_directories(${COMMON_DIR})
+include_directories(${PROTOCOL_DIR}/cpp)
 include_directories(${TCMALLOC_DIR}/include)
 
 aux_source_directory(${COMMON_DIR}/config src)
@@ -42,11 +44,12 @@ aux_source_directory(${COMMON_DIR}/time src)
 aux_source_directory(${COMMON_DIR}/tools src)
 aux_source_directory(${COMMON_DIR}/xml src)
 aux_source_directory(src src)
+aux_source_directory(${PROTOCOL_DIR}/cpp src)
 
 link_directories(/usr/lib64)
 add_executable(${target} ${src})
 
-target_link_libraries(${target} rt dl pthread unwind)
+target_link_libraries(${target} rt dl pthread)
 target_link_libraries(${target} ${EASYLOG_DIR}/lib/libeasylog.a)
 target_link_libraries(${target} ${EASYNET_DIR}/lib/libeasynet.a)
 target_link_libraries(${target} ${PROTOBUF_DIR}/lib/libprotobuf.a)

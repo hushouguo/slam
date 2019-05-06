@@ -14,12 +14,14 @@
 DECLARE_MESSAGE();
 
 BEGIN_NAMESPACE_SLAM {
-	bool SceneTaskManager::msgParser(SOCKET socket, CommonMessage* rawmsg) {
-		return DISPATCH_MESSAGE(this->_easynet, socket, rawmsg);
+	bool SceneTaskManager::msgParser(Easynet* easynet, SOCKET socket, CommonMessage* rawmsg) {
+		return DISPATCH_MESSAGE(easynet, socket, rawmsg);
 	}
 
 	INITIALIZE_INSTANCE(SceneTaskManager);
 }
+
+using namespace slam;
 
 //Note: ON_MSG(MSGID, STRUCTURE) 
 // 	 ON_MSG(Easynet* easynet, SOCKET socket, STRUCTURE* msg, CommonMessage* rawmsg)

@@ -15,7 +15,6 @@
 #include "MainProcess.h"
 
 using namespace slam;
-
 int main(int argc, char* argv[]) {
 	// Verify that the version of the library that we linked against is
 	// compatible with the version of the headers we compiled against.

@@ -228,7 +228,7 @@ const ::google::protobuf::uint32 TableStruct::offsets[] GOOGLE_PROTOBUF_ATTRIBUT
   ~0u,  // no _weak_field_map_
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::protocol::ServerRegisterRequest, svrtype_),
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::protocol::ServerRegisterRequest, port_),
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::protocol::ServerRegisterRequest, shardid_),
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::protocol::ServerRegisterRequest, shard_),
   ~0u,  // no _has_bits_
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::protocol::ServerRegisterResponse, _internal_metadata_),
   ~0u,  // no _extensions_
@@ -343,47 +343,47 @@ void protobuf_RegisterTypes(const ::std::string&) {
 void AddDescriptorsImpl() {
   InitDefaults();
   static const char descriptor[] GOOGLE_PROTOBUF_ATTRIBUTE_SECTION_VARIABLE(protodesc_cold) = {
-      "\n\014server.proto\022\010protocol\032\014entity.proto\"^"
+      "\n\014server.proto\022\010protocol\032\014entity.proto\"\\"
       "\n\025ServerRegisterRequest\022&\n\007svrtype\030\001 \001(\016"
-      "2\025.protocol.SERVER_TYPE\022\014\n\004port\030\002 \001(\005\022\017\n"
-      "\007shardid\030\003 \001(\005\"L\n\026ServerRegisterResponse"
-      "\022\n\n\002rc\030\001 \001(\010\022&\n\007svrtype\030\002 \001(\0162\025.protocol"
-      ".SERVER_TYPE\"\?\n\025ServerRetrieveRequest\022&\n"
-      "\007svrtype\030\001 \001(\0162\025.protocol.SERVER_TYPE\"Q\n"
-      "\026ServerRetrieveResponse\022&\n\007svrtype\030\001 \001(\016"
-      "2\025.protocol.SERVER_TYPE\022\017\n\007servers\030\002 \003(\004"
-      "\"[\n\016StorageContext\022\016\n\006client\030\001 \001(\r\022\025\n\rga"
-      "tewayserver\030\002 \001(\r\022\023\n\013sceneserver\030\003 \001(\r\022\r"
-      "\n\005flags\030\004 \001(\r\"\204\001\n\027StorageSerializeReques"
-      "t\022\r\n\005shard\030\001 \001(\r\022\r\n\005table\030\002 \001(\t\022 \n\006entit"
-      "y\030\003 \001(\0132\020.protocol.Entity\022)\n\007context\030\004 \001"
-      "(\0132\030.protocol.StorageContext\"\201\001\n\030Storage"
-      "SerializeResponse\022\r\n\005shard\030\001 \001(\r\022\r\n\005tabl"
-      "e\030\002 \001(\t\022\020\n\010entityid\030\003 \001(\004\022)\n\007context\030\004 \001"
-      "(\0132\030.protocol.StorageContext\022\n\n\002rc\030\005 \001(\010"
-      "\"v\n\031StorageUnserializeRequest\022\r\n\005shard\030\001"
-      " \001(\r\022\r\n\005table\030\002 \001(\t\022\020\n\010entityid\030\003 \001(\004\022)\n"
-      "\007context\030\004 \001(\0132\030.protocol.StorageContext"
-      "\"\245\001\n\032StorageUnserializeResponse\022\r\n\005shard"
-      "\030\001 \001(\r\022\r\n\005table\030\002 \001(\t\022\020\n\010entityid\030\003 \001(\004\022"
-      " \n\006entity\030\004 \001(\0132\020.protocol.Entity\022)\n\007con"
-      "text\030\005 \001(\0132\030.protocol.StorageContext\022\n\n\002"
-      "rc\030\006 \001(\010*\265\002\n\006SMSGID\022\017\n\013SMSGID_BASE\020\000\022 \n\032"
-      "SMSGID_SERVER_REGISTER_REQ\020\340\324\003\022 \n\032SMSGID"
-      "_SERVER_REGISTER_REP\020\341\324\003\022 \n\032SMSGID_SERVE"
-      "R_RETRIEVE_REQ\020\342\324\003\022 \n\032SMSGID_SERVER_RETR"
-      "IEVE_REP\020\343\324\003\022\"\n\034SMSGID_STORAGE_SERIALIZE"
-      "_REQ\020\352\324\003\022\"\n\034SMSGID_STORAGE_SERIALIZE_REP"
-      "\020\353\324\003\022$\n\036SMSGID_STORAGE_UNSERIALIZE_REQ\020\354"
-      "\324\003\022$\n\036SMSGID_STORAGE_UNSERIALIZE_REP\020\355\324\003"
-      "*\263\001\n\013SERVER_TYPE\022\024\n\020SERVER_TYPE_NONE\020\000\022\027"
-      "\n\023SERVER_TYPE_GATEWAY\020\001\022\025\n\021SERVER_TYPE_S"
-      "CENE\020\002\022\027\n\023SERVER_TYPE_CENTRAL\020\003\022\027\n\023SERVE"
-      "R_TYPE_STORAGE\020\004\022\025\n\021SERVER_TYPE_ROBOT\020\005\022"
-      "\025\n\021SERVER_TYPE_ORDER\020\006b\006proto3"
+      "2\025.protocol.SERVER_TYPE\022\014\n\004port\030\002 \001(\005\022\r\n"
+      "\005shard\030\003 \001(\005\"L\n\026ServerRegisterResponse\022\n"
+      "\n\002rc\030\001 \001(\010\022&\n\007svrtype\030\002 \001(\0162\025.protocol.S"
+      "ERVER_TYPE\"\?\n\025ServerRetrieveRequest\022&\n\007s"
+      "vrtype\030\001 \001(\0162\025.protocol.SERVER_TYPE\"Q\n\026S"
+      "erverRetrieveResponse\022&\n\007svrtype\030\001 \001(\0162\025"
+      ".protocol.SERVER_TYPE\022\017\n\007servers\030\002 \003(\004\"["
+      "\n\016StorageContext\022\016\n\006client\030\001 \001(\r\022\025\n\rgate"
+      "wayserver\030\002 \001(\r\022\023\n\013sceneserver\030\003 \001(\r\022\r\n\005"
+      "flags\030\004 \001(\r\"\204\001\n\027StorageSerializeRequest\022"
+      "\r\n\005shard\030\001 \001(\r\022\r\n\005table\030\002 \001(\t\022 \n\006entity\030"
+      "\003 \001(\0132\020.protocol.Entity\022)\n\007context\030\004 \001(\013"
+      "2\030.protocol.StorageContext\"\201\001\n\030StorageSe"
+      "rializeResponse\022\r\n\005shard\030\001 \001(\r\022\r\n\005table\030"
+      "\002 \001(\t\022\020\n\010entityid\030\003 \001(\004\022)\n\007context\030\004 \001(\013"
+      "2\030.protocol.StorageContext\022\n\n\002rc\030\005 \001(\010\"v"
+      "\n\031StorageUnserializeRequest\022\r\n\005shard\030\001 \001"
+      "(\r\022\r\n\005table\030\002 \001(\t\022\020\n\010entityid\030\003 \001(\004\022)\n\007c"
+      "ontext\030\004 \001(\0132\030.protocol.StorageContext\"\245"
+      "\001\n\032StorageUnserializeResponse\022\r\n\005shard\030\001"
+      " \001(\r\022\r\n\005table\030\002 \001(\t\022\020\n\010entityid\030\003 \001(\004\022 \n"
+      "\006entity\030\004 \001(\0132\020.protocol.Entity\022)\n\007conte"
+      "xt\030\005 \001(\0132\030.protocol.StorageContext\022\n\n\002rc"
+      "\030\006 \001(\010*\265\002\n\006SMSGID\022\017\n\013SMSGID_BASE\020\000\022 \n\032SM"
+      "SGID_SERVER_REGISTER_REQ\020\340\324\003\022 \n\032SMSGID_S"
+      "ERVER_REGISTER_REP\020\341\324\003\022 \n\032SMSGID_SERVER_"
+      "RETRIEVE_REQ\020\342\324\003\022 \n\032SMSGID_SERVER_RETRIE"
+      "VE_REP\020\343\324\003\022\"\n\034SMSGID_STORAGE_SERIALIZE_R"
+      "EQ\020\352\324\003\022\"\n\034SMSGID_STORAGE_SERIALIZE_REP\020\353"
+      "\324\003\022$\n\036SMSGID_STORAGE_UNSERIALIZE_REQ\020\354\324\003"
+      "\022$\n\036SMSGID_STORAGE_UNSERIALIZE_REP\020\355\324\003*\263"
+      "\001\n\013SERVER_TYPE\022\024\n\020SERVER_TYPE_NONE\020\000\022\027\n\023"
+      "SERVER_TYPE_GATEWAY\020\001\022\025\n\021SERVER_TYPE_SCE"
+      "NE\020\002\022\027\n\023SERVER_TYPE_CENTRAL\020\003\022\027\n\023SERVER_"
+      "TYPE_STORAGE\020\004\022\025\n\021SERVER_TYPE_ROBOT\020\005\022\025\n"
+      "\021SERVER_TYPE_ORDER\020\006b\006proto3"
   };
   ::google::protobuf::DescriptorPool::InternalAddGeneratedFile(
-      descriptor, 1510);
+      descriptor, 1508);
   ::google::protobuf::MessageFactory::InternalRegisterGeneratedFile(
     "server.proto", &protobuf_RegisterTypes);
   ::protobuf_entity_2eproto::AddDescriptors();
@@ -449,7 +449,7 @@ void ServerRegisterRequest::InitAsDefaultInstance() {
 #if !defined(_MSC_VER) || _MSC_VER >= 1900
 const int ServerRegisterRequest::kSvrtypeFieldNumber;
 const int ServerRegisterRequest::kPortFieldNumber;
-const int ServerRegisterRequest::kShardidFieldNumber;
+const int ServerRegisterRequest::kShardFieldNumber;
 #endif  // !defined(_MSC_VER) || _MSC_VER >= 1900
 
 ServerRegisterRequest::ServerRegisterRequest()
@@ -464,15 +464,15 @@ ServerRegisterRequest::ServerRegisterRequest(const ServerRegisterRequest& from)
       _internal_metadata_(NULL) {
   _internal_metadata_.MergeFrom(from._internal_metadata_);
   ::memcpy(&svrtype_, &from.svrtype_,
-    static_cast<size_t>(reinterpret_cast<char*>(&shardid_) -
-    reinterpret_cast<char*>(&svrtype_)) + sizeof(shardid_));
+    static_cast<size_t>(reinterpret_cast<char*>(&shard_) -
+    reinterpret_cast<char*>(&svrtype_)) + sizeof(shard_));
   // @@protoc_insertion_point(copy_constructor:protocol.ServerRegisterRequest)
 }
 
 void ServerRegisterRequest::SharedCtor() {
   ::memset(&svrtype_, 0, static_cast<size_t>(
-      reinterpret_cast<char*>(&shardid_) -
-      reinterpret_cast<char*>(&svrtype_)) + sizeof(shardid_));
+      reinterpret_cast<char*>(&shard_) -
+      reinterpret_cast<char*>(&svrtype_)) + sizeof(shard_));
 }
 
 ServerRegisterRequest::~ServerRegisterRequest() {
@@ -504,8 +504,8 @@ void ServerRegisterRequest::Clear() {
   (void) cached_has_bits;
 
   ::memset(&svrtype_, 0, static_cast<size_t>(
-      reinterpret_cast<char*>(&shardid_) -
-      reinterpret_cast<char*>(&svrtype_)) + sizeof(shardid_));
+      reinterpret_cast<char*>(&shard_) -
+      reinterpret_cast<char*>(&svrtype_)) + sizeof(shard_));
   _internal_metadata_.Clear();
 }
 
@@ -548,14 +548,14 @@ bool ServerRegisterRequest::MergePartialFromCodedStream(
         break;
       }
 
-      // int32 shardid = 3;
+      // int32 shard = 3;
       case 3: {
         if (static_cast< ::google::protobuf::uint8>(tag) ==
             static_cast< ::google::protobuf::uint8>(24u /* 24 & 0xFF */)) {
 
           DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
                    ::google::protobuf::int32, ::google::protobuf::internal::WireFormatLite::TYPE_INT32>(
-                 input, &shardid_)));
+                 input, &shard_)));
         } else {
           goto handle_unusual;
         }
@@ -599,9 +599,9 @@ void ServerRegisterRequest::SerializeWithCachedSizes(
     ::google::protobuf::internal::WireFormatLite::WriteInt32(2, this->port(), output);
   }
 
-  // int32 shardid = 3;
-  if (this->shardid() != 0) {
-    ::google::protobuf::internal::WireFormatLite::WriteInt32(3, this->shardid(), output);
+  // int32 shard = 3;
+  if (this->shard() != 0) {
+    ::google::protobuf::internal::WireFormatLite::WriteInt32(3, this->shard(), output);
   }
 
   if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
@@ -629,9 +629,9 @@ void ServerRegisterRequest::SerializeWithCachedSizes(
     target = ::google::protobuf::internal::WireFormatLite::WriteInt32ToArray(2, this->port(), target);
   }
 
-  // int32 shardid = 3;
-  if (this->shardid() != 0) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteInt32ToArray(3, this->shardid(), target);
+  // int32 shard = 3;
+  if (this->shard() != 0) {
+    target = ::google::protobuf::internal::WireFormatLite::WriteInt32ToArray(3, this->shard(), target);
   }
 
   if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
@@ -664,11 +664,11 @@ size_t ServerRegisterRequest::ByteSizeLong() const {
         this->port());
   }
 
-  // int32 shardid = 3;
-  if (this->shardid() != 0) {
+  // int32 shard = 3;
+  if (this->shard() != 0) {
     total_size += 1 +
       ::google::protobuf::internal::WireFormatLite::Int32Size(
-        this->shardid());
+        this->shard());
   }
 
   int cached_size = ::google::protobuf::internal::ToCachedSize(total_size);
@@ -704,8 +704,8 @@ void ServerRegisterRequest::MergeFrom(const ServerRegisterRequest& from) {
   if (from.port() != 0) {
     set_port(from.port());
   }
-  if (from.shardid() != 0) {
-    set_shardid(from.shardid());
+  if (from.shard() != 0) {
+    set_shard(from.shard());
   }
 }
 
@@ -735,7 +735,7 @@ void ServerRegisterRequest::InternalSwap(ServerRegisterRequest* other) {
   using std::swap;
   swap(svrtype_, other->svrtype_);
   swap(port_, other->port_);
-  swap(shardid_, other->shardid_);
+  swap(shard_, other->shard_);
   _internal_metadata_.Swap(&other->_internal_metadata_);
 }
 

@@ -25,6 +25,7 @@ BEGIN_NAMESPACE_SLAM {
 				});
 		SOCKET socket = this->_easynet->createServer(address, port);
 		CHECK_RETURN(!ILLEGAL_SOCKET(socket), false, "createServer:(%s:%d) failure", address, port);
+		Debug << "StorageService listening on " << address << ":" << port;
 		return true;
 	}
 
@@ -43,7 +44,7 @@ BEGIN_NAMESPACE_SLAM {
             if (socket == EASYNET_ILLEGAL_SOCKET) {
                 break;
             }
-            assert(socket == this->id);
+            //assert(socket == this->id);
             if (!state) {
             	CentralTask* centralTask = sCentralTaskManager.find(socket);
             	if (centralTask) {
@@ -94,6 +95,7 @@ BEGIN_NAMESPACE_SLAM {
 	INITIALIZE_INSTANCE(StorageService);
 }
 
+using namespace slam;
 
 //Note: ON_MSG(MSGID, STRUCTURE) 
 // 	 ON_MSG(Easynet* easynet, SOCKET socket, STRUCTURE* msg, CommonMessage* rawmsg)

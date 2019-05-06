@@ -246,11 +246,11 @@ class ServerRegisterRequest : public ::google::protobuf::Message /* @@protoc_ins
   ::google::protobuf::int32 port() const;
   void set_port(::google::protobuf::int32 value);
 
-  // int32 shardid = 3;
-  void clear_shardid();
-  static const int kShardidFieldNumber = 3;
-  ::google::protobuf::int32 shardid() const;
-  void set_shardid(::google::protobuf::int32 value);
+  // int32 shard = 3;
+  void clear_shard();
+  static const int kShardFieldNumber = 3;
+  ::google::protobuf::int32 shard() const;
+  void set_shard(::google::protobuf::int32 value);
 
   // @@protoc_insertion_point(class_scope:protocol.ServerRegisterRequest)
  private:
@@ -258,7 +258,7 @@ class ServerRegisterRequest : public ::google::protobuf::Message /* @@protoc_ins
   ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
   int svrtype_;
   ::google::protobuf::int32 port_;
-  ::google::protobuf::int32 shardid_;
+  ::google::protobuf::int32 shard_;
   mutable ::google::protobuf::internal::CachedSize _cached_size_;
   friend struct ::protobuf_server_2eproto::TableStruct;
 };
@@ -1340,18 +1340,18 @@ inline void ServerRegisterRequest::set_port(::google::protobuf::int32 value) {
   // @@protoc_insertion_point(field_set:protocol.ServerRegisterRequest.port)
 }
 
-// int32 shardid = 3;
-inline void ServerRegisterRequest::clear_shardid() {
-  shardid_ = 0;
+// int32 shard = 3;
+inline void ServerRegisterRequest::clear_shard() {
+  shard_ = 0;
 }
-inline ::google::protobuf::int32 ServerRegisterRequest::shardid() const {
-  // @@protoc_insertion_point(field_get:protocol.ServerRegisterRequest.shardid)
-  return shardid_;
+inline ::google::protobuf::int32 ServerRegisterRequest::shard() const {
+  // @@protoc_insertion_point(field_get:protocol.ServerRegisterRequest.shard)
+  return shard_;
 }
-inline void ServerRegisterRequest::set_shardid(::google::protobuf::int32 value) {
+inline void ServerRegisterRequest::set_shard(::google::protobuf::int32 value) {
   
-  shardid_ = value;
-  // @@protoc_insertion_point(field_set:protocol.ServerRegisterRequest.shardid)
+  shard_ = value;
+  // @@protoc_insertion_point(field_set:protocol.ServerRegisterRequest.shard)
 }
 
 // -------------------------------------------------------------------

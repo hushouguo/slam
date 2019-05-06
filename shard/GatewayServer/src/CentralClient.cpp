@@ -88,6 +88,7 @@ BEGIN_NAMESPACE_SLAM {
 	INITIALIZE_INSTANCE(CentralClient);
 }
 
+using namespace slam;
 
 //Note: ON_MSG(MSGID, STRUCTURE) 
 //		ON_MSG(Easynet* easynet, SOCKET socket, STRUCTURE* msg, CommonMessage* rawmsg)

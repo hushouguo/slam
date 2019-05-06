@@ -33,7 +33,7 @@ BEGIN_NAMESPACE_SLAM {
 			CHECK_RETURN(!ILLEGAL_SOCKET(socket), false, "createServer:(%s:%d) failure", address, port);
 			this->_easynets.push_back(easynet);
 		}
-		Debug << "GatewayService create " << number << " Easynet";
+		Debug << "GatewayService listening on " << address << ":" << port << ", Easynet: " << number;
 		return true;
 	}
 

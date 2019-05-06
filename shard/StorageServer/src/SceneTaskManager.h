@@ -9,7 +9,7 @@
 BEGIN_NAMESPACE_SLAM {
 	class SceneTaskManager : public Manager<SceneTask> {
 		public:	
-			bool msgParser(SOCKET socket, CommonMessage* rawmsg);
+			bool msgParser(Easynet* easynet, SOCKET socket, CommonMessage* rawmsg);
 	};
 }
 
