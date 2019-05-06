@@ -5,5 +5,12 @@
  
 #ifndef __ENTITY_H__
 #define __ENTITY_H__
- 
+
+BEGIN_NAMESPACE_SLAM {
+	class Entity : public Entry<u64, google::protocol::Entity*> {
+		public:
+			Entity(
+	};
+}
+
 #endif
