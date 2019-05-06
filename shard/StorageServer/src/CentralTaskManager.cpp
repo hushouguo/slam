@@ -27,14 +27,11 @@ using namespace slam;
 // 	 ON_MSG(Easynet* easynet, SOCKET socket, STRUCTURE* msg, CommonMessage* rawmsg)
 //
 
-#if false
-ON_MSG(MSGID_HEARTBEAT, Heartbeat) {
-	Heartbeat res;
-	//res.set_systime(sTime.milliseconds());
-	res.set_systime(msg->systime());
-	task->sendMessage(fd, MSGID_HEARTBEAT, &res, 0);
-	//log_trace("receive heartbeat: %ld, systime: %ld", msg->systime(), res.systime());
+ON_MSG(SMSGID_STORAGE_SERIALIZE_REQ, StorageSerializeRequest) {
+	sStorageProcessManager.serialize(easynet, socket, msg);
 }
-#endif	
 
+ON_MSG(SMSGID_STORAGE_UNSERIALIZE_REQ, StorageUnserializeRequest) {
+	sStorageProcessManager.unserialize(easynet, socket, msg);
+}
 

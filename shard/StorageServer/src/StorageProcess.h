@@ -7,16 +7,21 @@
 #define __STORAGEPROCESS_H__
 
 BEGIN_NAMESPACE_SLAM {
-	class StorageProcess : public Runnable {
+	class StorageProcess : public Entry<int> {
 		public:
-			StorageProcess(u32 id);
+			StorageProcess(int id);
 			const char* getClassName() override { return "StorageProcess"; }
 
 		public:
-			void run() override;
-
+			bool init();
+			
 		public:
-			bool serialize(u32 shard, std::string table, Entity* entity, Message* context);	
+			void serialize(Easynet* easynet, SOCKET socket, StorageSerializeRequest* request);
+			void unserialize(Easynet* easynet, SOCKET socket, StorageUnserializeRequest* request);
+
+		private:
+			std::unordered_map<int, MySQL*> _dbs;
+			StorageEntityManager _entityManager;
 	};
 }
 

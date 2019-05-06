@@ -46,6 +46,12 @@ int main(int argc, char* argv[]) {
 
 	DumpLibraryVersion();
 
+	sThreadPool.init(sConfig.get("Service.threads", sConfig.threads));
+	
+	CHECK_GOTO(sStorageProcessManager.init(
+		sConfig.get("Service.threads", sConfig.threads)),
+		exit_failure, "StorageProcessManager init failure");
+
 	CHECK_GOTO(sStorageService.init(
 		sConfig.get("Service.address", "0.0.0.0"), sConfig.get("Service.port", 12300u)),
 		exit_failure, "StorageService init failure");
@@ -54,6 +60,8 @@ int main(int argc, char* argv[]) {
 
 exit_failure:
 	sConfig.syshalt(0);
+	sThreadPool.stop();
+	sStorageProcessManager.stop();
 	sStorageService.stop();
 	Trace("shutdown system with terminate reason: %d", sConfig.terminate_reason);
 	Easylog::syslog()->stop();
