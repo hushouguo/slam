@@ -50,17 +50,15 @@ int main(int argc, char* argv[]) {
 
 	DumpLibraryVersion();
 
-#if 0
 	CHECK_GOTO(sCentralClient.init(
 		sConfig.get("CentralServer.address", "127.0.0.1"), sConfig.get("CentralServer.port", 9000u)), 
 		exit_failure, "CentralClient init failure");
-#endif
 
 	CHECK_GOTO(sGatewayService.init(
 		sConfig.get("Service.address", "0.0.0.0"), sConfig.get("Service.port", 12306u)), 
 		exit_failure, "ClientTaskManager init failure");
 	
-//	CHECK_GOTO(sSceneClientManager.init(), exit_failure, "SceneClientManager init failure");
+	CHECK_GOTO(sSceneClientManager.init(), exit_failure, "SceneClientManager init failure");
 
 	sMainProcess.run();
 

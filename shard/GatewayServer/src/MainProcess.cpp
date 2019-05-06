@@ -25,7 +25,7 @@ BEGIN_NAMESPACE_SLAM {
 				Debug << "Need reload config files and data files";
 			}
 			sGatewayService.run();
-			//sCentralClient.run();
+			sCentralClient.run();
 			sSceneClientManager.run();
 		}
 	}
