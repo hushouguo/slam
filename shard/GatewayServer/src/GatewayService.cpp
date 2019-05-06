@@ -10,10 +10,12 @@
 #include "SceneClientManager.h"
 #include "GatewayPlayer.h"
 #include "GatewayPlayerManager.h"
+#include "GatewayService.h"
 #include "MainProcess.h"
 
 BEGIN_NAMESPACE_SLAM {
 	bool GatewayService::init(const char* address, int port, size_t number) {
+		//assert(this->_easynet == nullptr && ILLEGAL_SOCKET(this->_socket));	
 		if (number == 0) {
 			number = cpus();
 		}
@@ -28,7 +30,7 @@ BEGIN_NAMESPACE_SLAM {
 						sMainProcess.wakeup();
 					});
 			SOCKET socket = easynet->createServer(address, port);
-			CHECK_RETURN(socket != EASYNET_ILLEGAL_SOCKET, false, "createServer:(%s:%d) failure", address, port);
+			CHECK_RETURN(!ILLEGAL_SOCKET(socket), false, "createServer:(%s:%d) failure", address, port);
 			this->_easynets.push_back(easynet);
 		}
 		Debug << "GatewayService create " << number << " Easynet";
@@ -56,22 +58,22 @@ BEGIN_NAMESPACE_SLAM {
 		while (!sConfig.halt) {
 			bool state = false;
 			SOCKET socket = easynet->getSocketState(&state);
-			if (socket == EASYNET_ILLEGAL_SOCKET) {
+			if (ILLEGAL_SOCKET(socket)) {
 				break;
 			}
 			if (state) {
 				ClientTask* task = new ClientTask(easynet, socket);
-				if (!this->add(task)) {
+				if (!sClientTaskManager.add(task)) {
 					SafeDelete(task);
 				}
 				Debug << "new client task arrived: " << socket;
 			}
 			else {
 				Alarm << "lost client task: " << socket;
-				ClientTask* task = this->find(socket);
+				ClientTask* task = sClientTaskManager.find(socket);
 				if (task) {
 					sGatewayPlayerManager.lostClient(task);					
-					this->remove(task);
+					sClientTaskManager.remove(task);
 					SafeDelete(task);
 				}
 			}
@@ -85,15 +87,15 @@ BEGIN_NAMESPACE_SLAM {
 			if (!netmsg) {
 				break;
 			}
-			assert(socket != EASYNET_ILLEGAL_SOCKET);
-			ClientTask* task = this->find(socket);
+			assert(!ILLEGAL_SOCKET(socket));
+			ClientTask* task = sClientTaskManager.find(socket);
 			if (!task) {
 				Error << "illegal socket: " << socket;
 				easynet->closeSocket(socket);
 			}
 			else {
 	            CommonMessage* rawmsg = CastCommonMessage(easynet, netmsg);
-				if (!this->msgParser(easynet, socket, rawmsg)) {
+				if (!sClientTaskManager.msgParser(easynet, socket, rawmsg)) {
 					easynet->closeSocket(socket);
 				}
 			}
@@ -101,5 +103,6 @@ BEGIN_NAMESPACE_SLAM {
 		}
 	}
 
-	INITIALIZE_INSTANCE(GatewayServiceManager);
+	INITIALIZE_INSTANCE(GatewayService);
 }
+

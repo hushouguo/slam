@@ -11,6 +11,7 @@
 #include "SceneClientManager.h"
 #include "GatewayPlayer.h"
 #include "GatewayPlayerManager.h"
+#include "GatewayService.h"
 #include "MainProcess.h"
 
 using namespace slam;
@@ -55,7 +56,7 @@ int main(int argc, char* argv[]) {
 		exit_failure, "CentralClient init failure");
 #endif
 
-	CHECK_GOTO(sClientTaskManager.init(
+	CHECK_GOTO(sGatewayService.init(
 		sConfig.get("Service.address", "0.0.0.0"), sConfig.get("Service.port", 12306u)), 
 		exit_failure, "ClientTaskManager init failure");
 	
@@ -65,7 +66,7 @@ int main(int argc, char* argv[]) {
 
 exit_failure:
 	sConfig.syshalt(0);
-	sClientTaskManager.stop();
+	sGatewayService.stop();
 	sCentralClient.stop();
 	sSceneClientManager.stop();
 	Trace("shutdown system with terminate reason: %d", sConfig.terminate_reason);

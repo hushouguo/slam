@@ -13,6 +13,7 @@ DECLARE_MESSAGE();
 
 BEGIN_NAMESPACE_SLAM {
 	bool CentralClient::init(const char* address, int port) {
+		assert(this->_easynet == nullptr && ILLEGAL_SOCKET(this->_socket));
 		this->_easynet = Easynet::createInstance(
 			[](const void* buffer, size_t len) -> int {
 				CommonMessage* msg = (CommonMessage*) buffer;
@@ -22,14 +23,14 @@ BEGIN_NAMESPACE_SLAM {
 				sMainProcess.wakeup();
 				});
 
-		this->id = this->_easynet->createClient(address, port, 0);
-		CHECK_RETURN(this->id != EASYNET_ILLEGAL_SOCKET, false, "createServer:(%s:%d) failure", address, port);
+		this->_socket = this->_easynet->createClient(address, port, 0);
+		CHECK_RETURN(!ILLEGAL_SOCKET(this->_socket), false, "createServer:(%s:%d) failure", address, port);
 		return true;
 	}
 
 	void CentralClient::stop() {
 		SafeDelete(this->_easynet);
-		this->id = EASYNET_ILLEGAL_SOCKET;
+		this->_socket = EASYNET_ILLEGAL_SOCKET;
 		sConfig.syshalt(0);
 	}
 
@@ -41,17 +42,17 @@ BEGIN_NAMESPACE_SLAM {
 	}
 
 	void CentralClient::run() {
-		CHECK_RETURN(this->_easynet && this->id != EASYNET_ILLEGAL_SOCKET, void(0), "centralClient not initiated");
+		CHECK_RETURN(this->_easynet && !ILLEGAL_SOCKET(this->_socket), void(0), "centralClient not initiated");
 
 		//
 		// handle connection state
         while (!sConfig.halt) {
             bool state = false;
             SOCKET socket = this->_easynet->getSocketState(&state);
-            if (socket == EASYNET_ILLEGAL_SOCKET) {
+            if (ILLEGAL_SOCKET(socket)) {
                 break;
             }
-            assert(socket == this->id);
+            assert(socket == this->_socket);
             if (state) {
 				Debug << "CentralClient successful connect";
 				this->registerServer();
@@ -70,7 +71,7 @@ BEGIN_NAMESPACE_SLAM {
             if (!netmsg) {
                 break;
             }
-            assert(socket == this->id);
+            assert(socket == this->_socket);
 
             CommonMessage* rawmsg = CastCommonMessage(this->_easynet, netmsg);
             if (!this->msgParser(rawmsg)) {
@@ -81,11 +82,11 @@ BEGIN_NAMESPACE_SLAM {
 	}	
 
 	bool CentralClient::sendMessage(u64 entityid, u32 msgid, const google::protobuf::Message* message) {
-		return SendMessage(this->_easynet, this->id, entityid, msgid, message);
+		return SendMessage(this->_easynet, this->_socket, entityid, msgid, message);
 	}
 
 	bool CentralClient::msgParser(CommonMessage* rawmsg) {
-		return DISPATCH_MESSAGE(this->_easynet, this->id, rawmsg);
+		return DISPATCH_MESSAGE(this->_easynet, this->_socket, rawmsg);
 	}
 	
 	INITIALIZE_INSTANCE(CentralClient);

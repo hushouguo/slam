@@ -22,6 +22,7 @@ Note 1: Rank之类的需求需要额外的service来遍历所有数据库对象�
 Note 2: 分库分表的考虑, 只分库，不分表
 Note 3: 通过传递lamda来通知链接的断开是不可以的
 
+GatewayServer链接的timeout和发送消息的频率限制, 心跳
 
 StorageServer
 1. 8 threads: 通过entityid来dispatch, 每个线程拥有自己的面对所有数据库的独立连接
@@ -34,5 +35,16 @@ SceneServer
 1. 逻辑多线程，如果是开房间的方式，开启线程池，来运行游戏逻辑
 2. 看需求而定，游戏逻辑可以用lua来编写，看看需要多少接口
 3. 多线程来跑游戏逻辑需要考虑互斥的地方
+
+c++ 11 signal system
+
+https://www.80ying.com/movie/4159
+https://www.80ying.com/movie/24248
+https://www.80ying.com/movie/24379
+https://www.80ying.com/movie/22780
+https://www.80ying.com/movie/24372
+https://www.85lou.com/thread-265254-1-1.html
+https://www.85lou.com/thread-265532-1-1.html
+https://www.85lou.com/thread-265534-1-1.html
 
 

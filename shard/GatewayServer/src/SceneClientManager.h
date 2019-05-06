@@ -9,9 +9,6 @@
 BEGIN_NAMESPACE_SLAM {
 	class SceneClientManager : public Manager<SceneClient> {
 		public:
-			SceneClientManager();
-			
-		public:
 			bool init();
 			bool init(u64 sceneServerid);
 			void stop();
@@ -19,8 +16,6 @@ BEGIN_NAMESPACE_SLAM {
 		public:	
 			void run();
 			bool msgParser(SOCKET socket, CommonMessage* rawmsg);
-
-		public:
 			bool sendMessage(SOCKET socket, u64 entityid, u32 msgid, const google::protobuf::Message* message);
 
 		private:

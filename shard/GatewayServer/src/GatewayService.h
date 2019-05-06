@@ -23,6 +23,6 @@ BEGIN_NAMESPACE_SLAM {
 	};
 }
 
-#define sGatewayServiceManager slam::Singleton<slam::GatewayServiceManager>::getInstance()
+#define sGatewayService slam::Singleton<slam::GatewayService>::getInstance()
 
 #endif

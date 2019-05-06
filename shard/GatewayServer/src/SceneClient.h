@@ -11,9 +11,9 @@ BEGIN_NAMESPACE_SLAM {
 		public:
 			SceneClient(Easynet* easynet, SOCKET socket, u64 sceneServerid);
 			const char* getClassName() override { return "SceneClient"; }
-			inline u64 sceneServerid() { return this->_sceneServerid; }
 	
 		public:
+			inline u64 sceneServerid() { return this->_sceneServerid; }
 			bool sendMessage(u64 entityid, u32 msgid, const google::protobuf::Message* message);
 
 		private:

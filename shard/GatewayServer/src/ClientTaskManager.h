@@ -8,22 +8,9 @@
 
 BEGIN_NAMESPACE_SLAM {
 	class ClientTaskManager : public Manager<ClientTask> {
-		public:
-			bool init(const char* address, int port, size_t number = 0);
-			void stop();
-		
 		public:	
-			void run();
 			bool msgParser(Easynet* easynet, SOCKET socket, CommonMessage* rawmsg);
-
-		public:
 			bool sendMessage(SOCKET socket, u64 entityid, u32 msgid, const google::protobuf::Message* message);
-			
-		private:
-			std::vector<Easynet*> _easynets;
-
-		private:
-			void run(Easynet* easynet);
 	};
 }
 

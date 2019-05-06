@@ -16,7 +16,8 @@
 DECLARE_MESSAGE();
 
 BEGIN_NAMESPACE_SLAM {
-	SceneClientManager::SceneClientManager() {
+	bool SceneClientManager::init() {	
+		assert(this->_easynet == nullptr);
 		this->_easynet = Easynet::createInstance(
 			[](const void* buffer, size_t len) -> int {
 				CommonMessage* msg = (CommonMessage*) buffer;
@@ -25,9 +26,7 @@ BEGIN_NAMESPACE_SLAM {
 			[]() {
 				sMainProcess.wakeup();
 				});
-	}
-	
-	bool SceneClientManager::init() {	
+		assert(this->_easynet);				
 		ServerRetrieveRequest request;
 		request.set_svrtype(SERVER_TYPE_SCENE);
 		return sCentralClient.sendMessage(0, SMSGID_SERVER_RETRIEVE_REQ, &request);

@@ -11,6 +11,7 @@
 #include "SceneClientManager.h"
 #include "GatewayPlayer.h"
 #include "GatewayPlayerManager.h"
+#include "GatewayService.h"
 #include "MainProcess.h"
 
 BEGIN_NAMESPACE_SLAM {
@@ -23,7 +24,7 @@ BEGIN_NAMESPACE_SLAM {
 				//NOTE: reload config & data files
 				Debug << "Need reload config files and data files";
 			}
-			sClientTaskManager.run();
+			sGatewayService.run();
 			//sCentralClient.run();
 			sSceneClientManager.run();
 		}
