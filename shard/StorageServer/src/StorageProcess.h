@@ -21,8 +21,8 @@ BEGIN_NAMESPACE_SLAM {
 			void unserialize(Easynet* easynet, SOCKET socket, StorageUnserializeRequest* request);
 
 		private:
-			std::unordered_map<int, MySQL*> _dbs;
 			StorageEntityManager _entityManager;
+			StorageHandlerManager _handlerManager;
 	};
 }
 

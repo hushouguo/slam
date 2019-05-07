@@ -14,6 +14,8 @@
 #include "StorageEntityManager.h"
 #include "StorageProcess.h"
 #include "StorageProcessManager.h"
+#include "StorageHandler.h"
+#include "StorageHandlerManager.h"
 
 BEGIN_NAMESPACE_SLAM {
 	bool StorageProcessManager::init(int number) {

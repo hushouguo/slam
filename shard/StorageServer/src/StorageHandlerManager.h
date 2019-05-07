@@ -7,6 +7,14 @@
 #define __STORAGEHANDLERMANAGER_H__
 
 BEGIN_NAMESPACE_SLAM {
+	class StorageHandlerManager : public Manager<StorageHandler> {
+		public:
+			bool init();
+
+		public:
+			u64 InsertEntityToTable(u32 shard, std::string table, Entity* entity);
+			Entity* RetrieveEntityFromTable(u32 shard, std::string table, u64 entityid);
+	};
 }
 
 #endif
