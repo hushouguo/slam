@@ -8,7 +8,6 @@ enum ValueType {
 	valuetype_string			=	2;
 	valuetype_float				=	3;
 	valuetype_bool				=	4;
-	valuetype_bytes				=	5;
 }
 
 message Value {
@@ -17,7 +16,6 @@ message Value {
 	string value_string			=	3;
 	float value_float			=	4;
 	bool value_bool				=	5;
-	bytes value_bytes			=	6;
 }
 
 message Entity {

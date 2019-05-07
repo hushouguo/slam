@@ -75,13 +75,12 @@ enum ValueType {
   valuetype_string = 2,
   valuetype_float = 3,
   valuetype_bool = 4,
-  valuetype_bytes = 5,
   ValueType_INT_MIN_SENTINEL_DO_NOT_USE_ = ::google::protobuf::kint32min,
   ValueType_INT_MAX_SENTINEL_DO_NOT_USE_ = ::google::protobuf::kint32max
 };
 bool ValueType_IsValid(int value);
 const ValueType ValueType_MIN = valuetype_nil;
-const ValueType ValueType_MAX = valuetype_bytes;
+const ValueType ValueType_MAX = valuetype_bool;
 const int ValueType_ARRAYSIZE = ValueType_MAX + 1;
 
 const ::google::protobuf::EnumDescriptor* ValueType_descriptor();
@@ -197,20 +196,6 @@ class Value : public ::google::protobuf::Message /* @@protoc_insertion_point(cla
   ::std::string* release_value_string();
   void set_allocated_value_string(::std::string* value_string);
 
-  // bytes value_bytes = 6;
-  void clear_value_bytes();
-  static const int kValueBytesFieldNumber = 6;
-  const ::std::string& value_bytes() const;
-  void set_value_bytes(const ::std::string& value);
-  #if LANG_CXX11
-  void set_value_bytes(::std::string&& value);
-  #endif
-  void set_value_bytes(const char* value);
-  void set_value_bytes(const void* value, size_t size);
-  ::std::string* mutable_value_bytes();
-  ::std::string* release_value_bytes();
-  void set_allocated_value_bytes(::std::string* value_bytes);
-
   // int64 value_int64 = 2;
   void clear_value_int64();
   static const int kValueInt64FieldNumber = 2;
@@ -240,7 +225,6 @@ class Value : public ::google::protobuf::Message /* @@protoc_insertion_point(cla
 
   ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
   ::google::protobuf::internal::ArenaStringPtr value_string_;
-  ::google::protobuf::internal::ArenaStringPtr value_bytes_;
   ::google::protobuf::int64 value_int64_;
   int type_;
   float value_float_;
@@ -506,59 +490,6 @@ inline void Value::set_value_bool(bool value) {
   
   value_bool_ = value;
   // @@protoc_insertion_point(field_set:protocol.Value.value_bool)
-}
-
-// bytes value_bytes = 6;
-inline void Value::clear_value_bytes() {
-  value_bytes_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-}
-inline const ::std::string& Value::value_bytes() const {
-  // @@protoc_insertion_point(field_get:protocol.Value.value_bytes)
-  return value_bytes_.GetNoArena();
-}
-inline void Value::set_value_bytes(const ::std::string& value) {
-  
-  value_bytes_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
-  // @@protoc_insertion_point(field_set:protocol.Value.value_bytes)
-}
-#if LANG_CXX11
-inline void Value::set_value_bytes(::std::string&& value) {
-  
-  value_bytes_.SetNoArena(
-    &::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::move(value));
-  // @@protoc_insertion_point(field_set_rvalue:protocol.Value.value_bytes)
-}
-#endif
-inline void Value::set_value_bytes(const char* value) {
-  GOOGLE_DCHECK(value != NULL);
-  
-  value_bytes_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
-  // @@protoc_insertion_point(field_set_char:protocol.Value.value_bytes)
-}
-inline void Value::set_value_bytes(const void* value, size_t size) {
-  
-  value_bytes_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
-      ::std::string(reinterpret_cast<const char*>(value), size));
-  // @@protoc_insertion_point(field_set_pointer:protocol.Value.value_bytes)
-}
-inline ::std::string* Value::mutable_value_bytes() {
-  
-  // @@protoc_insertion_point(field_mutable:protocol.Value.value_bytes)
-  return value_bytes_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-}
-inline ::std::string* Value::release_value_bytes() {
-  // @@protoc_insertion_point(field_release:protocol.Value.value_bytes)
-  
-  return value_bytes_.ReleaseNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-}
-inline void Value::set_allocated_value_bytes(::std::string* value_bytes) {
-  if (value_bytes != NULL) {
-    
-  } else {
-    
-  }
-  value_bytes_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value_bytes);
-  // @@protoc_insertion_point(field_set_allocated:protocol.Value.value_bytes)
 }
 
 // -------------------------------------------------------------------

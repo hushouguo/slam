@@ -12,6 +12,8 @@
 #include "MainProcess.h"
 #include "StorageEntity.h"
 #include "StorageEntityManager.h"
+#include "StorageHandler.h"
+#include "StorageHandlerManager.h"
 #include "StorageProcess.h"
 #include "StorageProcessManager.h"
 

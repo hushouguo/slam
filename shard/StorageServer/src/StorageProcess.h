@@ -7,7 +7,6 @@
 #define __STORAGEPROCESS_H__
 
 BEGIN_NAMESPACE_SLAM {
-	class MySQL;
 	class StorageProcess : public Entry<int> {
 		public:
 			StorageProcess(int id);

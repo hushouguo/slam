@@ -104,7 +104,6 @@ const ::google::protobuf::uint32 TableStruct::offsets[] GOOGLE_PROTOBUF_ATTRIBUT
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::protocol::Value, value_string_),
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::protocol::Value, value_float_),
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::protocol::Value, value_bool_),
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::protocol::Value, value_bytes_),
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::protocol::Entity_ValuesEntry_DoNotUse, _has_bits_),
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::protocol::Entity_ValuesEntry_DoNotUse, _internal_metadata_),
   ~0u,  // no _extensions_
@@ -124,8 +123,8 @@ const ::google::protobuf::uint32 TableStruct::offsets[] GOOGLE_PROTOBUF_ATTRIBUT
 };
 static const ::google::protobuf::internal::MigrationSchema schemas[] GOOGLE_PROTOBUF_ATTRIBUTE_SECTION_VARIABLE(protodesc_cold) = {
   { 0, -1, sizeof(::protocol::Value)},
-  { 11, 18, sizeof(::protocol::Entity_ValuesEntry_DoNotUse)},
-  { 20, -1, sizeof(::protocol::Entity)},
+  { 10, 17, sizeof(::protocol::Entity_ValuesEntry_DoNotUse)},
+  { 19, -1, sizeof(::protocol::Entity)},
 };
 
 static ::google::protobuf::Message const * const file_default_instances[] = {
@@ -155,21 +154,20 @@ void protobuf_RegisterTypes(const ::std::string&) {
 void AddDescriptorsImpl() {
   InitDefaults();
   static const char descriptor[] GOOGLE_PROTOBUF_ATTRIBUTE_SECTION_VARIABLE(protodesc_cold) = {
-      "\n\014entity.proto\022\010protocol\"\223\001\n\005Value\022!\n\004ty"
-      "pe\030\001 \001(\0162\023.protocol.ValueType\022\023\n\013value_i"
-      "nt64\030\002 \001(\003\022\024\n\014value_string\030\003 \001(\t\022\023\n\013valu"
-      "e_float\030\004 \001(\002\022\022\n\nvalue_bool\030\005 \001(\010\022\023\n\013val"
-      "ue_bytes\030\006 \001(\014\"\202\001\n\006Entity\022\n\n\002id\030\001 \001(\004\022,\n"
-      "\006values\030\002 \003(\0132\034.protocol.Entity.ValuesEn"
-      "try\032>\n\013ValuesEntry\022\013\n\003key\030\001 \001(\t\022\036\n\005value"
-      "\030\002 \001(\0132\017.protocol.Value:\0028\001*\207\001\n\tValueTyp"
-      "e\022\021\n\rvaluetype_nil\020\000\022\023\n\017valuetype_int64\020"
-      "\001\022\024\n\020valuetype_string\020\002\022\023\n\017valuetype_flo"
-      "at\020\003\022\022\n\016valuetype_bool\020\004\022\023\n\017valuetype_by"
-      "tes\020\005b\006proto3"
+      "\n\014entity.proto\022\010protocol\"~\n\005Value\022!\n\004typ"
+      "e\030\001 \001(\0162\023.protocol.ValueType\022\023\n\013value_in"
+      "t64\030\002 \001(\003\022\024\n\014value_string\030\003 \001(\t\022\023\n\013value"
+      "_float\030\004 \001(\002\022\022\n\nvalue_bool\030\005 \001(\010\"\202\001\n\006Ent"
+      "ity\022\n\n\002id\030\001 \001(\004\022,\n\006values\030\002 \003(\0132\034.protoc"
+      "ol.Entity.ValuesEntry\032>\n\013ValuesEntry\022\013\n\003"
+      "key\030\001 \001(\t\022\036\n\005value\030\002 \001(\0132\017.protocol.Valu"
+      "e:\0028\001*r\n\tValueType\022\021\n\rvaluetype_nil\020\000\022\023\n"
+      "\017valuetype_int64\020\001\022\024\n\020valuetype_string\020\002"
+      "\022\023\n\017valuetype_float\020\003\022\022\n\016valuetype_bool\020"
+      "\004b\006proto3"
   };
   ::google::protobuf::DescriptorPool::InternalAddGeneratedFile(
-      descriptor, 453);
+      descriptor, 409);
   ::google::protobuf::MessageFactory::InternalRegisterGeneratedFile(
     "entity.proto", &protobuf_RegisterTypes);
 }
@@ -197,7 +195,6 @@ bool ValueType_IsValid(int value) {
     case 2:
     case 3:
     case 4:
-    case 5:
       return true;
     default:
       return false;
@@ -215,7 +212,6 @@ const int Value::kValueInt64FieldNumber;
 const int Value::kValueStringFieldNumber;
 const int Value::kValueFloatFieldNumber;
 const int Value::kValueBoolFieldNumber;
-const int Value::kValueBytesFieldNumber;
 #endif  // !defined(_MSC_VER) || _MSC_VER >= 1900
 
 Value::Value()
@@ -233,10 +229,6 @@ Value::Value(const Value& from)
   if (from.value_string().size() > 0) {
     value_string_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.value_string_);
   }
-  value_bytes_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-  if (from.value_bytes().size() > 0) {
-    value_bytes_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.value_bytes_);
-  }
   ::memcpy(&value_int64_, &from.value_int64_,
     static_cast<size_t>(reinterpret_cast<char*>(&value_bool_) -
     reinterpret_cast<char*>(&value_int64_)) + sizeof(value_bool_));
@@ -245,7 +237,6 @@ Value::Value(const Value& from)
 
 void Value::SharedCtor() {
   value_string_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-  value_bytes_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   ::memset(&value_int64_, 0, static_cast<size_t>(
       reinterpret_cast<char*>(&value_bool_) -
       reinterpret_cast<char*>(&value_int64_)) + sizeof(value_bool_));
@@ -258,7 +249,6 @@ Value::~Value() {
 
 void Value::SharedDtor() {
   value_string_.DestroyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-  value_bytes_.DestroyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
 
 void Value::SetCachedSize(int size) const {
@@ -282,7 +272,6 @@ void Value::Clear() {
   (void) cached_has_bits;
 
   value_string_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-  value_bytes_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   ::memset(&value_int64_, 0, static_cast<size_t>(
       reinterpret_cast<char*>(&value_bool_) -
       reinterpret_cast<char*>(&value_int64_)) + sizeof(value_bool_));
@@ -372,18 +361,6 @@ bool Value::MergePartialFromCodedStream(
         break;
       }
 
-      // bytes value_bytes = 6;
-      case 6: {
-        if (static_cast< ::google::protobuf::uint8>(tag) ==
-            static_cast< ::google::protobuf::uint8>(50u /* 50 & 0xFF */)) {
-          DO_(::google::protobuf::internal::WireFormatLite::ReadBytes(
-                input, this->mutable_value_bytes()));
-        } else {
-          goto handle_unusual;
-        }
-        break;
-      }
-
       default: {
       handle_unusual:
         if (tag == 0) {
@@ -441,12 +418,6 @@ void Value::SerializeWithCachedSizes(
     ::google::protobuf::internal::WireFormatLite::WriteBool(5, this->value_bool(), output);
   }
 
-  // bytes value_bytes = 6;
-  if (this->value_bytes().size() > 0) {
-    ::google::protobuf::internal::WireFormatLite::WriteBytesMaybeAliased(
-      6, this->value_bytes(), output);
-  }
-
   if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
     ::google::protobuf::internal::WireFormat::SerializeUnknownFields(
         (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()), output);
@@ -493,13 +464,6 @@ void Value::SerializeWithCachedSizes(
     target = ::google::protobuf::internal::WireFormatLite::WriteBoolToArray(5, this->value_bool(), target);
   }
 
-  // bytes value_bytes = 6;
-  if (this->value_bytes().size() > 0) {
-    target =
-      ::google::protobuf::internal::WireFormatLite::WriteBytesToArray(
-        6, this->value_bytes(), target);
-  }
-
   if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
     target = ::google::protobuf::internal::WireFormat::SerializeUnknownFieldsToArray(
         (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()), target);
@@ -522,13 +486,6 @@ size_t Value::ByteSizeLong() const {
     total_size += 1 +
       ::google::protobuf::internal::WireFormatLite::StringSize(
         this->value_string());
-  }
-
-  // bytes value_bytes = 6;
-  if (this->value_bytes().size() > 0) {
-    total_size += 1 +
-      ::google::protobuf::internal::WireFormatLite::BytesSize(
-        this->value_bytes());
   }
 
   // int64 value_int64 = 2;
@@ -585,10 +542,6 @@ void Value::MergeFrom(const Value& from) {
 
     value_string_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.value_string_);
   }
-  if (from.value_bytes().size() > 0) {
-
-    value_bytes_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.value_bytes_);
-  }
   if (from.value_int64() != 0) {
     set_value_int64(from.value_int64());
   }
@@ -628,8 +581,6 @@ void Value::Swap(Value* other) {
 void Value::InternalSwap(Value* other) {
   using std::swap;
   value_string_.Swap(&other->value_string_, &::google::protobuf::internal::GetEmptyStringAlreadyInited(),
-    GetArenaNoVirtual());
-  value_bytes_.Swap(&other->value_bytes_, &::google::protobuf::internal::GetEmptyStringAlreadyInited(),
     GetArenaNoVirtual());
   swap(value_int64_, other->value_int64_);
   swap(type_, other->type_);
