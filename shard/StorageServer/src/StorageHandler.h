@@ -8,9 +8,9 @@
 
 BEGIN_NAMESPACE_SLAM {
 	class MySQL;
-	class StorageHandler : public Entry<int> {
+	class StorageHandler : public Entry<u32> {
 		public:
-			StorageHandler(int shard);
+			StorageHandler(u32 shard);
 			const char* getClassName() override { return "StorageHandler"; }
 
 		public:

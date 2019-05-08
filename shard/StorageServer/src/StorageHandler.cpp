@@ -19,7 +19,7 @@
 #define MYSQL_VARCHAR_GBK_MAXSIZE		32766
 
 BEGIN_NAMESPACE_SLAM {
-	StorageHandler::StorageHandler(int shard) : Entry<int>(shard) {
+	StorageHandler::StorageHandler(u32 shard) : Entry<u32>(shard) {
 	}
 
 	u64 StorageHandler::InsertEntityToTable(u32 shard, std::string table, const Entity* entity) {
