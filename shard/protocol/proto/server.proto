@@ -31,7 +31,7 @@ enum SERVER_TYPE {
 message ServerRegisterRequest {
 	SERVER_TYPE svrtype				=	1;
 	int32 port						=	2;
-	int32 shard						=	3;
+	uint32 shard					=	3;
 }
 
 message ServerRegisterResponse {

@@ -20,7 +20,7 @@
 // @@protoc_insertion_point(includes)
 
 namespace protobuf_entity_2eproto {
-extern PROTOBUF_INTERNAL_EXPORT_protobuf_entity_2eproto ::google::protobuf::internal::SCCInfo<1> scc_info_Entity;
+extern PROTOBUF_INTERNAL_EXPORT_protobuf_entity_2eproto ::google::protobuf::internal::SCCInfo<0> scc_info_Entity;
 }  // namespace protobuf_entity_2eproto
 namespace protobuf_server_2eproto {
 extern PROTOBUF_INTERNAL_EXPORT_protobuf_server_2eproto ::google::protobuf::internal::SCCInfo<0> scc_info_StorageContext;
@@ -346,7 +346,7 @@ void AddDescriptorsImpl() {
       "\n\014server.proto\022\010protocol\032\014entity.proto\"\\"
       "\n\025ServerRegisterRequest\022&\n\007svrtype\030\001 \001(\016"
       "2\025.protocol.SERVER_TYPE\022\014\n\004port\030\002 \001(\005\022\r\n"
-      "\005shard\030\003 \001(\005\"L\n\026ServerRegisterResponse\022\n"
+      "\005shard\030\003 \001(\r\"L\n\026ServerRegisterResponse\022\n"
       "\n\002rc\030\001 \001(\010\022&\n\007svrtype\030\002 \001(\0162\025.protocol.S"
       "ERVER_TYPE\"\?\n\025ServerRetrieveRequest\022&\n\007s"
       "vrtype\030\001 \001(\0162\025.protocol.SERVER_TYPE\"Q\n\026S"
@@ -548,13 +548,13 @@ bool ServerRegisterRequest::MergePartialFromCodedStream(
         break;
       }
 
-      // int32 shard = 3;
+      // uint32 shard = 3;
       case 3: {
         if (static_cast< ::google::protobuf::uint8>(tag) ==
             static_cast< ::google::protobuf::uint8>(24u /* 24 & 0xFF */)) {
 
           DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
-                   ::google::protobuf::int32, ::google::protobuf::internal::WireFormatLite::TYPE_INT32>(
+                   ::google::protobuf::uint32, ::google::protobuf::internal::WireFormatLite::TYPE_UINT32>(
                  input, &shard_)));
         } else {
           goto handle_unusual;
@@ -599,9 +599,9 @@ void ServerRegisterRequest::SerializeWithCachedSizes(
     ::google::protobuf::internal::WireFormatLite::WriteInt32(2, this->port(), output);
   }
 
-  // int32 shard = 3;
+  // uint32 shard = 3;
   if (this->shard() != 0) {
-    ::google::protobuf::internal::WireFormatLite::WriteInt32(3, this->shard(), output);
+    ::google::protobuf::internal::WireFormatLite::WriteUInt32(3, this->shard(), output);
   }
 
   if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
@@ -629,9 +629,9 @@ void ServerRegisterRequest::SerializeWithCachedSizes(
     target = ::google::protobuf::internal::WireFormatLite::WriteInt32ToArray(2, this->port(), target);
   }
 
-  // int32 shard = 3;
+  // uint32 shard = 3;
   if (this->shard() != 0) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteInt32ToArray(3, this->shard(), target);
+    target = ::google::protobuf::internal::WireFormatLite::WriteUInt32ToArray(3, this->shard(), target);
   }
 
   if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
@@ -664,10 +664,10 @@ size_t ServerRegisterRequest::ByteSizeLong() const {
         this->port());
   }
 
-  // int32 shard = 3;
+  // uint32 shard = 3;
   if (this->shard() != 0) {
     total_size += 1 +
-      ::google::protobuf::internal::WireFormatLite::Int32Size(
+      ::google::protobuf::internal::WireFormatLite::UInt32Size(
         this->shard());
   }
 

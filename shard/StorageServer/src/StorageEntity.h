@@ -11,6 +11,8 @@ BEGIN_NAMESPACE_SLAM {
 		public:
 			StorageEntity(Entity*);
 			const char* getClassName() override { return "StorageEntity"; }
+
+		public:
 	};
 }
 

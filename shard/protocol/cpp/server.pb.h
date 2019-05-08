@@ -246,11 +246,11 @@ class ServerRegisterRequest : public ::google::protobuf::Message /* @@protoc_ins
   ::google::protobuf::int32 port() const;
   void set_port(::google::protobuf::int32 value);
 
-  // int32 shard = 3;
+  // uint32 shard = 3;
   void clear_shard();
   static const int kShardFieldNumber = 3;
-  ::google::protobuf::int32 shard() const;
-  void set_shard(::google::protobuf::int32 value);
+  ::google::protobuf::uint32 shard() const;
+  void set_shard(::google::protobuf::uint32 value);
 
   // @@protoc_insertion_point(class_scope:protocol.ServerRegisterRequest)
  private:
@@ -258,7 +258,7 @@ class ServerRegisterRequest : public ::google::protobuf::Message /* @@protoc_ins
   ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
   int svrtype_;
   ::google::protobuf::int32 port_;
-  ::google::protobuf::int32 shard_;
+  ::google::protobuf::uint32 shard_;
   mutable ::google::protobuf::internal::CachedSize _cached_size_;
   friend struct ::protobuf_server_2eproto::TableStruct;
 };
@@ -1340,15 +1340,15 @@ inline void ServerRegisterRequest::set_port(::google::protobuf::int32 value) {
   // @@protoc_insertion_point(field_set:protocol.ServerRegisterRequest.port)
 }
 
-// int32 shard = 3;
+// uint32 shard = 3;
 inline void ServerRegisterRequest::clear_shard() {
-  shard_ = 0;
+  shard_ = 0u;
 }
-inline ::google::protobuf::int32 ServerRegisterRequest::shard() const {
+inline ::google::protobuf::uint32 ServerRegisterRequest::shard() const {
   // @@protoc_insertion_point(field_get:protocol.ServerRegisterRequest.shard)
   return shard_;
 }
-inline void ServerRegisterRequest::set_shard(::google::protobuf::int32 value) {
+inline void ServerRegisterRequest::set_shard(::google::protobuf::uint32 value) {
   
   shard_ = value;
   // @@protoc_insertion_point(field_set:protocol.ServerRegisterRequest.shard)
