@@ -38,7 +38,7 @@ namespace protobuf_entity_2eproto {
 struct TableStruct {
   static const ::google::protobuf::internal::ParseTableField entries[];
   static const ::google::protobuf::internal::AuxillaryParseTableField aux[];
-  static const ::google::protobuf::internal::ParseTable schema[1];
+  static const ::google::protobuf::internal::ParseTable schema[2];
   static const ::google::protobuf::internal::FieldMetadata field_metadata[];
   static const ::google::protobuf::internal::SerializationTable serialization_table[];
   static const ::google::protobuf::uint32 offsets[];
@@ -49,15 +49,122 @@ namespace protocol {
 class Entity;
 class EntityDefaultTypeInternal;
 extern EntityDefaultTypeInternal _Entity_default_instance_;
+class Friend;
+class FriendDefaultTypeInternal;
+extern FriendDefaultTypeInternal _Friend_default_instance_;
 }  // namespace protocol
 namespace google {
 namespace protobuf {
 template<> ::protocol::Entity* Arena::CreateMaybeMessage<::protocol::Entity>(Arena*);
+template<> ::protocol::Friend* Arena::CreateMaybeMessage<::protocol::Friend>(Arena*);
 }  // namespace protobuf
 }  // namespace google
 namespace protocol {
 
 // ===================================================================
+
+class Friend : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:protocol.Friend) */ {
+ public:
+  Friend();
+  virtual ~Friend();
+
+  Friend(const Friend& from);
+
+  inline Friend& operator=(const Friend& from) {
+    CopyFrom(from);
+    return *this;
+  }
+  #if LANG_CXX11
+  Friend(Friend&& from) noexcept
+    : Friend() {
+    *this = ::std::move(from);
+  }
+
+  inline Friend& operator=(Friend&& from) noexcept {
+    if (GetArenaNoVirtual() == from.GetArenaNoVirtual()) {
+      if (this != &from) InternalSwap(&from);
+    } else {
+      CopyFrom(from);
+    }
+    return *this;
+  }
+  #endif
+  static const ::google::protobuf::Descriptor* descriptor();
+  static const Friend& default_instance();
+
+  static void InitAsDefaultInstance();  // FOR INTERNAL USE ONLY
+  static inline const Friend* internal_default_instance() {
+    return reinterpret_cast<const Friend*>(
+               &_Friend_default_instance_);
+  }
+  static constexpr int kIndexInFileMessages =
+    0;
+
+  void Swap(Friend* other);
+  friend void swap(Friend& a, Friend& b) {
+    a.Swap(&b);
+  }
+
+  // implements Message ----------------------------------------------
+
+  inline Friend* New() const final {
+    return CreateMaybeMessage<Friend>(NULL);
+  }
+
+  Friend* New(::google::protobuf::Arena* arena) const final {
+    return CreateMaybeMessage<Friend>(arena);
+  }
+  void CopyFrom(const ::google::protobuf::Message& from) final;
+  void MergeFrom(const ::google::protobuf::Message& from) final;
+  void CopyFrom(const Friend& from);
+  void MergeFrom(const Friend& from);
+  void Clear() final;
+  bool IsInitialized() const final;
+
+  size_t ByteSizeLong() const final;
+  bool MergePartialFromCodedStream(
+      ::google::protobuf::io::CodedInputStream* input) final;
+  void SerializeWithCachedSizes(
+      ::google::protobuf::io::CodedOutputStream* output) const final;
+  ::google::protobuf::uint8* InternalSerializeWithCachedSizesToArray(
+      bool deterministic, ::google::protobuf::uint8* target) const final;
+  int GetCachedSize() const final { return _cached_size_.Get(); }
+
+  private:
+  void SharedCtor();
+  void SharedDtor();
+  void SetCachedSize(int size) const final;
+  void InternalSwap(Friend* other);
+  private:
+  inline ::google::protobuf::Arena* GetArenaNoVirtual() const {
+    return NULL;
+  }
+  inline void* MaybeArenaPtr() const {
+    return NULL;
+  }
+  public:
+
+  ::google::protobuf::Metadata GetMetadata() const final;
+
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+
+  // uint32 id = 1;
+  void clear_id();
+  static const int kIdFieldNumber = 1;
+  ::google::protobuf::uint32 id() const;
+  void set_id(::google::protobuf::uint32 value);
+
+  // @@protoc_insertion_point(class_scope:protocol.Friend)
+ private:
+
+  ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
+  ::google::protobuf::uint32 id_;
+  mutable ::google::protobuf::internal::CachedSize _cached_size_;
+  friend struct ::protobuf_entity_2eproto::TableStruct;
+};
+// -------------------------------------------------------------------
 
 class Entity : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:protocol.Entity) */ {
  public:
@@ -94,7 +201,7 @@ class Entity : public ::google::protobuf::Message /* @@protoc_insertion_point(cl
                &_Entity_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    0;
+    1;
 
   void Swap(Entity* other);
   friend void swap(Entity& a, Entity& b) {
@@ -174,6 +281,18 @@ class Entity : public ::google::protobuf::Message /* @@protoc_insertion_point(cl
   ::std::string* release_mailbox();
   void set_allocated_mailbox(::std::string* mailbox);
 
+  // .protocol.Friend friendlist = 7;
+  bool has_friendlist() const;
+  void clear_friendlist();
+  static const int kFriendlistFieldNumber = 7;
+  private:
+  const ::protocol::Friend& _internal_friendlist() const;
+  public:
+  const ::protocol::Friend& friendlist() const;
+  ::protocol::Friend* release_friendlist();
+  ::protocol::Friend* mutable_friendlist();
+  void set_allocated_friendlist(::protocol::Friend* friendlist);
+
   // uint64 id = 1;
   void clear_id();
   static const int kIdFieldNumber = 1;
@@ -204,6 +323,7 @@ class Entity : public ::google::protobuf::Message /* @@protoc_insertion_point(cl
   ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
   ::google::protobuf::internal::ArenaStringPtr bag_;
   ::google::protobuf::internal::ArenaStringPtr mailbox_;
+  ::protocol::Friend* friendlist_;
   ::google::protobuf::uint64 id_;
   ::google::protobuf::uint64 gold_;
   ::google::protobuf::uint64 diamond_;
@@ -220,6 +340,24 @@ class Entity : public ::google::protobuf::Message /* @@protoc_insertion_point(cl
   #pragma GCC diagnostic push
   #pragma GCC diagnostic ignored "-Wstrict-aliasing"
 #endif  // __GNUC__
+// Friend
+
+// uint32 id = 1;
+inline void Friend::clear_id() {
+  id_ = 0u;
+}
+inline ::google::protobuf::uint32 Friend::id() const {
+  // @@protoc_insertion_point(field_get:protocol.Friend.id)
+  return id_;
+}
+inline void Friend::set_id(::google::protobuf::uint32 value) {
+  
+  id_ = value;
+  // @@protoc_insertion_point(field_set:protocol.Friend.id)
+}
+
+// -------------------------------------------------------------------
+
 // Entity
 
 // uint64 id = 1;
@@ -384,9 +522,65 @@ inline void Entity::set_allocated_mailbox(::std::string* mailbox) {
   // @@protoc_insertion_point(field_set_allocated:protocol.Entity.mailbox)
 }
 
+// .protocol.Friend friendlist = 7;
+inline bool Entity::has_friendlist() const {
+  return this != internal_default_instance() && friendlist_ != NULL;
+}
+inline void Entity::clear_friendlist() {
+  if (GetArenaNoVirtual() == NULL && friendlist_ != NULL) {
+    delete friendlist_;
+  }
+  friendlist_ = NULL;
+}
+inline const ::protocol::Friend& Entity::_internal_friendlist() const {
+  return *friendlist_;
+}
+inline const ::protocol::Friend& Entity::friendlist() const {
+  const ::protocol::Friend* p = friendlist_;
+  // @@protoc_insertion_point(field_get:protocol.Entity.friendlist)
+  return p != NULL ? *p : *reinterpret_cast<const ::protocol::Friend*>(
+      &::protocol::_Friend_default_instance_);
+}
+inline ::protocol::Friend* Entity::release_friendlist() {
+  // @@protoc_insertion_point(field_release:protocol.Entity.friendlist)
+  
+  ::protocol::Friend* temp = friendlist_;
+  friendlist_ = NULL;
+  return temp;
+}
+inline ::protocol::Friend* Entity::mutable_friendlist() {
+  
+  if (friendlist_ == NULL) {
+    auto* p = CreateMaybeMessage<::protocol::Friend>(GetArenaNoVirtual());
+    friendlist_ = p;
+  }
+  // @@protoc_insertion_point(field_mutable:protocol.Entity.friendlist)
+  return friendlist_;
+}
+inline void Entity::set_allocated_friendlist(::protocol::Friend* friendlist) {
+  ::google::protobuf::Arena* message_arena = GetArenaNoVirtual();
+  if (message_arena == NULL) {
+    delete friendlist_;
+  }
+  if (friendlist) {
+    ::google::protobuf::Arena* submessage_arena = NULL;
+    if (message_arena != submessage_arena) {
+      friendlist = ::google::protobuf::internal::GetOwnedMessage(
+          message_arena, friendlist, submessage_arena);
+    }
+    
+  } else {
+    
+  }
+  friendlist_ = friendlist;
+  // @@protoc_insertion_point(field_set_allocated:protocol.Entity.friendlist)
+}
+
 #ifdef __GNUC__
   #pragma GCC diagnostic pop
 #endif  // __GNUC__
+// -------------------------------------------------------------------
+
 
 // @@protoc_insertion_point(namespace_scope)
 

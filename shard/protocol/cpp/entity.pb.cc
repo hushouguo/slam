@@ -19,7 +19,15 @@
 #endif
 // @@protoc_insertion_point(includes)
 
+namespace protobuf_entity_2eproto {
+extern PROTOBUF_INTERNAL_EXPORT_protobuf_entity_2eproto ::google::protobuf::internal::SCCInfo<0> scc_info_Friend;
+}  // namespace protobuf_entity_2eproto
 namespace protocol {
+class FriendDefaultTypeInternal {
+ public:
+  ::google::protobuf::internal::ExplicitlyConstructed<Friend>
+      _instance;
+} _Friend_default_instance_;
 class EntityDefaultTypeInternal {
  public:
   ::google::protobuf::internal::ExplicitlyConstructed<Entity>
@@ -27,6 +35,20 @@ class EntityDefaultTypeInternal {
 } _Entity_default_instance_;
 }  // namespace protocol
 namespace protobuf_entity_2eproto {
+static void InitDefaultsFriend() {
+  GOOGLE_PROTOBUF_VERIFY_VERSION;
+
+  {
+    void* ptr = &::protocol::_Friend_default_instance_;
+    new (ptr) ::protocol::Friend();
+    ::google::protobuf::internal::OnShutdownDestroyMessage(ptr);
+  }
+  ::protocol::Friend::InitAsDefaultInstance();
+}
+
+::google::protobuf::internal::SCCInfo<0> scc_info_Friend =
+    {{ATOMIC_VAR_INIT(::google::protobuf::internal::SCCInfoBase::kUninitialized), 0, InitDefaultsFriend}, {}};
+
 static void InitDefaultsEntity() {
   GOOGLE_PROTOBUF_VERIFY_VERSION;
 
@@ -38,16 +60,24 @@ static void InitDefaultsEntity() {
   ::protocol::Entity::InitAsDefaultInstance();
 }
 
-::google::protobuf::internal::SCCInfo<0> scc_info_Entity =
-    {{ATOMIC_VAR_INIT(::google::protobuf::internal::SCCInfoBase::kUninitialized), 0, InitDefaultsEntity}, {}};
+::google::protobuf::internal::SCCInfo<1> scc_info_Entity =
+    {{ATOMIC_VAR_INIT(::google::protobuf::internal::SCCInfoBase::kUninitialized), 1, InitDefaultsEntity}, {
+      &protobuf_entity_2eproto::scc_info_Friend.base,}};
 
 void InitDefaults() {
+  ::google::protobuf::internal::InitSCC(&scc_info_Friend.base);
   ::google::protobuf::internal::InitSCC(&scc_info_Entity.base);
 }
 
-::google::protobuf::Metadata file_level_metadata[1];
+::google::protobuf::Metadata file_level_metadata[2];
 
 const ::google::protobuf::uint32 TableStruct::offsets[] GOOGLE_PROTOBUF_ATTRIBUTE_SECTION_VARIABLE(protodesc_cold) = {
+  ~0u,  // no _has_bits_
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::protocol::Friend, _internal_metadata_),
+  ~0u,  // no _extensions_
+  ~0u,  // no _oneof_case_
+  ~0u,  // no _weak_field_map_
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::protocol::Friend, id_),
   ~0u,  // no _has_bits_
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::protocol::Entity, _internal_metadata_),
   ~0u,  // no _extensions_
@@ -59,12 +89,15 @@ const ::google::protobuf::uint32 TableStruct::offsets[] GOOGLE_PROTOBUF_ATTRIBUT
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::protocol::Entity, level_),
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::protocol::Entity, bag_),
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::protocol::Entity, mailbox_),
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::protocol::Entity, friendlist_),
 };
 static const ::google::protobuf::internal::MigrationSchema schemas[] GOOGLE_PROTOBUF_ATTRIBUTE_SECTION_VARIABLE(protodesc_cold) = {
-  { 0, -1, sizeof(::protocol::Entity)},
+  { 0, -1, sizeof(::protocol::Friend)},
+  { 6, -1, sizeof(::protocol::Entity)},
 };
 
 static ::google::protobuf::Message const * const file_default_instances[] = {
+  reinterpret_cast<const ::google::protobuf::Message*>(&::protocol::_Friend_default_instance_),
   reinterpret_cast<const ::google::protobuf::Message*>(&::protocol::_Entity_default_instance_),
 };
 
@@ -83,19 +116,20 @@ void protobuf_AssignDescriptorsOnce() {
 void protobuf_RegisterTypes(const ::std::string&) GOOGLE_PROTOBUF_ATTRIBUTE_COLD;
 void protobuf_RegisterTypes(const ::std::string&) {
   protobuf_AssignDescriptorsOnce();
-  ::google::protobuf::internal::RegisterAllTypes(file_level_metadata, 1);
+  ::google::protobuf::internal::RegisterAllTypes(file_level_metadata, 2);
 }
 
 void AddDescriptorsImpl() {
   InitDefaults();
   static const char descriptor[] GOOGLE_PROTOBUF_ATTRIBUTE_SECTION_VARIABLE(protodesc_cold) = {
-      "\n\014entity.proto\022\010protocol\"`\n\006Entity\022\n\n\002id"
-      "\030\001 \001(\004\022\014\n\004gold\030\002 \001(\004\022\017\n\007diamond\030\003 \001(\004\022\r\n"
-      "\005level\030\004 \001(\r\022\013\n\003bag\030\005 \001(\014\022\017\n\007mailbox\030\006 \001"
-      "(\014b\006proto3"
+      "\n\014entity.proto\022\010protocol\"\024\n\006Friend\022\n\n\002id"
+      "\030\001 \001(\r\"\206\001\n\006Entity\022\n\n\002id\030\001 \001(\004\022\014\n\004gold\030\002 "
+      "\001(\004\022\017\n\007diamond\030\003 \001(\004\022\r\n\005level\030\004 \001(\r\022\013\n\003b"
+      "ag\030\005 \001(\014\022\017\n\007mailbox\030\006 \001(\014\022$\n\nfriendlist\030"
+      "\007 \001(\0132\020.protocol.Friendb\006proto3"
   };
   ::google::protobuf::DescriptorPool::InternalAddGeneratedFile(
-      descriptor, 130);
+      descriptor, 191);
   ::google::protobuf::MessageFactory::InternalRegisterGeneratedFile(
     "entity.proto", &protobuf_RegisterTypes);
 }
@@ -115,7 +149,232 @@ namespace protocol {
 
 // ===================================================================
 
+void Friend::InitAsDefaultInstance() {
+}
+#if !defined(_MSC_VER) || _MSC_VER >= 1900
+const int Friend::kIdFieldNumber;
+#endif  // !defined(_MSC_VER) || _MSC_VER >= 1900
+
+Friend::Friend()
+  : ::google::protobuf::Message(), _internal_metadata_(NULL) {
+  ::google::protobuf::internal::InitSCC(
+      &protobuf_entity_2eproto::scc_info_Friend.base);
+  SharedCtor();
+  // @@protoc_insertion_point(constructor:protocol.Friend)
+}
+Friend::Friend(const Friend& from)
+  : ::google::protobuf::Message(),
+      _internal_metadata_(NULL) {
+  _internal_metadata_.MergeFrom(from._internal_metadata_);
+  id_ = from.id_;
+  // @@protoc_insertion_point(copy_constructor:protocol.Friend)
+}
+
+void Friend::SharedCtor() {
+  id_ = 0u;
+}
+
+Friend::~Friend() {
+  // @@protoc_insertion_point(destructor:protocol.Friend)
+  SharedDtor();
+}
+
+void Friend::SharedDtor() {
+}
+
+void Friend::SetCachedSize(int size) const {
+  _cached_size_.Set(size);
+}
+const ::google::protobuf::Descriptor* Friend::descriptor() {
+  ::protobuf_entity_2eproto::protobuf_AssignDescriptorsOnce();
+  return ::protobuf_entity_2eproto::file_level_metadata[kIndexInFileMessages].descriptor;
+}
+
+const Friend& Friend::default_instance() {
+  ::google::protobuf::internal::InitSCC(&protobuf_entity_2eproto::scc_info_Friend.base);
+  return *internal_default_instance();
+}
+
+
+void Friend::Clear() {
+// @@protoc_insertion_point(message_clear_start:protocol.Friend)
+  ::google::protobuf::uint32 cached_has_bits = 0;
+  // Prevent compiler warnings about cached_has_bits being unused
+  (void) cached_has_bits;
+
+  id_ = 0u;
+  _internal_metadata_.Clear();
+}
+
+bool Friend::MergePartialFromCodedStream(
+    ::google::protobuf::io::CodedInputStream* input) {
+#define DO_(EXPRESSION) if (!GOOGLE_PREDICT_TRUE(EXPRESSION)) goto failure
+  ::google::protobuf::uint32 tag;
+  // @@protoc_insertion_point(parse_start:protocol.Friend)
+  for (;;) {
+    ::std::pair<::google::protobuf::uint32, bool> p = input->ReadTagWithCutoffNoLastTag(127u);
+    tag = p.first;
+    if (!p.second) goto handle_unusual;
+    switch (::google::protobuf::internal::WireFormatLite::GetTagFieldNumber(tag)) {
+      // uint32 id = 1;
+      case 1: {
+        if (static_cast< ::google::protobuf::uint8>(tag) ==
+            static_cast< ::google::protobuf::uint8>(8u /* 8 & 0xFF */)) {
+
+          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
+                   ::google::protobuf::uint32, ::google::protobuf::internal::WireFormatLite::TYPE_UINT32>(
+                 input, &id_)));
+        } else {
+          goto handle_unusual;
+        }
+        break;
+      }
+
+      default: {
+      handle_unusual:
+        if (tag == 0) {
+          goto success;
+        }
+        DO_(::google::protobuf::internal::WireFormat::SkipField(
+              input, tag, _internal_metadata_.mutable_unknown_fields()));
+        break;
+      }
+    }
+  }
+success:
+  // @@protoc_insertion_point(parse_success:protocol.Friend)
+  return true;
+failure:
+  // @@protoc_insertion_point(parse_failure:protocol.Friend)
+  return false;
+#undef DO_
+}
+
+void Friend::SerializeWithCachedSizes(
+    ::google::protobuf::io::CodedOutputStream* output) const {
+  // @@protoc_insertion_point(serialize_start:protocol.Friend)
+  ::google::protobuf::uint32 cached_has_bits = 0;
+  (void) cached_has_bits;
+
+  // uint32 id = 1;
+  if (this->id() != 0) {
+    ::google::protobuf::internal::WireFormatLite::WriteUInt32(1, this->id(), output);
+  }
+
+  if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
+    ::google::protobuf::internal::WireFormat::SerializeUnknownFields(
+        (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()), output);
+  }
+  // @@protoc_insertion_point(serialize_end:protocol.Friend)
+}
+
+::google::protobuf::uint8* Friend::InternalSerializeWithCachedSizesToArray(
+    bool deterministic, ::google::protobuf::uint8* target) const {
+  (void)deterministic; // Unused
+  // @@protoc_insertion_point(serialize_to_array_start:protocol.Friend)
+  ::google::protobuf::uint32 cached_has_bits = 0;
+  (void) cached_has_bits;
+
+  // uint32 id = 1;
+  if (this->id() != 0) {
+    target = ::google::protobuf::internal::WireFormatLite::WriteUInt32ToArray(1, this->id(), target);
+  }
+
+  if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
+    target = ::google::protobuf::internal::WireFormat::SerializeUnknownFieldsToArray(
+        (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()), target);
+  }
+  // @@protoc_insertion_point(serialize_to_array_end:protocol.Friend)
+  return target;
+}
+
+size_t Friend::ByteSizeLong() const {
+// @@protoc_insertion_point(message_byte_size_start:protocol.Friend)
+  size_t total_size = 0;
+
+  if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
+    total_size +=
+      ::google::protobuf::internal::WireFormat::ComputeUnknownFieldsSize(
+        (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()));
+  }
+  // uint32 id = 1;
+  if (this->id() != 0) {
+    total_size += 1 +
+      ::google::protobuf::internal::WireFormatLite::UInt32Size(
+        this->id());
+  }
+
+  int cached_size = ::google::protobuf::internal::ToCachedSize(total_size);
+  SetCachedSize(cached_size);
+  return total_size;
+}
+
+void Friend::MergeFrom(const ::google::protobuf::Message& from) {
+// @@protoc_insertion_point(generalized_merge_from_start:protocol.Friend)
+  GOOGLE_DCHECK_NE(&from, this);
+  const Friend* source =
+      ::google::protobuf::internal::DynamicCastToGenerated<const Friend>(
+          &from);
+  if (source == NULL) {
+  // @@protoc_insertion_point(generalized_merge_from_cast_fail:protocol.Friend)
+    ::google::protobuf::internal::ReflectionOps::Merge(from, this);
+  } else {
+  // @@protoc_insertion_point(generalized_merge_from_cast_success:protocol.Friend)
+    MergeFrom(*source);
+  }
+}
+
+void Friend::MergeFrom(const Friend& from) {
+// @@protoc_insertion_point(class_specific_merge_from_start:protocol.Friend)
+  GOOGLE_DCHECK_NE(&from, this);
+  _internal_metadata_.MergeFrom(from._internal_metadata_);
+  ::google::protobuf::uint32 cached_has_bits = 0;
+  (void) cached_has_bits;
+
+  if (from.id() != 0) {
+    set_id(from.id());
+  }
+}
+
+void Friend::CopyFrom(const ::google::protobuf::Message& from) {
+// @@protoc_insertion_point(generalized_copy_from_start:protocol.Friend)
+  if (&from == this) return;
+  Clear();
+  MergeFrom(from);
+}
+
+void Friend::CopyFrom(const Friend& from) {
+// @@protoc_insertion_point(class_specific_copy_from_start:protocol.Friend)
+  if (&from == this) return;
+  Clear();
+  MergeFrom(from);
+}
+
+bool Friend::IsInitialized() const {
+  return true;
+}
+
+void Friend::Swap(Friend* other) {
+  if (other == this) return;
+  InternalSwap(other);
+}
+void Friend::InternalSwap(Friend* other) {
+  using std::swap;
+  swap(id_, other->id_);
+  _internal_metadata_.Swap(&other->_internal_metadata_);
+}
+
+::google::protobuf::Metadata Friend::GetMetadata() const {
+  protobuf_entity_2eproto::protobuf_AssignDescriptorsOnce();
+  return ::protobuf_entity_2eproto::file_level_metadata[kIndexInFileMessages];
+}
+
+
+// ===================================================================
+
 void Entity::InitAsDefaultInstance() {
+  ::protocol::_Entity_default_instance_._instance.get_mutable()->friendlist_ = const_cast< ::protocol::Friend*>(
+      ::protocol::Friend::internal_default_instance());
 }
 #if !defined(_MSC_VER) || _MSC_VER >= 1900
 const int Entity::kIdFieldNumber;
@@ -124,6 +383,7 @@ const int Entity::kDiamondFieldNumber;
 const int Entity::kLevelFieldNumber;
 const int Entity::kBagFieldNumber;
 const int Entity::kMailboxFieldNumber;
+const int Entity::kFriendlistFieldNumber;
 #endif  // !defined(_MSC_VER) || _MSC_VER >= 1900
 
 Entity::Entity()
@@ -145,6 +405,11 @@ Entity::Entity(const Entity& from)
   if (from.mailbox().size() > 0) {
     mailbox_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.mailbox_);
   }
+  if (from.has_friendlist()) {
+    friendlist_ = new ::protocol::Friend(*from.friendlist_);
+  } else {
+    friendlist_ = NULL;
+  }
   ::memcpy(&id_, &from.id_,
     static_cast<size_t>(reinterpret_cast<char*>(&level_) -
     reinterpret_cast<char*>(&id_)) + sizeof(level_));
@@ -154,9 +419,9 @@ Entity::Entity(const Entity& from)
 void Entity::SharedCtor() {
   bag_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   mailbox_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-  ::memset(&id_, 0, static_cast<size_t>(
+  ::memset(&friendlist_, 0, static_cast<size_t>(
       reinterpret_cast<char*>(&level_) -
-      reinterpret_cast<char*>(&id_)) + sizeof(level_));
+      reinterpret_cast<char*>(&friendlist_)) + sizeof(level_));
 }
 
 Entity::~Entity() {
@@ -167,6 +432,7 @@ Entity::~Entity() {
 void Entity::SharedDtor() {
   bag_.DestroyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   mailbox_.DestroyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  if (this != internal_default_instance()) delete friendlist_;
 }
 
 void Entity::SetCachedSize(int size) const {
@@ -191,6 +457,10 @@ void Entity::Clear() {
 
   bag_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   mailbox_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  if (GetArenaNoVirtual() == NULL && friendlist_ != NULL) {
+    delete friendlist_;
+  }
+  friendlist_ = NULL;
   ::memset(&id_, 0, static_cast<size_t>(
       reinterpret_cast<char*>(&level_) -
       reinterpret_cast<char*>(&id_)) + sizeof(level_));
@@ -287,6 +557,18 @@ bool Entity::MergePartialFromCodedStream(
         break;
       }
 
+      // .protocol.Friend friendlist = 7;
+      case 7: {
+        if (static_cast< ::google::protobuf::uint8>(tag) ==
+            static_cast< ::google::protobuf::uint8>(58u /* 58 & 0xFF */)) {
+          DO_(::google::protobuf::internal::WireFormatLite::ReadMessage(
+               input, mutable_friendlist()));
+        } else {
+          goto handle_unusual;
+        }
+        break;
+      }
+
       default: {
       handle_unusual:
         if (tag == 0) {
@@ -345,6 +627,12 @@ void Entity::SerializeWithCachedSizes(
       6, this->mailbox(), output);
   }
 
+  // .protocol.Friend friendlist = 7;
+  if (this->has_friendlist()) {
+    ::google::protobuf::internal::WireFormatLite::WriteMessageMaybeToArray(
+      7, this->_internal_friendlist(), output);
+  }
+
   if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
     ::google::protobuf::internal::WireFormat::SerializeUnknownFields(
         (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()), output);
@@ -393,6 +681,13 @@ void Entity::SerializeWithCachedSizes(
         6, this->mailbox(), target);
   }
 
+  // .protocol.Friend friendlist = 7;
+  if (this->has_friendlist()) {
+    target = ::google::protobuf::internal::WireFormatLite::
+      InternalWriteMessageToArray(
+        7, this->_internal_friendlist(), deterministic, target);
+  }
+
   if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
     target = ::google::protobuf::internal::WireFormat::SerializeUnknownFieldsToArray(
         (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()), target);
@@ -422,6 +717,13 @@ size_t Entity::ByteSizeLong() const {
     total_size += 1 +
       ::google::protobuf::internal::WireFormatLite::BytesSize(
         this->mailbox());
+  }
+
+  // .protocol.Friend friendlist = 7;
+  if (this->has_friendlist()) {
+    total_size += 1 +
+      ::google::protobuf::internal::WireFormatLite::MessageSize(
+        *friendlist_);
   }
 
   // uint64 id = 1;
@@ -487,6 +789,9 @@ void Entity::MergeFrom(const Entity& from) {
 
     mailbox_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.mailbox_);
   }
+  if (from.has_friendlist()) {
+    mutable_friendlist()->::protocol::Friend::MergeFrom(from.friendlist());
+  }
   if (from.id() != 0) {
     set_id(from.id());
   }
@@ -529,6 +834,7 @@ void Entity::InternalSwap(Entity* other) {
     GetArenaNoVirtual());
   mailbox_.Swap(&other->mailbox_, &::google::protobuf::internal::GetEmptyStringAlreadyInited(),
     GetArenaNoVirtual());
+  swap(friendlist_, other->friendlist_);
   swap(id_, other->id_);
   swap(gold_, other->gold_);
   swap(diamond_, other->diamond_);
@@ -546,6 +852,9 @@ void Entity::InternalSwap(Entity* other) {
 }  // namespace protocol
 namespace google {
 namespace protobuf {
+template<> GOOGLE_PROTOBUF_ATTRIBUTE_NOINLINE ::protocol::Friend* Arena::CreateMaybeMessage< ::protocol::Friend >(Arena* arena) {
+  return Arena::CreateInternal< ::protocol::Friend >(arena);
+}
 template<> GOOGLE_PROTOBUF_ATTRIBUTE_NOINLINE ::protocol::Entity* Arena::CreateMaybeMessage< ::protocol::Entity >(Arena* arena) {
   return Arena::CreateInternal< ::protocol::Entity >(arena);
 }

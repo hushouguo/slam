@@ -20,7 +20,7 @@
 // @@protoc_insertion_point(includes)
 
 namespace protobuf_entity_2eproto {
-extern PROTOBUF_INTERNAL_EXPORT_protobuf_entity_2eproto ::google::protobuf::internal::SCCInfo<0> scc_info_Entity;
+extern PROTOBUF_INTERNAL_EXPORT_protobuf_entity_2eproto ::google::protobuf::internal::SCCInfo<1> scc_info_Entity;
 }  // namespace protobuf_entity_2eproto
 namespace protobuf_server_2eproto {
 extern PROTOBUF_INTERNAL_EXPORT_protobuf_server_2eproto ::google::protobuf::internal::SCCInfo<0> scc_info_StorageContext;
