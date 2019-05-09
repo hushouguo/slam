@@ -31,35 +31,33 @@
 #define MYSQL_VARCHAR_GBK_MAXSIZE		32766
 
 BEGIN_NAMESPACE_SLAM {
+	struct DatabaseFieldDescriptor {
+		enum_field_types type;
+		u32 flags;
+		size_t length;
+	};
+	
+	using std::unordered_map<std::string, DatabaseFieldDescriptor> = FieldSet;
+	using std::unordered_map<std::string, FieldSet> = TableSet;
+	
 	class MySQL;
 	class MessageStatement {
 		public:
 			MessageStatement(MySQL* mysql);
 
 		public:
-			bool SerializeMessage(std::string table, const Message* message, u64* insertid);
-			bool UnserializeMessage(std::string table, u64 entityid, Message* message);
+			bool CreateMessage(std::string table, const Message* message, u64* insertid);
+			bool RetrieveMessage(std::string table, u64 entityid, Message* message);
+			bool UpdateMessage(std::string table, u64 entityid, const Message* message);
+			bool DeleteMessage(std::string table, u64 entityid);
 
 		private:
 			MySQL* _dbhandler = nullptr;
 
 		private:
-			struct DatabaseFieldDescriptor {
-				enum_field_types type;
-				u32 flags;
-				u64 length;
-			};
-			using std::unordered_map<std::string, DatabaseFieldDescriptor> = FieldSet;
-			using std::unordered_map<std::string, FieldSet> = TableSet;
 			TableSet _tables;
 			bool LoadField(std::string table);
 			void DumpFieldDescriptor();
-
-		private:
-			bool UpdateTable(std::string table, const Message* message);
-			bool CreateTable(std::string table, const FieldSet& fieldSet);
-			bool AddField(std::string table, const DatabaseFieldDescriptor& field);
-			bool AlterField(std::string table, const DatabaseFieldDescriptor& field);
 	};
 }
 

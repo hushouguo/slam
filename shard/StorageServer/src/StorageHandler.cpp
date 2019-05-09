@@ -24,38 +24,15 @@ BEGIN_NAMESPACE_SLAM {
 
 	u64 StorageHandler::InsertEntityToTable(u32 shard, std::string table, const Entity* entity) {
 		assert(shard == this->id);
-		assert(this->_dbhandler);
-		CHECK_RETURN(this->UpdateTable(table, entity), 0, "table: %s, shard: %d update error", table.c_str(), shard);
-		std::ostringstream sql, sql_fields, sql_values;
-		for (auto& i : entity->values()) {
-			if (sql_fields.rdbuf()->in_avail()) {
-				sql_fields << ",";
-				sql_values << ",";
-			}
-			sql_fields << "`" << i.first << "`";
-			auto& value = i.second;
-			switch (value.type()) {
-				case valuetype_nil: sql_values << "NULL"; break;
-				case valuetype_int64: sql_values << value.value_int64(); break;
-				case valuetype_string: sql_values << "'" << value.value_string() << "'"; break;
-				case valuetype_float: sql_values << value.value_float; break;
-				case valuetype_bool: sql_values << (value.value_bool() ? 1 : 0); break;
-				default: 
-				CHECK_RETURN(false, 0, "illegal value type: %d, name: %s, table: %s, shard: %d", value.type(), i.first.c_str(), table.c_str(), shard);
-			}
-		}
-		if (entity->id() != 0) {
-			sql_fields << ",id";
-			sql_values << "," << entity->id();
-		}
-		sql << "INSERT INTO `" << table << "` (" << sql_fields.str() << ") VALUES (" << sql_values.str() << ")";
-		bool rc = this->_dbhandler->runCommand(sql.str());
-		CHECK_RETURN(rc, 0, "run sql: %s error", sql.str().c_str());
-		//todo: cache entity
-		return entity->id() == 0 ? this->_dbhandler->insertId() : entity->id();
+		CHECK_RETURN(this->_dbhandler && this->_messageStatement, 0, "StorageHandler: %d not initiated", shard);
+		u64 entityid = 0;
+		bool rc = this->_messageStatement->CreateMessage(table, entity, &entityid);
+		CHECK_RETURN(rc, 0, "CreateMessage: %s, shard: %d error", table.c_str(), shard);
+		return entityid;
 	}
 	
 	bool StorageHandler::RetrieveEntityFromTable(u32 shard, std::string table, u64 entityid, Entity* entity) {
+#if false	
 		assert(shard == this->id);
 		assert(this->_dbhandler);
 		std::ostringstream sql;
@@ -134,216 +111,17 @@ BEGIN_NAMESPACE_SLAM {
 		}
 		
 		SafeDelete(result);
+#endif		
 		return true;
 	}
 
 	bool StorageHandler::UpdateEntityToTable(u32 shard, std::string table, Entity* entity) {
 		return false;
 	}
-
-	bool StorageHandler::UpdateTable(std::string table, const Entity* entity) {
-		if (this->_tables.find(table) == this->_tables.end()) {
-			bool rc = this->CreateTable(table, entity);
-			if (rc) {
-				this->_tables.insert(table);
-			}
-			return rc;
-		}
-		return this->AlterTable(table, entity);
-	}
-
-	bool StorageHandler::CreateTable(std::string table, const Entity* entity) {		
-		assert(this->_dbhandler);
-		assert(entity);
-		std::ostringstream sql;
-		sql << "CREATE TABLE IF NOT EXISTS `" << table << "`(";
-		sql << "`id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY";
-		for (auto& i : entity->values()) {
-			sql << ", `" << i.first << "` ";
-			const char* fieldString = this->GetFieldDescriptor(i.second);
-			CHECK_RETURN(fieldString, false, "table: %s, field: %s, valuetype: %d", table.c_str(), i.first.c_str(), i.second.type());
-			sql << fieldString;
-		}
-		sql << ") ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8";
-		bool rc = this->_dbhandler->runCommand(sql.str());
-		CHECK_RETURN(rc, 0, "run sql: %s error", sql.str().c_str());
-		return rc;
-	}
-	
-	bool StorageHandler::AlterTable(std::string table, const Entity* entity) {
-#if 0	
-		assert(this->_dbhandler);
-		assert(entity);
-		std::unordered_map<std::string, FieldDescriptor>& desc_fields = this->_tables[table];		
-		std::ostringstream sql;
-		sql << "ALTER TABLE `" << table << "` MODIFY `" << field_name << "` " << m2string[field_type] << " NOT NULL";
-		sql << "ALTER TABLE `" << table << "` ADD `" << field_name << "` " << m2string[field_type] << " NOT NULL";
-		for (auto& i : entity->values()) {
-			auto& value = i.second;
-			if (desc_fields.find(i.first) == desc_fields.end()) {
-				sql << " ADD ";
-			}
-			else {
-				if (value.type() == )
-				sql << " MODIFY ";
-			}			
-			sql << "`" << i.first << "` ";
-			
-			switch (value.type()) {
-				case valuetype_nil: 
-					CHECK_RETURN(false, false, "table: %s, found NULL field: %s", table.c_str(), i.first.c_str());
-				case valuetype_int64:
-					if (value.value_int64() > INT32_MAX || value.value_int64() < INT32_MIN) {
-						sql << "BIGINT NOT NULL";
-					}
-					else {
-						sql << "INT NOT NULL";
-					}
-					break;
-				case valuetype_string:
-					if (value.value_string().length() < MYSQL_VARCHAR_UTF8_MAXSIZE) {
-						if (value.value_string().length() < 32) {
-							sql << "VARCHAR(32) NOT NULL";
-						}
-						else if (value.value_string().length() < 128) {
-							sql << "VARCHAR(128) NOT NULL";
-						}
-						else if (value.value_string().length() < 256) {
-							sql << "VARCHAR(256) NOT NULL";
-						}
-						else if (value.value_string().length() < 1024) {
-							sql << "VARCHAR(1024) NOT NULL";
-						}
-						else {
-							sql << "VARCHAR(" << (MYSQL_VARCHAR_UTF8_MAXSIZE - 1) << ") NOT NULL";
-						}
-					}
-					else {
-						sql << "LONGTEXT NOT NULL";
-					}
-					break;
-				case valuetype_float:
-					sql << "FLOAT NOT NULL";
-					break;
-				case valuetype_bool:
-					sql << "TINYINT NOT NULL";
-					break;
-				default: 
-				CHECK_RETURN(false, 0, "illegal value type: %d, name: %s, table: %s, shard: %d", value.type(), i.first.c_str(), table.c_str(), shard);
-			}
-		}
-		sql << ") ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8";
-		bool rc = this->_dbhandler->runCommand(sql.str());
-		CHECK_RETURN(rc, 0, "run sql: %s error", sql.str().c_str());
-		return rc;
-#endif
-		return true;
-	}
-
-	const char* StorageHandler::GetFieldDescriptor(const Value& value) {
-		switch (value.type()) {
-			case valuetype_int64: 
-				return (value.value_int64() > INT32_MAX || value.value_int64() < INT32_MIN) ? "BIGINT NOT NULL" : "INT NOT NULL";
-			case valuetype_string:
-				if (value.value_string().length() < MYSQL_VARCHAR_UTF8_MAXSIZE) {
-					if (value.value_string().length() < 32) {
-						return "VARCHAR(32) NOT NULL";
-					}
-					else if (value.value_string().length() < 128) {
-						return "VARCHAR(128) NOT NULL";
-					}
-					else if (value.value_string().length() < 256) {
-						return "VARCHAR(256) NOT NULL";
-					}
-					else if (value.value_string().length() < 1024) {
-						return "VARCHAR(1024) NOT NULL";
-					}
-					else {
-						return "VARCHAR(21844) NOT NULL";
-					}
-				}
-				return "LONGTEXT NOT NULL";
-			case valuetype_float: return "FLOAT NOT NULL";
-			case valuetype_bool: return "TINYINT NOT NULL";
-			case valuetype_nil:
-			default: break;
-		}
-		return nullptr;
-	}
-
-	bool StorageHandler::NeedExtendField(const FieldDescriptor& descriptor, const Value& value) {
-#if 0	
-		switch (value.type()) {
-			case valuetype_int64: return descriptor.length < value.value_int64();
-			
-				return descriptor.type == MYSQL_TYPE_SHORT
-				return (value.value_int64() > INT32_MAX || value.value_int64() < INT32_MIN) ? "BIGINT NOT NULL" : "INT NOT NULL";
-			case valuetype_string:
-				if (value.value_string().length() < MYSQL_VARCHAR_UTF8_MAXSIZE) {
-					if (value.value_string().length() < 32) {
-						return "VARCHAR(32) NOT NULL";
-					}
-					else if (value.value_string().length() < 128) {
-						return "VARCHAR(128) NOT NULL";
-					}
-					else if (value.value_string().length() < 256) {
-						return "VARCHAR(256) NOT NULL";
-					}
-					else if (value.value_string().length() < 1024) {
-						return "VARCHAR(1024) NOT NULL";
-					}
-					else {
-						return "VARCHAR(21844) NOT NULL";
-					}
-				}
-				return "LONGTEXT NOT NULL";
-			case valuetype_float: return "FLOAT NOT NULL";
-			case valuetype_bool: return "TINYINT NOT NULL";
-			case valuetype_nil:
-			default: break;
-		}
-		return nullptr;
-#endif
-		return true;
-	}
-
-	// 
-	// field descriptor
-	bool StorageHandler::loadField(std::string table) {
-		std::unordered_map<std::string, FieldDescriptor>& desc_fields = this->_tables[table];
-	
-		std::ostringstream sql;
-		sql << "SELECT * FROM `" << table.c_str() << "` LIMIT 1";
-		
-		MySQLResult* result = this->dbhandler->runQuery(sql.str());
-		assert(result);
-		u32 fieldNumber = result->fieldNumber();
-		MYSQL_FIELD* fields = result->fetchField();
-		for (u32 i = 0; i < fieldNumber; ++i) {
-			const MYSQL_FIELD& field = fields[i];
-			//CHECK_RETURN(ContainsKey(m2string, field.type), false, "table: %s found not support field: %s, type: %d", table.c_str(), field.org_name, field.type);
-			FieldDescriptor& fieldDescriptor = desc_fields[field.org_name];
-			fieldDescriptor.type = field.type;
-			fieldDescriptor.flags = field.flags;
-			fieldDescriptor.length = field.length;
-		}
-		SafeDelete(result);
-		
-		return true;
-	}
-
-	void StorageHandler::DumpFieldDescriptor() {
-		Debug << "shard: " << this->id;
-		for (auto& i : this->_tables) {
-			Debug << "\ttable: " << i.first;
-			for (auto& v : i.second) {
-				Debug << "\t\tfield: " << v.first << ", length: " << v.second.length;
-			}
-		}
-	}
 	
 	bool StorageHandler::init(std::string host, std::string user, std::string password, std::string database, int port) {
-		assert(this->_dbhandler == nullptr);
+		SafeDelete(this->_dbhandler);
+		SafeDelete(this->_messageStatement);
 		this->_dbhandler = new MySQL();
 		bool rc = this->_dbhandler->openDatabase(
 			host.c_str(),
@@ -367,22 +145,8 @@ BEGIN_NAMESPACE_SLAM {
 		rc = this->_dbhandler->selectDatabase(database);
 		CHECK_RETURN(rc, false, "select database: %s error", database.c_str());
 
-		//
-		// load table
-		std::set<std::string> tables;
-		tables.clear();
-		rc = this->_dbhandler->loadTable("%", tables);
-		CHECK_RETURN(rc, false, "load table from database: %s error", database.c_str());
-
-		//
-		// load fields decription
-		for (auto& table : tables) {
-			rc = this->loadField(table);
-			CHECK_RETURN(rc, false, "load field: %s error", table.c_str());
-		}
-
-		this->DumpFieldDescriptor();
-
+		this->_messageStatement = new MessageStatement(this->_dbhandler);
+		
 		return true;
 	}
 }

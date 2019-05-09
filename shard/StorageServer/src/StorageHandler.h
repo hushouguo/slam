@@ -23,25 +23,7 @@ BEGIN_NAMESPACE_SLAM {
 		
 		private:
 			MySQL* _dbhandler = nullptr;
-
-		private:
-			struct FieldDescriptor {
-				enum_field_types type;
-				u32 flags;
-				u64 length;
-			};		
-			std::unordered_map<std::string, std::unordered_map<std::string, FieldDescriptor>> _tables;
-			bool loadField(std::string table);
-			void DumpFieldDescriptor();
-
-		private:
-			bool UpdateTable(std::string table, const Entity* entity);
-			bool CreateTable(std::string table, const Entity* entity);
-			bool AlterTable(std::string table, const Entity* entity);
-
-		private:
-			const char* GetFieldDescriptor(const Value& value);
-			bool NeedExtendField(const FieldDescriptor& descriptor, const Value& value);
+			MessageStatement* _messageStatement = nullptr;
 	};
 }
 
