@@ -12,6 +12,7 @@
 #include "MainProcess.h"
 #include "StorageEntity.h"
 #include "StorageEntityManager.h"
+#include "MessageStatement.h"
 #include "StorageHandler.h"
 #include "StorageHandlerManager.h"
 #include "StorageProcess.h"
@@ -53,7 +54,21 @@ int main(int argc, char* argv[]) {
 	DumpLibraryVersion();
 
 	sThreadPool.init(sConfig.get("Service.threads", sConfig.threads));
-	
+
+	if (true) {
+		StorageHandlerManager m;
+		CHECK_GOTO(m.init(), exit_failure, "StorageHandlerManager init failure");
+		Entity entity;
+		//entity.set_id(100);
+		entity.set_gold(100);
+		entity.set_diamond(200);
+		entity.set_bag("this is a bagaaa背包sdfsd");
+		entity.set_level(123);
+		u64 entityid = m.InsertEntityToTable(1, "user", &entity);
+		Debug << "entityid: " << entityid;
+		goto exit_failure;
+	}
+
 	CHECK_GOTO(sStorageProcessManager.init(
 		sConfig.get("Service.threads", sConfig.threads)),
 		exit_failure, "StorageProcessManager init failure");

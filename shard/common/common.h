@@ -236,5 +236,7 @@ using namespace logger;
 #include "client.pb.h"
 
 using namespace protocol;
+using namespace google::protobuf;
+using namespace google::protobuf::compiler;
 
 #endif

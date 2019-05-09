@@ -7,7 +7,6 @@
 #define __STORAGEHANDLER_H__
 
 BEGIN_NAMESPACE_SLAM {
-	class MySQL;
 	class StorageHandler : public Entry<u32> {
 		public:
 			StorageHandler(u32 shard);

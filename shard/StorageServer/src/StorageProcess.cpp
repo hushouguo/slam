@@ -4,9 +4,6 @@
  */
 
 #include "common.h"
-#include "mysql/MySQLResult.h"
-#include "mysql/MySQLStatement.h"
-#include "mysql/MySQL.h"
 #include "CentralTask.h"
 #include "CentralTaskManager.h"
 #include "SceneTask.h"
@@ -15,10 +12,11 @@
 #include "MainProcess.h"
 #include "StorageEntity.h"
 #include "StorageEntityManager.h"
-#include "StorageProcess.h"
-#include "StorageProcessManager.h"
+#include "MessageStatement.h"
 #include "StorageHandler.h"
 #include "StorageHandlerManager.h"
+#include "StorageProcess.h"
+#include "StorageProcessManager.h"
 
 BEGIN_NAMESPACE_SLAM {
 	StorageProcess::StorageProcess(int id) : Entry<int>(id) {

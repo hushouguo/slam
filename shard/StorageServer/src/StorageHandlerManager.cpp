@@ -12,11 +12,11 @@
 #include "MainProcess.h"
 #include "StorageEntity.h"
 #include "StorageEntityManager.h"
+#include "MessageStatement.h"
 #include "StorageHandler.h"
 #include "StorageHandlerManager.h"
 
 BEGIN_NAMESPACE_SLAM {
-
 	bool StorageHandlerManager::init() {
 		XmlParser xmlParser;
 		if (!xmlParser.open("conf/db.xml")) {
@@ -47,6 +47,15 @@ BEGIN_NAMESPACE_SLAM {
 		
 		xmlParser.final();
 		return rc;	
+	}
+
+	u64 StorageHandlerManager::InsertEntityToTable(u32 shard, std::string table, const Entity* entity) {
+		StorageHandler* storageHandler = this->find(shard);
+		return storageHandler ? storageHandler->InsertEntityToTable(shard, table, entity) : 0;
+	}
+
+	Entity* StorageHandlerManager::RetrieveEntityFromTable(u32 shard, std::string table, u64 entityid) {
+		return nullptr;
 	}
 }
 

@@ -63,16 +63,26 @@ BEGIN_NAMESPACE_SLAM {
 	//
 	// FieldType of protobuf::Message to FieldType of MySQL
 	static std::map<FieldDescriptor::CppType, DatabaseFieldDescriptor> __msg2field = {
-		{ CPPTYPE_INT32,	{MYSQL_TYPE_LONG, NOT_NULL_FLAG, 4} },// TYPE_INT32, TYPE_SINT32, TYPE_SFIXED32
-		{ CPPTYPE_UINT32, 	{MYSQL_TYPE_LONG, NOT_NULL_FLAG | UNSIGNED_FLAG, 4} },// TYPE_INT64, TYPE_SINT64, TYPE_SFIXED64
-		{ CPPTYPE_INT64, 	{MYSQL_TYPE_LONGLONG, NOT_NULL_FLAG, 8} },// TYPE_UINT32, TYPE_FIXED32
-		{ CPPTYPE_UINT64,	{MYSQL_TYPE_LONGLONG, NOT_NULL_FLAG | UNSIGNED_FLAG, 8} },// TYPE_UINT64, TYPE_FIXED64
-		{ CPPTYPE_FLOAT,	{MYSQL_TYPE_FLOAT, NOT_NULL_FLAG, 4} },// TYPE_FLOAT
-		{ CPPTYPE_DOUBLE,	{MYSQL_TYPE_DOUBLE, NOT_NULL_FLAG, 8} },// TYPE_DOUBLE
-		{ CPPTYPE_BOOL, 	{MYSQL_TYPE_TINY, NOT_NULL_FLAG | UNSIGNED_FLAG, 1} },// TYPE_BOOL
-		{ CPPTYPE_ENUM, 	{MYSQL_TYPE_LONG, NOT_NULL_FLAG, 4} },// TYPE_ENUM
-		{ CPPTYPE_STRING,	{MYSQL_TYPE_VAR_STRING, NOT_NULL_FLAG, 0} },// TYPE_STRING, TYPE_BYTES
-		{ CPPTYPE_MESSAGE,	{MYSQL_TYPE_LONGBLOB, NOT_NULL_FLAG | BLOB_FLAG, 0} }// TYPE_MESSAGE, TYPE_GROUP
+		// TYPE_INT32, TYPE_SINT32, TYPE_SFIXED32
+		{ FieldDescriptor::CPPTYPE_INT32,	{MYSQL_TYPE_LONG, NOT_NULL_FLAG, 4} },
+		// TYPE_INT64, TYPE_SINT64, TYPE_SFIXED64
+		{ FieldDescriptor::CPPTYPE_UINT32, 	{MYSQL_TYPE_LONG, NOT_NULL_FLAG | UNSIGNED_FLAG, 4} },
+		// TYPE_UINT32, TYPE_FIXED32
+		{ FieldDescriptor::CPPTYPE_INT64, 	{MYSQL_TYPE_LONGLONG, NOT_NULL_FLAG, 8} },
+		// TYPE_UINT64, TYPE_FIXED64
+		{ FieldDescriptor::CPPTYPE_UINT64,	{MYSQL_TYPE_LONGLONG, NOT_NULL_FLAG | UNSIGNED_FLAG, 8} },
+		// TYPE_FLOAT
+		{ FieldDescriptor::CPPTYPE_FLOAT,	{MYSQL_TYPE_FLOAT, NOT_NULL_FLAG, 4} },
+		// TYPE_DOUBLE
+		{ FieldDescriptor::CPPTYPE_DOUBLE,	{MYSQL_TYPE_DOUBLE, NOT_NULL_FLAG, 8} },
+		// TYPE_BOOL
+		{ FieldDescriptor::CPPTYPE_BOOL, 	{MYSQL_TYPE_TINY, NOT_NULL_FLAG | UNSIGNED_FLAG, 1} },
+		// TYPE_ENUM
+		{ FieldDescriptor::CPPTYPE_ENUM, 	{MYSQL_TYPE_LONG, NOT_NULL_FLAG, 4} },
+		// TYPE_STRING, TYPE_BYTES
+		{ FieldDescriptor::CPPTYPE_STRING,	{MYSQL_TYPE_VAR_STRING, NOT_NULL_FLAG, 0} },
+		// TYPE_MESSAGE, TYPE_GROUP
+		{ FieldDescriptor::CPPTYPE_MESSAGE,	{MYSQL_TYPE_LONG_BLOB, NOT_NULL_FLAG | BLOB_FLAG, 0} }
 	};
 
 	void ExtendField(const Message& message, const FieldDescriptor* field, const Reflection* ref, DatabaseFieldDescriptor& descriptor) {
@@ -81,13 +91,17 @@ BEGIN_NAMESPACE_SLAM {
 			size_t newlen = 0;
 			if (ref->HasField(message, field)) {
 				std::string value = ref->GetString(message, field);
-				if (value.length() < MYSQL_VARCHAR_UTF8_MAXSIZE) { newlen = value.length() / 32 + 32; }
-				else if (value.length() < (u16)(-1)) {
+				size_t len = value.length() * 3; // UTF-8
+				if (len < MYSQL_VARCHAR_UTF8_MAXSIZE) { 
+					newlen = 31;
+					newlen = (len & ~newlen) + 32;
+				}
+				else if (len < (u16)(-1)) {
 					newtype = MYSQL_TYPE_BLOB;
 					newlen = (u16)(-1);
 				}
 				else {
-					newtype = MYSQL_TYPE_LONGBLOB;
+					newtype = MYSQL_TYPE_LONG_BLOB;
 					newlen = (u32)(-1);
 				}
 			}
@@ -143,8 +157,9 @@ BEGIN_NAMESPACE_SLAM {
 		for (auto& i : fieldSet) {
 			if (i.first.compare("id")) {
 				sql << ", `" << i.first << "` ";
-				rc = GetFieldStatement(i.second, sql);
-				CHECK_RETURN(rc, false, "field: %s, type:%d(%d,%d) error", i.first, i.second.type, i.second.flags, i.second.length);
+				bool rc = GetFieldStatement(i.second, sql);
+				CHECK_RETURN(rc, false, "field: %s, type:%d(%d,%d) error", 
+						i.first.c_str(), i.second.type, i.second.flags, i.second.length);
 			}
 		}
 		sql << ") ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8";
@@ -171,7 +186,7 @@ BEGIN_NAMESPACE_SLAM {
 		//
 		// load fields decription
 		for (auto& table : tables) {
-			rc = this->loadField(table);
+			rc = this->LoadField(table);
 			CHECK_PANIC(rc, "load field: %s error", table.c_str());
 		}
 
@@ -207,13 +222,13 @@ BEGIN_NAMESPACE_SLAM {
 		for (auto& i : this->_tables) {
 			Debug << "\ttable: " << i.first;
 			for (auto& v : i.second) {
-				Debug << "\t\tfield: " << v.first << ", length: " << v.second.length;
+				Debug << "\t\tfield: " << v.first << ", flags: " << v.second.flags << ", length: " << v.second.length;
 			}
 		}
 	}
 
 	bool GetFieldSet(const Message& message, const Reflection* ref, const FieldDescriptor* field, FieldSet& fieldSet) {
-		CHECK_RETURN(FindOrNull(__msg2field, field->cpp_type()), false, "unhandled cpp_type: %d", field->cpp_type());
+		CHECK_RETURN(__msg2field.find(field->cpp_type()) != __msg2field.end(), false, "illegal cpp_type:%d", field->cpp_type());
 		if (ref->HasField(message, field)) {
 			if (field->is_repeated()) {
 				//TODO:
@@ -228,8 +243,8 @@ BEGIN_NAMESPACE_SLAM {
 	
 	bool ScrapeStatement(const Message& message, const Reflection* ref, const FieldDescriptor* field, std::ostringstream& sql_fields, std::ostringstream& sql_values) {
 		if (!ref->HasField(message, field)) { return true; }//TODO:
-		if (sql_fields.rdbuf()->in_avail()) { sql_fields << ","; }
-		if (sql_values.rdbuf()->in_avail()) { sql_values << ","; }
+		if (sql_fields.tellp() > 0) { sql_fields << ","; }
+		if (sql_values.tellp() > 0) { sql_values << ","; }
 		sql_fields << field->name();
 		switch (field->cpp_type()) {
 #define CASE_FIELD_TYPE(CPPTYPE, METHOD_TYPE, VALUE_TYPE)	\
@@ -237,7 +252,7 @@ BEGIN_NAMESPACE_SLAM {
 				if (true) {\
 					VALUE_TYPE value = ref->Get##METHOD_TYPE(message, field);\
 					sql_values << value;\
-				} break;\
+				} break;
 			CASE_FIELD_TYPE(INT32, Int32, int32_t);
 			CASE_FIELD_TYPE(INT64, Int64, int64_t);
 			CASE_FIELD_TYPE(UINT32, UInt32, uint32_t);
@@ -276,7 +291,7 @@ BEGIN_NAMESPACE_SLAM {
 			});
 			CHECK_RETURN(rc, false, "DecodeMessage to table: %s failure", table.c_str());			
 #if true		
-			Debug << "Message: " << message.GetTypeName();
+			Debug << "Message: " << message->GetTypeName();
 			for (auto& i : fieldSet) {
 				Debug << "\t" << i.first << " => " << i.second.type << "," << i.second.flags << "," << i.second.length;
 			}
@@ -295,19 +310,24 @@ BEGIN_NAMESPACE_SLAM {
 			});
 			CHECK_RETURN(rc, false, "DecodeMessage to table: %s failure", table.c_str());
 			
-			const FieldSet& lastSet = this->_tables[table];
+			FieldSet& lastSet = this->_tables[table];
 			for (auto& i : fieldSet) {
-				if (lastSet.find(i.first) == lastSet) {
-					rc = AddField(this->_dbhandler, table, i.second);
-					CHECK_RETURN(rc, false, "add field: %s error", i.first);
+				if (lastSet.find(i.first) == lastSet.end()) {
+					rc = AddField(this->_dbhandler, table, i.first, i.second);
+					CHECK_RETURN(rc, false, "add field: %s error", i.first.c_str());					
 					lastSet[i.first] = i.second;
 				}
 				else {
 					const DatabaseFieldDescriptor& descriptor = lastSet[i.first];
-					if (i.second.flags != descriptor.flags 
-							|| i.second.type != descriptor.type || i.second.length != descriptor.length) {
-						rc = AlterField(this->_dbhandler, table, i.second);
-						CHECK_RETURN(rc, false, "alter field: %s error", i.first);
+					Debug("field:%s, newlen: %ld, len: %ld", i.first.c_str(), i.second.length, descriptor.length);
+					if (i.second.type != descriptor.type
+							|| i.second.length > descriptor.length
+							|| ((IS_UNSIGNED(i.second.flags) && !IS_UNSIGNED(descriptor.flags))
+									|| (IS_NOT_NULL(i.second.flags) && !IS_NOT_NULL(descriptor.flags))
+								) 
+					   ) {
+						rc = AlterField(this->_dbhandler, table, i.first, i.second);
+						CHECK_RETURN(rc, false, "alter field: %s error", i.first.c_str());
 						lastSet[i.first] = i.second;
 					}
 				}
@@ -320,6 +340,7 @@ BEGIN_NAMESPACE_SLAM {
 		sql << "INSERT INTO `" << table << "` (" << sql_fields.str() << ") VALUES (" << sql_values.str() << ")";
 		bool rc = this->_dbhandler->runCommand(sql.str());
 		CHECK_RETURN(rc, false, "run sql: %s error", sql.str().c_str());
+		Debug << "create sql: " << sql.str();
 		if (insertid) {
 			*insertid = this->_dbhandler->insertId();
 		}

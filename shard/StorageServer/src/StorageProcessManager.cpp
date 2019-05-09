@@ -12,10 +12,11 @@
 #include "MainProcess.h"
 #include "StorageEntity.h"
 #include "StorageEntityManager.h"
-#include "StorageProcess.h"
-#include "StorageProcessManager.h"
+#include "MessageStatement.h"
 #include "StorageHandler.h"
 #include "StorageHandlerManager.h"
+#include "StorageProcess.h"
+#include "StorageProcessManager.h"
 
 BEGIN_NAMESPACE_SLAM {
 	bool StorageProcessManager::init(int number) {

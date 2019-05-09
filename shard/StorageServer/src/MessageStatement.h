@@ -37,8 +37,8 @@ BEGIN_NAMESPACE_SLAM {
 		size_t length;
 	};
 	
-	using std::unordered_map<std::string, DatabaseFieldDescriptor> = FieldSet;
-	using std::unordered_map<std::string, FieldSet> = TableSet;
+	typedef std::unordered_map<std::string, DatabaseFieldDescriptor>  FieldSet;
+	typedef std::unordered_map<std::string, FieldSet>  TableSet;
 	
 	class MySQL;
 	class MessageStatement {

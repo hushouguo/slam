@@ -4,6 +4,9 @@
  */
 
 #include "common.h"
+#include "mysql/MySQLResult.h"
+#include "mysql/MySQLStatement.h"
+#include "mysql/MySQL.h"
 #include "CentralTask.h"
 #include "CentralTaskManager.h"
 #include "SceneTask.h"
@@ -12,7 +15,9 @@
 #include "MainProcess.h"
 #include "StorageEntity.h"
 #include "StorageEntityManager.h"
+#include "MessageStatement.h"
 #include "StorageHandler.h"
+#include "StorageHandlerManager.h"
 
 #define MYSQL_VARCHAR_ASCII_MAXSIZE		65532
 #define MYSQL_VARCHAR_UTF8_MAXSIZE		21845
