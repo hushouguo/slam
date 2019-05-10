@@ -90,7 +90,7 @@ int main(int argc, char* argv[]) {
 			}
 		};
 
-		auto updateEntity = [](StorageHandlerManager& m, u64 entityid, Entity* entity) {
+		auto updateEntity = [&loadEntity](StorageHandlerManager& m, u64 entityid, Entity* entity) {
 			entity->set_diamond(entity->diamond() + 1);
 			bool rc = m.UpdateEntityToTable(1, "user", entityid, entity);
 			if (rc) {
@@ -103,10 +103,15 @@ int main(int argc, char* argv[]) {
 
 		StorageHandlerManager m;
 		CHECK_GOTO(m.init(), exit_failure, "StorageHandlerManager init failure");
-		loadEntity(m, 1);
-		Entity entity;
-		entity.set_mailbox("this is new mailbox");
-		updateEntity(m, 1, &entity);
+		if (false) {
+			createEntity(m);
+		}
+		else {
+			loadEntity(m, 1);
+			Entity entity;
+			entity.set_mailbox("this is new mailbox");
+			updateEntity(m, 1, &entity);
+		}
 		goto exit_failure;		
 	}
 	

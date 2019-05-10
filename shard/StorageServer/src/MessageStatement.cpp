@@ -618,7 +618,7 @@ BEGIN_NAMESPACE_SLAM {
 		// update entity to table
 		std::ostringstream sql;
  		sql << "UPDATE `" << table << "` SET " << sql_values.str() << " WHERE id = " << entityid;
-		bool rc = this->_dbhandler->runCommand(sql.str());
+		rc = this->_dbhandler->runCommand(sql.str());
 		CHECK_RETURN(rc, false, "run sql: %s error", sql.str().c_str());
 		Debug << "update sql: " << sql.str();
 		return true;
