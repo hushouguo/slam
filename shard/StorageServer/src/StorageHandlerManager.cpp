@@ -51,17 +51,20 @@ BEGIN_NAMESPACE_SLAM {
 
 	u64  StorageHandlerManager::InsertEntityToTable(u32 shard, std::string table, const Entity* entity) {
 		StorageHandler* storageHandler = this->find(shard);
-		return storageHandler ? storageHandler->InsertEntityToTable(shard, table, entity) : 0;
+		CHECK_RETURN(storageHandler, 0, "no config shard: %d", shard);
+		return storageHandler->InsertEntityToTable(shard, table, entity);
 	}
 
 	bool StorageHandlerManager::RetrieveEntityFromTable(u32 shard, std::string table, u64 entityid, Entity* entity) {
 		StorageHandler* storageHandler = this->find(shard);
-		return storageHandler ? storageHandler->RetrieveEntityFromTable(shard, table, entityid, entity) : false;
+		CHECK_RETURN(storageHandler, false, "no config shard: %d", shard);
+		return storageHandler->RetrieveEntityFromTable(shard, table, entityid, entity);
 	}
 
 	bool StorageHandlerManager::UpdateEntityToTable(u32 shard, std::string table, u64 entityid, const Entity* entity) {
 		StorageHandler* storageHandler = this->find(shard);
-		return storageHandler ? storageHandler->UpdateEntityToTable(shard, table, entityid, entity) : false;
+		CHECK_RETURN(storageHandler, false, "no config shard: %d", shard);
+		return storageHandler->UpdateEntityToTable(shard, table, entityid, entity);
 	}
 }
 

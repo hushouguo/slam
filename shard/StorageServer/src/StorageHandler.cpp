@@ -31,21 +31,38 @@ BEGIN_NAMESPACE_SLAM {
 		assert(shard == this->id);
 		CHECK_RETURN(this->_dbhandler && this->_messageStatement, 0, "StorageHandler: %d not initiated", shard);
 		u64 entityid = 0;
-		bool rc = this->_messageStatement->CreateMessage(table, entity, &entityid);
-		CHECK_RETURN(rc, 0, "CreateMessage: %s, shard: %d error", table.c_str(), shard);
+		try {
+			bool rc = this->_messageStatement->CreateMessage(table, entity, &entityid);
+			CHECK_RETURN(rc, 0, "CreateMessage: %s, shard: %d error", table.c_str(), shard);
+		}
+		catch(std::exception& e) {
+			CHECK_RETURN(false, 0, "CreateMessage exception:%s, shard:%d, table:%s", e.what(), shard, table.c_str());
+		}		
 		return entityid;
 	}
 	
 	bool StorageHandler::RetrieveEntityFromTable(u32 shard, std::string table, u64 entityid, Entity* entity) {
 		assert(shard == this->id);
 		CHECK_RETURN(this->_dbhandler && this->_messageStatement, 0, "StorageHandler: %d not initiated", shard);
-		return this->_messageStatement->RetrieveMessage(table, entityid, entity);
+		try {
+			return this->_messageStatement->RetrieveMessage(table, entityid, entity);
+		}
+		catch(std::exception& e) {
+			CHECK_RETURN(false, false, "RetrieveMessage exception:%s, shard:%d, table:%s, entityid:%lld", e.what(), shard, table.c_str(), entityid);
+		}
+		return false;		
 	}
 
 	bool StorageHandler::UpdateEntityToTable(u32 shard, std::string table, u64 entityid, const Entity* entity) {
 		assert(shard == this->id);
 		CHECK_RETURN(this->_dbhandler && this->_messageStatement, 0, "StorageHandler: %d not initiated", shard);
-		return this->_messageStatement->UpdateMessage(table, entityid, entity);
+		try {
+			return this->_messageStatement->UpdateMessage(table, entityid, entity);
+		}
+		catch(std::exception& e) {
+			CHECK_RETURN(false, false, "UpdateMessage exception:%s, shard:%d, table:%s, entityid:%lld", e.what(), shard, table.c_str(), entityid);
+		}
+		return false;		
 	}
 	
 	bool StorageHandler::init(std::string host, std::string user, std::string password, std::string database, int port) {
@@ -77,6 +94,11 @@ BEGIN_NAMESPACE_SLAM {
 		this->_messageStatement = new MessageStatement(this->_dbhandler);
 		
 		return true;
+	}
+
+	StorageHandler::~StorageHandler() {
+		SafeDelete(this->_messageStatement);
+		SafeDelete(this->_dbhandler);		
 	}
 }
 

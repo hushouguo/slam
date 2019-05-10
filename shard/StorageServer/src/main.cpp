@@ -54,69 +54,6 @@ int main(int argc, char* argv[]) {
 	DumpLibraryVersion();
 
 	sThreadPool.init(sConfig.get("Service.threads", sConfig.threads));
-
-	if (true) {
-		auto createEntity = [](StorageHandlerManager& m) {
-			Entity entity;
-			//entity.set_id(100);
-			entity.set_gold(100);
-			entity.set_diamond(200);
-			entity.set_bag("this is a bagaaa背包sdfsd");
-			entity.set_level(123);
-			entity.mutable_friendlist()->set_id(101);
-			entity.mutable_friendlist()->set_name("hushouguo");
-			for (int i = 10;i<20;++i) {
-				entity.add_enemy(i);
-			}
-			for (char c = 'a'; c <= 'z'; ++c) {
-				std::ostringstream o;
-				o << c;
-				entity.add_alias(o.str());
-			}
-			entity.set_mailbox("mailbox");
-			u64 entityid = m.InsertEntityToTable(1, "user", &entity);
-			Debug << "entityid: " << entityid;
-			DumpMessage(&entity);
-		};
-
-		auto loadEntity = [](StorageHandlerManager& m, u64 entityid, Entity* entity) {
-			bool rc = m.RetrieveEntityFromTable(1, "user", entityid, entity);
-			if (rc) {
-				DumpMessage(entity);
-			}
-			else {
-				Error << "loadEntity error: " << entityid;
-			}
-		};
-
-		auto updateEntity = [&loadEntity](StorageHandlerManager& m, u64 entityid, Entity* entity) {
-			//entity->set_diamond(entity->diamond() + 1);
-			bool rc = m.UpdateEntityToTable(1, "user", entityid, entity);
-			if (rc) {
-				//loadEntity(m, entityid);
-			}
-			else {
-				Error << "updateEntity error: " << entityid;
-			}
-		};
-
-		StorageHandlerManager m;
-		CHECK_GOTO(m.init(), exit_failure, "StorageHandlerManager init failure");
-		if (false) {
-			createEntity(m);
-		}
-		else {
-			Entity entity;
-			loadEntity(m, 1, &entity);
-			//entity.set_mailbox("this is new mailbox");
-			entity.set_mailbox("");
-			entity.set_gold(0);
-			updateEntity(m, 1, &entity);
-			Debug << "load entity: 1 again";
-			loadEntity(m, 1, &entity);
-		}
-		goto exit_failure;		
-	}
 	
 	CHECK_GOTO(sStorageProcessManager.init(
 		sConfig.get("Service.threads", sConfig.threads)),

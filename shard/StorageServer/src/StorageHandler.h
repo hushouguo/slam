@@ -10,6 +10,7 @@ BEGIN_NAMESPACE_SLAM {
 	class StorageHandler : public Entry<u32> {
 		public:
 			StorageHandler(u32 shard);
+			~StorageHandler();
 			const char* getClassName() override { return "StorageHandler"; }
 
 		public:

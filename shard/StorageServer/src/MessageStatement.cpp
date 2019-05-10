@@ -10,8 +10,12 @@
 #include "MessageStatement.h"
 
 BEGIN_NAMESPACE_SLAM {
+	//
+	// Decode protobuf::Message
 	bool DecodeField(const Message& message, const FieldDescriptor* field, const Reflection* ref,
 		const std::function<bool(const Message& message, const Reflection* ref, const FieldDescriptor* field)>& func) {	
+		//
+		// filter `id` field
 		return field->name().compare("id") ? func(message, ref, field) : true;
 	}	
 	bool DecodeDescriptor(const Message& message, const Descriptor* descriptor, const Reflection* ref,
@@ -339,6 +343,8 @@ BEGIN_NAMESPACE_SLAM {
 		else {
 			//if (ref->HasField(message, field)) {
 				fieldSet[field->name()] = __msg2field[field->cpp_type()];
+				//
+				// extend VARCHAR field
 				ExtendField(message, field, ref, fieldSet[field->name()]);
 			//}
 		}
@@ -355,6 +361,8 @@ BEGIN_NAMESPACE_SLAM {
 		}
 		else {
 			if (sql_values.tellp() > 0) { sql_values << ","; }
+			//
+			// for UPDATE, make statement like: field_name = field_value
 			sql_values << field->name() << "=";
 		}
 
@@ -491,6 +499,8 @@ BEGIN_NAMESPACE_SLAM {
 			CHECK_RETURN(false, false, "not found entity: %lld", entityid);
 		}
 
+		//
+		// reset message
 		message->Clear();
 		
 		MYSQL_ROW row = result->fetchRow();
@@ -576,6 +586,8 @@ BEGIN_NAMESPACE_SLAM {
 		return true;
 	}
 
+	//
+	// UpdateMessage, the `message` MUST be full property
 	bool MessageStatement::UpdateMessage(std::string table, u64 entityid, const Message* message) {
 		CHECK_RETURN(this->_tables.find(table) != this->_tables.end(), false, "not found table: %s", table.c_str());
 		CHECK_RETURN(message, false, "message is nullptr");
