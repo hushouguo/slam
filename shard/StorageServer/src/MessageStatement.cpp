@@ -91,7 +91,7 @@ BEGIN_NAMESPACE_SLAM {
 			size_t newlen = 0;
 			if (ref->HasField(message, field)) {
 				std::string value = ref->GetString(message, field);
-				size_t len = value.length() * 3; // UTF-8
+				size_t len = value.length();
 				if (len < MYSQL_VARCHAR_UTF8_MAXSIZE) { 
 					newlen = 31;
 					newlen = (len & ~newlen) + 32;
@@ -110,7 +110,7 @@ BEGIN_NAMESPACE_SLAM {
 			}
 			if (descriptor.type != newtype || newlen > descriptor.length) {
 #if false
-				Debug("field: %s from (%d,%ld) to (%d,%ld)", field->name().c_str(), 
+				Debug("field: %s from (type: %d,len: %ld) to (type: %d,len: %ld)", field->name().c_str(), 
 					descriptor.type, descriptor.length,
 					newtype, newlen);
 #endif				
@@ -119,8 +119,6 @@ BEGIN_NAMESPACE_SLAM {
 			}
 		}
 	}
-
-
 
 	//
 	// add new field
@@ -142,6 +140,37 @@ BEGIN_NAMESPACE_SLAM {
 		CHECK_RETURN(rc, false, "table: %s, field type: %d(%d,%d)", table.c_str(), field.type, field.flags, field.length);
 		Debug << "alter field: " << sql.str();
 		return mysql->runCommand(sql.str());
+	}
+
+	//
+	// UpdateField
+	bool UpdateField(MySQL* mysql, std::string table, const FieldSet& newSet, FieldSet& oldSet) {
+		for (auto& i : newSet) {
+			if (oldSet.find(i.first) == oldSet.end()) {
+				bool rc = AddField(mysql, table, i.first, i.second);
+				CHECK_RETURN(rc, false, "add field: %s error", i.first.c_str());					
+				oldSet[i.first] = i.second;
+			}
+			else {
+				const DatabaseFieldDescriptor& descriptor = oldSet[i.first];
+				//Debug("field:%s, newlen: %ld, len: %ld", i.first.c_str(), i.second.length, descriptor.length);
+				if (i.second.type != descriptor.type // FIX: modify different field type should be forbidden
+						//
+						// only VARCHAR field allow to convert
+						|| (descriptor.type == MYSQL_TYPE_VAR_STRING && i.second.length > descriptor.length)
+						//
+						// only UNSIGNED & NOT NULL flags will be set
+						|| ((IS_UNSIGNED(i.second.flags) && !IS_UNSIGNED(descriptor.flags))
+							|| (IS_NOT_NULL(i.second.flags) && !IS_NOT_NULL(descriptor.flags))
+						   ) 
+				   ) {
+					bool rc = AlterField(mysql, table, i.first, i.second);
+					CHECK_RETURN(rc, false, "alter field: %s error", i.first.c_str());
+					oldSet[i.first] = i.second;
+				}
+			}
+		}
+		return true;
 	}
 
 	//
@@ -325,11 +354,6 @@ BEGIN_NAMESPACE_SLAM {
 			if (sql_values.tellp() > 0) { sql_values << ","; }
 		}
 		else {
-			//
-			// isUpdate, don't update not set field
-			if (!ref->HasField(message, field)) {
-				return true;
-			}
 			if (sql_values.tellp() > 0) { sql_values << ","; }
 			sql_values << field->name() << "=";
 		}
@@ -431,32 +455,8 @@ BEGIN_NAMESPACE_SLAM {
 			});
 			CHECK_RETURN(rc, false, "DecodeMessage to table: %s failure", table.c_str());
 			
-			FieldSet& lastSet = this->_tables[table];
-			for (auto& i : fieldSet) {
-				if (lastSet.find(i.first) == lastSet.end()) {
-					rc = AddField(this->_dbhandler, table, i.first, i.second);
-					CHECK_RETURN(rc, false, "add field: %s error", i.first.c_str());					
-					lastSet[i.first] = i.second;
-				}
-				else {
-					const DatabaseFieldDescriptor& descriptor = lastSet[i.first];
-					//Debug("field:%s, newlen: %ld, len: %ld", i.first.c_str(), i.second.length, descriptor.length);
-					if (i.second.type != descriptor.type // FIX: modify different field type should be forbidden
-							//
-							// only VARCHAR field allow to convert
-							|| (descriptor.type == MYSQL_TYPE_VAR_STRING && i.second.length > descriptor.length)
-							//
-							// only UNSIGNED & NOT NULL flags will be set
-							|| ((IS_UNSIGNED(i.second.flags) && !IS_UNSIGNED(descriptor.flags))
-									|| (IS_NOT_NULL(i.second.flags) && !IS_NOT_NULL(descriptor.flags))
-								) 
-					   ) {
-						rc = AlterField(this->_dbhandler, table, i.first, i.second);
-						CHECK_RETURN(rc, false, "alter field: %s error", i.first.c_str());
-						lastSet[i.first] = i.second;
-					}
-				}
-			}
+			rc = UpdateField(this->_dbhandler, table, fieldSet, this->_tables[table]);
+			CHECK_RETURN(rc, false, "UpdateField table: %s failure", table.c_str());
 		}
 
 		//
@@ -592,32 +592,8 @@ BEGIN_NAMESPACE_SLAM {
 		});
 		CHECK_RETURN(rc, false, "DecodeMessage to table: %s failure", table.c_str());
 
-		FieldSet& lastSet = this->_tables[table];
-		for (auto& i : fieldSet) {
-			if (lastSet.find(i.first) == lastSet.end()) {
-				rc = AddField(this->_dbhandler, table, i.first, i.second);
-				CHECK_RETURN(rc, false, "add field: %s error", i.first.c_str());					
-				lastSet[i.first] = i.second;
-			}
-			else {
-				const DatabaseFieldDescriptor& descriptor = lastSet[i.first];
-				//Debug("field:%s, newlen: %ld, len: %ld", i.first.c_str(), i.second.length, descriptor.length);
-				if (i.second.type != descriptor.type // FIX: modify different field type should be forbidden
-						//
-						// only VARCHAR field allow to convert
-						|| (descriptor.type == MYSQL_TYPE_VAR_STRING && i.second.length > descriptor.length)
-						//
-						// only UNSIGNED & NOT NULL flags will be set
-						|| ((IS_UNSIGNED(i.second.flags) && !IS_UNSIGNED(descriptor.flags))
-								|| (IS_NOT_NULL(i.second.flags) && !IS_NOT_NULL(descriptor.flags))
-							) 
-				   ) {
-					rc = AlterField(this->_dbhandler, table, i.first, i.second);
-					CHECK_RETURN(rc, false, "alter field: %s error", i.first.c_str());
-					lastSet[i.first] = i.second;
-				}
-			}
-		}
+		rc = UpdateField(this->_dbhandler, table, fieldSet, this->_tables[table]);
+		CHECK_RETURN(rc, false, "UpdateField table: %s failure", table.c_str());
 
 		//
 		// update entity to table

@@ -79,11 +79,10 @@ int main(int argc, char* argv[]) {
 			DumpMessage(&entity);
 		};
 
-		auto loadEntity = [](StorageHandlerManager& m, u64 entityid) {
-			Entity entity;
-			bool rc = m.RetrieveEntityFromTable(1, "user", entityid, &entity);
+		auto loadEntity = [](StorageHandlerManager& m, u64 entityid, Entity* entity) {
+			bool rc = m.RetrieveEntityFromTable(1, "user", entityid, entity);
 			if (rc) {
-				DumpMessage(&entity);
+				DumpMessage(entity);
 			}
 			else {
 				Error << "loadEntity error: " << entityid;
@@ -91,10 +90,10 @@ int main(int argc, char* argv[]) {
 		};
 
 		auto updateEntity = [&loadEntity](StorageHandlerManager& m, u64 entityid, Entity* entity) {
-			entity->set_diamond(entity->diamond() + 1);
+			//entity->set_diamond(entity->diamond() + 1);
 			bool rc = m.UpdateEntityToTable(1, "user", entityid, entity);
 			if (rc) {
-				loadEntity(m, entityid);
+				//loadEntity(m, entityid);
 			}
 			else {
 				Error << "updateEntity error: " << entityid;
@@ -107,10 +106,14 @@ int main(int argc, char* argv[]) {
 			createEntity(m);
 		}
 		else {
-			loadEntity(m, 1);
 			Entity entity;
-			entity.set_mailbox("this is new mailbox");
+			loadEntity(m, 1, &entity);
+			//entity.set_mailbox("this is new mailbox");
+			entity.set_mailbox("");
+			entity.set_gold(0);
 			updateEntity(m, 1, &entity);
+			Debug << "load entity: 1 again";
+			loadEntity(m, 1, &entity);
 		}
 		goto exit_failure;		
 	}
