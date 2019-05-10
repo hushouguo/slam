@@ -41,6 +41,7 @@ BEGIN_NAMESPACE_SLAM {
 
 		public:
 			u64 insertId();
+			inline const MySQLConfig& mysqlconf() { return this->_mysqlconf; }
 
 		private:
 			friend class MySQLStatement;

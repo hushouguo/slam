@@ -83,7 +83,7 @@ BEGIN_NAMESPACE_SLAM {
 		{ FieldDescriptor::CPPTYPE_STRING,	{MYSQL_TYPE_VAR_STRING, NOT_NULL_FLAG, 0} },
 		// TYPE_MESSAGE, TYPE_GROUP
 		{ FieldDescriptor::CPPTYPE_MESSAGE,	{MYSQL_TYPE_LONG_BLOB, NOT_NULL_FLAG | BLOB_FLAG, 0} }
-	};
+	};	
 
 	void ExtendField(const Message& message, const FieldDescriptor* field, const Reflection* ref, DatabaseFieldDescriptor& descriptor) {
 		if (descriptor.type == MYSQL_TYPE_VAR_STRING) {
@@ -195,28 +195,103 @@ BEGIN_NAMESPACE_SLAM {
 		this->DumpFieldDescriptor();
 	}
 
+	static std::map<const char*, enum_field_types> __string2type = {
+		{"tinyint", MYSQL_TYPE_TINY},
+		{"smallint", MYSQL_TYPE_SHORT},
+		{"int", MYSQL_TYPE_LONG},
+		{"bigint", MYSQL_TYPE_LONGLONG},		
+		{"float", MYSQL_TYPE_FLOAT}, {"double", MYSQL_TYPE_DOUBLE},
+		{"char", MYSQL_TYPE_STRING}, {"varchar", MYSQL_TYPE_VAR_STRING},
+		{"date", MYSQL_TYPE_DATE}, {"time", MYSQL_TYPE_TIME}, 
+		{"timestamp", MYSQL_TYPE_TIMESTAMP}, {"datetime", MYSQL_TYPE_DATETIME},
+		{"tinyblob", MYSQL_TYPE_TINY_BLOB}, {"blob", MYSQL_TYPE_BLOB}, 
+		{"mediumblob", MYSQL_TYPE_MEDIUM_BLOB}, {"longblob", MYSQL_TYPE_LONG_BLOB}
+	}
+	
 	// 
 	// field descriptor
 	bool MessageStatement::LoadField(std::string table) {
 		std::ostringstream sql;
-		sql << "SELECT * FROM `" << table.c_str() << "` LIMIT 1";
-		MySQLResult* result = this->_dbhandler->runQuery(sql.str());
-		CHECK_RETURN(result, false, "runQuery: %s error", sql.str().c_str());
+		sql << "SELECT";
+		sql << " COLUMN_NAME";					// field name, like: `name` etc
+		sql << ", IS_NULLABLE";					// NOT NULL
+		sql << ", DATA_TYPE";					// varchar, int etc...
+		sql << ", CHARACTER_MAXIMUM_LENGTH";	// like: varchar(96), 96, int, this is null
+		sql << ", NUMERIC_PRECISION";			// like: bigint, 20, for non-integer, this is null
+		sql << ", COLUMN_TYPE";					// like: bigint(20) unsigned
+		sql << " FROM information_schema.COLUMNS WHERE 1=1";
+		sql << " AND TABLE_SCHEMA=`" << this->_dbhandler->mysqlconf().database << "`";
+		sql << " AND TABLE_NAME=`" << table << "`";
+		
+		MySQLStatement stmt;
+		CHECK_RETURN(stmt.prepare(sql.str()) && stmt.exec(), false, "exec sql: %s error", sql.str().c_str());
+		
+		char COLUMN_NAME[64];
+		char IS_NULLABLE[3];
+		char DATA_TYPE[64];
+		u64 CHARACTER_MAXIMUM_LENGTH = 0;
+		u64 NUMERIC_PRECISION = 0;
+		char COLUMN_TYPE[960];
+		
+		unsigned long lengths[6] = { 0, 0, 0, 0, 0, 0 };		
+		MYSQL_BIND result[6];
+		memset(result, 0, sizeof(result));
 
-		u32 fieldNumber = result->fieldNumber();
-		MYSQL_FIELD* fields = result->fetchField();
+		// COLUMN_NAME
+		result[0].buffer_type = MYSQL_TYPE_VAR_STRING;
+		result[0].buffer = COLUMN_NAME;
+		result[0].buffer_length = sizeof(COLUMN_NAME);
+		result[0].length = &lengths[0];
 
+		// IS_NULLABLE
+		result[1].buffer_type = MYSQL_TYPE_VAR_STRING;
+		result[1].buffer = IS_NULLABLE;
+		result[1].buffer_length = sizeof(IS_NULLABLE);
+		result[1].length = &lengths[1];
+
+		// DATA_TYPE
+		result[2].buffer_type = MYSQL_TYPE_VAR_STRING;
+		result[2].buffer = DATA_TYPE;
+		result[2].buffer_length = sizeof(DATA_TYPE);
+		result[2].length = &lengths[2];
+
+		// CHARACTER_MAXIMUM_LENGTH
+		result[3].buffer_type = MYSQL_TYPE_LONGLONG;
+		result[3].buffer = (void*) &CHARACTER_MAXIMUM_LENGTH;
+		result[3].buffer_length = sizeof(CHARACTER_MAXIMUM_LENGTH);
+		result[3].length = &lengths[3];
+
+		// NUMERIC_PRECISION
+		result[4].buffer_type = MYSQL_TYPE_LONGLONG;
+		result[4].buffer = (void*) &NUMERIC_PRECISION;
+		result[4].buffer_length = sizeof(NUMERIC_PRECISION);
+		result[4].length = &lengths[4];
+
+		// COLUMN_TYPE: longtext
+		result[5].buffer_type = MYSQL_TYPE_LONG_BLOB;
+		result[5].buffer = COLUMN_TYPE;
+		result[5].buffer_length = sizeof(COLUMN_TYPE);
+		result[5].length = &lengths[5];
+		
+		if (!stmt.bindResult(result)) { return false; }
+		
 		FieldSet& fieldSet = this->_tables[table];
-		for (u32 i = 0; i < fieldNumber; ++i) {
-			const MYSQL_FIELD& field = fields[i];
-			DatabaseFieldDescriptor& fieldDescriptor = fieldSet[field.org_name];
-			fieldDescriptor.type = field.type;
-			fieldDescriptor.flags = field.flags;
-			fieldDescriptor.length = field.length;
+		while (stmt.fetch()) {
+			CHECK_CONTINUE(__string2type.find(DATA_TYPE) != __string2type.end(), "illegal DATA_TYPE: %s", DATA_TYPE);
+			DatabaseFieldDescriptor& fieldDescriptor = fieldSet[COLUMN_NAME];
+			fieldDescriptor.type = __string2type[DATA_TYPE];
+			fieldDescriptor.length = CHARACTER_MAXIMUM_LENGTH > 0 ? CHARACTER_MAXIMUM_LENGTH : NUMERIC_PRECISION;
+			fieldDescriptor.flags = 0;
+			if (!strcasecmp(IS_NULLABLE, "NO")) {
+				fieldDescriptor.flags |= NOT_NULL_FLAG;
+			}
+			if (strcasestr(COLUMN_TYPE, "unsigned")) {
+				fieldDescriptor.flags |= UNSIGNED_FLAG;
+			}
+			CHARACTER_MAXIMUM_LENGTH = NUMERIC_PRECISION = 0;
 		}
-
-		SafeDelete(result);
-		return true;
+		
+		return stmt.freeResult();
 	}
 
 	void MessageStatement::DumpFieldDescriptor() {
