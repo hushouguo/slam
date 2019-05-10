@@ -56,7 +56,7 @@ BEGIN_NAMESPACE_SLAM {
 
 	bool StorageHandlerManager::RetrieveEntityFromTable(u32 shard, std::string table, u64 entityid, Entity* entity) {
 		StorageHandler* storageHandler = this->find(shard);
-		return storageHandler ? storageHandler->RetrieveEntityFromTable(shard, table, entity) : false;
+		return storageHandler ? storageHandler->RetrieveEntityFromTable(shard, table, entityid, entity) : false;
 	}
 }
 

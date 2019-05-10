@@ -325,7 +325,7 @@ BEGIN_NAMESPACE_SLAM {
 		if (field->is_repeated()) {
 			//
 			// all repeated fields would be encoded to json string
-			sql_values << "\"" << "[";
+			sql_values << "'" << "[";
 			for (int i = 0; i < ref->FieldSize(message, field); ++i) {
 				if (i > 0) {
 					sql_values << ",";
@@ -346,19 +346,19 @@ BEGIN_NAMESPACE_SLAM {
 #undef CASE_FIELD_TYPE				
 					case google::protobuf::FieldDescriptor::CPPTYPE_STRING: {
 						std::string value = ref->GetRepeatedString(message, field, i);
-						sql_values << "'" << value << "'";
+						sql_values << "\"" << value << "\"";
 						} break;				
 					case google::protobuf::FieldDescriptor::CPPTYPE_MESSAGE: {
 						const Message& submessage = ref->GetRepeatedMessage(message, field, i);
 						std::string value;
 						bool rc = submessage.SerializeToString(&value);
 						CHECK_RETURN(rc, false, "repeated field: %s SerializeToString: %s error", field->name().c_str(), submessage.GetTypeName().c_str());
-						sql_values << "'" << value << "'";
+						sql_values << "\"" << value << "\"";
 						} break;
 					default: CHECK_RETURN(false, false, "illegal repeated field->cpp_type: %d,%s", field->cpp_type(), field->name().c_str());
 				}
 			}
-			sql_values << "]" << "\"";
+			sql_values << "]" << "'";
 		}
 		else {
 			switch (field->cpp_type()) {
@@ -472,9 +472,9 @@ BEGIN_NAMESPACE_SLAM {
 		MySQLResult* result = this->_dbhandler->runQuery(sql.str());
 		CHECK_RETURN(result, false, "retrieve: %s error", sql.str().c_str());
 		u32 rowNumber = result->rowNumber();
-		if (rowNumber) {
+		if (rowNumber == 0) {
 			SafeDelete(result);
-			return false;
+			CHECK_RETURN(false, false, "not found entity: %lld", entityid);
 		}
 
 		message->Clear();
@@ -493,14 +493,14 @@ BEGIN_NAMESPACE_SLAM {
 				//
 				// all repeated fields would be encoded to json string
 				rapidjson::Document root;  // Default template parameter uses UTF8 and MemoryPoolAllocator.
-				CHECK_CONTINUE(root.Parse(row[i]).HasParseError() == false, "illegal repeated field: %s", mysql_field.org_name);
+				CHECK_CONTINUE(root.Parse(row[i]).HasParseError() == false, "illegal repeated field: %s,%s", mysql_field.org_name, row[i]);
 				CHECK_CONTINUE(root.IsArray(), "not repeated field: %s", mysql_field.org_name);
 				for (size_t n = 0; n < root.Size(); ++n) {
 					rapidjson::Value& value = root[n];				
 					switch (field->cpp_type()) {
 #define CASE_FIELD_TYPE(CPPTYPE, METHOD_TYPE, value)	\
 						case google::protobuf::FieldDescriptor::CPPTYPE_##CPPTYPE: \
-							ref->SetRepeated##METHOD_TYPE(message, field, n, value); break;
+							ref->Add##METHOD_TYPE(message, field, value); break;
 							
 						CASE_FIELD_TYPE(INT32, Int32, value.GetInt());
 						CASE_FIELD_TYPE(INT64, Int64, value.GetInt64());
@@ -513,10 +513,10 @@ BEGIN_NAMESPACE_SLAM {
 #undef CASE_FIELD_TYPE				
 						case google::protobuf::FieldDescriptor::CPPTYPE_STRING: {
 							std::string valueString = value.GetString();
-							ref->SetRepeatedString(message, field, n, valueString);
+							ref->AddString(message, field, valueString);
 							} break;				
 						case google::protobuf::FieldDescriptor::CPPTYPE_MESSAGE: {
-							Message* submessage = ref->MutableRepeatedMessage(message, field, n);
+							Message* submessage = ref->AddMessage(message, field, nullptr);
 							assert(submessage);
 							std::string valueString = value.GetString();
 							bool rc = submessage->ParseFromString(valueString);

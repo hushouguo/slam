@@ -77,15 +77,19 @@ int main(int argc, char* argv[]) {
 		entity.set_mailbox("mailbox");
 		u64 entityid = m.InsertEntityToTable(1, "user", &entity);
 		Debug << "entityid: " << entityid;
+		DumpMessage(&entity);
 		goto exit_failure;
 	}
 	else {
 		StorageHandlerManager m;
 		CHECK_GOTO(m.init(), exit_failure, "StorageHandlerManager init failure");
 		Entity entity;
-		bool rc = m.RetrieveEntityFromTable(1, "user", 8, &entity);
+		bool rc = m.RetrieveEntityFromTable(1, "user", 1, &entity);
 		if (rc) {
 			DumpMessage(&entity);
+		}
+		else {
+			Error << "RetrieveEntityFromTable failure";
 		}
 		goto exit_failure;
 	}

@@ -1270,65 +1270,72 @@ BEGIN_NAMESPACE_SLAM {
 		}
 		return true;
 	}
+
+	static bool ShowMessage(const Message& message, const Reflection* ref, const FieldDescriptor* field) {
+		if (field->is_repeated()) {
+			Debug << "repeated field: " << field->name() << " " << ref->FieldSize(message, field);
+			for (int i = 0; i < ref->FieldSize(message, field); ++i) {
+				switch (field->cpp_type()) {
+#define CASE_FIELD_TYPE(CPPTYPE, METHOD_TYPE)	\
+					case google::protobuf::FieldDescriptor::CPPTYPE_##CPPTYPE: \
+					   	Debug << "\t[" << i << "] => " << ref->GetRepeated##METHOD_TYPE(message, field, i); break;
+					CASE_FIELD_TYPE(INT32, Int32);
+					CASE_FIELD_TYPE(INT64, Int64);
+					CASE_FIELD_TYPE(UINT32, UInt32);
+					CASE_FIELD_TYPE(UINT64, UInt64);
+					CASE_FIELD_TYPE(DOUBLE, Double);
+					CASE_FIELD_TYPE(FLOAT, Float);
+					CASE_FIELD_TYPE(BOOL, Bool);
+					CASE_FIELD_TYPE(ENUM, EnumValue);
+#undef CASE_FIELD_TYPE				
+					case google::protobuf::FieldDescriptor::CPPTYPE_STRING:
+						Debug << "\t[" << i << "] => " << ref->GetRepeatedString(message, field, i);
+						break;
+					case google::protobuf::FieldDescriptor::CPPTYPE_MESSAGE:
+						if (true) {
+							const Message& submessage = ref->GetRepeatedMessage(message, field, i);
+							Debug << "\t[" << i << "] => " << "SubMessage: " << submessage.GetTypeName();
+							DumpMessage(submessage, submessage.GetDescriptor(), submessage.GetReflection(), ShowMessage);
+						}
+						break;
+					default: CHECK_RETURN(false, false, "illegal repeated field->cpp_type: %d,%s", field->cpp_type(), field->name().c_str());
+				}
+			}				
+		}
+		else {
+			switch (field->cpp_type()) {
+#define CASE_FIELD_TYPE(CPPTYPE, METHOD_TYPE)	\
+				case google::protobuf::FieldDescriptor::CPPTYPE_##CPPTYPE: \
+				   Debug << "\t" << field->name() << " => " << ref->Get##METHOD_TYPE(message, field); break;
+				CASE_FIELD_TYPE(INT32, Int32);
+				CASE_FIELD_TYPE(INT64, Int64);
+				CASE_FIELD_TYPE(UINT32, UInt32);
+				CASE_FIELD_TYPE(UINT64, UInt64);
+				CASE_FIELD_TYPE(DOUBLE, Double);
+				CASE_FIELD_TYPE(FLOAT, Float);
+				CASE_FIELD_TYPE(BOOL, Bool);
+				CASE_FIELD_TYPE(ENUM, EnumValue);
+#undef CASE_FIELD_TYPE			
+				case google::protobuf::FieldDescriptor::CPPTYPE_STRING:
+					Debug << "\t" << field->name() << " => " << ref->GetString(message, field);
+					break;
+				case google::protobuf::FieldDescriptor::CPPTYPE_MESSAGE:
+					if (true) {
+						const Message& submessage = ref->GetMessage(message, field, nullptr);
+						Debug << "SubMessage: " << submessage.GetTypeName();
+						DumpMessage(submessage, submessage.GetDescriptor(), submessage.GetReflection(), ShowMessage);
+					}
+				break;
+				default: CHECK_RETURN(false, false, "illegal field->cpp_type: %d,%s", field->cpp_type(), field->name().c_str());
+			}					
+		}				
+		return true;
+	}
+
 	void DumpMessage(const google::protobuf::Message* message) {
 		assert(message);
 		Debug << "DumpMessage: " << message->GetTypeName();
-		auto func = [](const Message& message, const Reflection* ref, const FieldDescriptor* field)->bool {
-				if (field->is_repeated()) {
-								for (int i = 0; i < ref->FieldSize(message, field); ++i) {
-									switch (field->cpp_type()) {
-#define CASE_FIELD_TYPE(CPPTYPE, METHOD_TYPE)	\
-										case google::protobuf::FieldDescriptor::CPPTYPE_##CPPTYPE: \
-											Debug << "\t" << field->name() << " => " << ref->GetRepeated##METHOD_TYPE(message, field, i); break;
-									
-										CASE_FIELD_TYPE(INT32, Int32);
-										CASE_FIELD_TYPE(INT64, Int64);
-										CASE_FIELD_TYPE(UINT32, UInt32);
-										CASE_FIELD_TYPE(UINT64, UInt64);
-										CASE_FIELD_TYPE(DOUBLE, Double);
-										CASE_FIELD_TYPE(FLOAT, Float);
-										CASE_FIELD_TYPE(BOOL, Bool);
-										CASE_FIELD_TYPE(ENUM, EnumValue);
-#undef CASE_FIELD_TYPE				
-										case google::protobuf::FieldDescriptor::CPPTYPE_STRING:
-											Debug << "\t" << field->name() << " => " << ref->GetRepeatedString(message, field, i);
-											break;
-										case google::protobuf::FieldDescriptor::CPPTYPE_MESSAGE:
-											const Message& submessage = ref->GetRepeatedMessage(message, field, i);
-											DumpMessage(submessage, submessage.GetDescriptor(), submessage.GetReflection(), func);
-											break;
-										default: CHECK_RETURN(false, false, "illegal repeated field->cpp_type: %d,%s", field->cpp_type(), field->name().c_str());
-									}
-								}				
-				}
-				else {
-					switch (field->cpp_type()) {
-#define CASE_FIELD_TYPE(CPPTYPE, METHOD_TYPE)	\
-						case google::protobuf::FieldDescriptor::CPPTYPE_##CPPTYPE: \
-							Debug << "\t" << field->name() << " => " << ref->Get##METHOD_TYPE(message, field); break;
-						CASE_FIELD_TYPE(INT32, Int32);
-						CASE_FIELD_TYPE(INT64, Int64);
-						CASE_FIELD_TYPE(UINT32, UInt32);
-						CASE_FIELD_TYPE(UINT64, UInt64);
-						CASE_FIELD_TYPE(DOUBLE, Double);
-						CASE_FIELD_TYPE(FLOAT, Float);
-						CASE_FIELD_TYPE(BOOL, Bool);
-						CASE_FIELD_TYPE(ENUM, EnumValue);
-#undef CASE_FIELD_TYPE			
-						case google::protobuf::FieldDescriptor::CPPTYPE_STRING:
-							Debug << "\t" << field->name() << " => " << ref->GetString(message, field);
-							break;
-						case google::protobuf::FieldDescriptor::CPPTYPE_MESSAGE:
-							const Message& submessage = ref->GetMessage(message, field, nullptr);
-							DumpMessage(submessage, submessage.GetDescriptor(), submessage.GetReflection(), func);
-							break;
-						default: CHECK_RETURN(false, false, "illegal field->cpp_type: %d,%s", field->cpp_type(), field->name().c_str());
-					}					
-				}				
-				return true;
-		};
-		
-		DumpMessage(*message, message->GetDescriptor(), message->GetReflection(), func);			
+		DumpMessage(*message, message->GetDescriptor(), message->GetReflection(), ShowMessage);
 	}
 }
 
