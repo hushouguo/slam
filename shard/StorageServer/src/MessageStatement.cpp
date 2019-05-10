@@ -195,7 +195,7 @@ BEGIN_NAMESPACE_SLAM {
 		this->DumpFieldDescriptor();
 	}
 
-	static std::map<const char*, enum_field_types> __string2type = {
+	static std::map<std::string, enum_field_types> __string2type = {
 		{"tinyint", MYSQL_TYPE_TINY},
 		{"smallint", MYSQL_TYPE_SHORT},
 		{"int", MYSQL_TYPE_LONG},
@@ -206,7 +206,7 @@ BEGIN_NAMESPACE_SLAM {
 		{"timestamp", MYSQL_TYPE_TIMESTAMP}, {"datetime", MYSQL_TYPE_DATETIME},
 		{"tinyblob", MYSQL_TYPE_TINY_BLOB}, {"blob", MYSQL_TYPE_BLOB}, 
 		{"mediumblob", MYSQL_TYPE_MEDIUM_BLOB}, {"longblob", MYSQL_TYPE_LONG_BLOB}
-	}
+	};
 	
 	// 
 	// field descriptor
@@ -220,10 +220,10 @@ BEGIN_NAMESPACE_SLAM {
 		sql << ", NUMERIC_PRECISION";			// like: bigint, 20, for non-integer, this is null
 		sql << ", COLUMN_TYPE";					// like: bigint(20) unsigned
 		sql << " FROM information_schema.COLUMNS WHERE 1=1";
-		sql << " AND TABLE_SCHEMA=`" << this->_dbhandler->mysqlconf().database << "`";
-		sql << " AND TABLE_NAME=`" << table << "`";
+		sql << " AND TABLE_SCHEMA='" << this->_dbhandler->mysqlconf().database << "'";
+		sql << " AND TABLE_NAME='" << table << "'";
 		
-		MySQLStatement stmt;
+		MySQLStatement stmt(this->_dbhandler);
 		CHECK_RETURN(stmt.prepare(sql.str()) && stmt.exec(), false, "exec sql: %s error", sql.str().c_str());
 		
 		char COLUMN_NAME[64];
@@ -289,6 +289,8 @@ BEGIN_NAMESPACE_SLAM {
 				fieldDescriptor.flags |= UNSIGNED_FLAG;
 			}
 			CHARACTER_MAXIMUM_LENGTH = NUMERIC_PRECISION = 0;
+			memset(IS_NULLABLE, 0, sizeof(IS_NULLABLE));
+			memset(COLUMN_TYPE, 0, sizeof(COLUMN_TYPE));
 		}
 		
 		return stmt.freeResult();
@@ -333,12 +335,12 @@ BEGIN_NAMESPACE_SLAM {
 			// all repeated fields would be encoded to json string
 			sql_values << "\"" << "[";
 			for (int i = 0; i < ref->FieldSize(message, field); ++i) {
+				if (i > 0) {
+					sql_values << ",";
+				}
 				switch (field->cpp_type()) {
 #define CASE_FIELD_TYPE(CPPTYPE, METHOD_TYPE)	\
 					case google::protobuf::FieldDescriptor::CPPTYPE_##CPPTYPE: \
-						if (i > 0) {\
-							sql_values << ",";\
-						}\
 						sql_values << ref->GetRepeated##METHOD_TYPE(message, field, i); break;
 				
 					CASE_FIELD_TYPE(INT32, Int32);

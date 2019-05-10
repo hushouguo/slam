@@ -74,6 +74,7 @@ int main(int argc, char* argv[]) {
 			o << c;
 			entity.add_alias(o.str());
 		}
+		entity.set_mailbox("mailbox");
 		u64 entityid = m.InsertEntityToTable(1, "user", &entity);
 		Debug << "entityid: " << entityid;
 		goto exit_failure;
