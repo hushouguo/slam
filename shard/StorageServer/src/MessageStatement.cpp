@@ -325,6 +325,11 @@ BEGIN_NAMESPACE_SLAM {
 			if (sql_values.tellp() > 0) { sql_values << ","; }
 		}
 		else {
+			//
+			// isUpdate, don't update not set field
+			if (!ref->HasField(message, field)) {
+				return true;
+			}
 			if (sql_values.tellp() > 0) { sql_values << ","; }
 			sql_values << field->name() << "=";
 		}
