@@ -55,7 +55,7 @@ int main(int argc, char* argv[]) {
 
 	sThreadPool.init(sConfig.get("Service.threads", sConfig.threads));
 
-	if (true) {
+	if (false) {
 		StorageHandlerManager m;
 		CHECK_GOTO(m.init(), exit_failure, "StorageHandlerManager init failure");
 		Entity entity;
@@ -77,6 +77,16 @@ int main(int argc, char* argv[]) {
 		entity.set_mailbox("mailbox");
 		u64 entityid = m.InsertEntityToTable(1, "user", &entity);
 		Debug << "entityid: " << entityid;
+		goto exit_failure;
+	}
+	else {
+		StorageHandlerManager m;
+		CHECK_GOTO(m.init(), exit_failure, "StorageHandlerManager init failure");
+		Entity entity;
+		bool rc = m.RetrieveEntityFromTable(1, "user", 8, &entity);
+		if (rc) {
+			DumpMessage(&entity);
+		}
 		goto exit_failure;
 	}
 

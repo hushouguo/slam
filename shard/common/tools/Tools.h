@@ -198,6 +198,10 @@ BEGIN_NAMESPACE_SLAM {
 	//
 	// output 3rd libraries version info
 	void DumpLibraryVersion();
+
+	//
+	// Dump protobuf::Message by reflection
+	void DumpMessage(const google::protobuf::Message* message);
 	
 #if SLAM_SSL_ENABLE	
 	//

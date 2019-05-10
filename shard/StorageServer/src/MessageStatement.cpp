@@ -12,7 +12,7 @@
 BEGIN_NAMESPACE_SLAM {
 	bool DecodeField(const Message& message, const FieldDescriptor* field, const Reflection* ref,
 		const std::function<bool(const Message& message, const Reflection* ref, const FieldDescriptor* field)>& func) {	
-		return func(message, ref, field);
+		return field->name().compare("id") ? func(message, ref, field) : true;
 	}	
 	bool DecodeDescriptor(const Message& message, const Descriptor* descriptor, const Reflection* ref,
 		const std::function<bool(const Message& message, const Reflection* ref, const FieldDescriptor* field)>& func) {
@@ -125,29 +125,23 @@ BEGIN_NAMESPACE_SLAM {
 	//
 	// add new field
 	bool AddField(MySQL* mysql, std::string table, const std::string& field_name, const DatabaseFieldDescriptor& field) {
-		if (field_name.compare("id")) {
-			std::ostringstream sql;
-			sql << "ALTER TABLE `" << table << "` ADD `" << field_name << "` ";
-			bool rc = GetFieldStatement(field, sql);
-			CHECK_RETURN(rc, false, "table: %s, field type: %d(%d,%d)", table.c_str(), field.type, field.flags, field.length);
-			Debug << "add field: " << sql.str();
-			return mysql->runCommand(sql.str());
-		}
-		return true;
+		std::ostringstream sql;
+		sql << "ALTER TABLE `" << table << "` ADD `" << field_name << "` ";
+		bool rc = GetFieldStatement(field, sql);
+		CHECK_RETURN(rc, false, "table: %s, field type: %d(%d,%d)", table.c_str(), field.type, field.flags, field.length);
+		Debug << "add field: " << sql.str();
+		return mysql->runCommand(sql.str());
 	}
 	
 	//
 	// alter field	
 	bool AlterField(MySQL* mysql, std::string table, const std::string& field_name, const DatabaseFieldDescriptor& field) {
-		if (field_name.compare("id")) {
-			std::ostringstream sql;
-			sql << "ALTER TABLE `" << table << "` MODIFY `" << field_name << "` ";
-			bool rc = GetFieldStatement(field, sql);
-			CHECK_RETURN(rc, false, "table: %s, field type: %d(%d,%d)", table.c_str(), field.type, field.flags, field.length);
-			Debug << "alter field: " << sql.str();
-			return mysql->runCommand(sql.str());
-		}
-		return true;
+		std::ostringstream sql;
+		sql << "ALTER TABLE `" << table << "` MODIFY `" << field_name << "` ";
+		bool rc = GetFieldStatement(field, sql);
+		CHECK_RETURN(rc, false, "table: %s, field type: %d(%d,%d)", table.c_str(), field.type, field.flags, field.length);
+		Debug << "alter field: " << sql.str();
+		return mysql->runCommand(sql.str());
 	}
 
 	//
@@ -157,12 +151,10 @@ BEGIN_NAMESPACE_SLAM {
 		sql << "CREATE TABLE IF NOT EXISTS `" << table << "`(";
 		sql << "`id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY"; // `id` is reserved
 		for (auto& i : fieldSet) {
-			if (i.first.compare("id")) {
-				sql << ", `" << i.first << "` ";
-				bool rc = GetFieldStatement(i.second, sql);
-				CHECK_RETURN(rc, false, "field: %s, type:%d(%d,%d) error", 
-						i.first.c_str(), i.second.type, i.second.flags, i.second.length);
-			}
+			sql << ", `" << i.first << "` ";
+			bool rc = GetFieldStatement(i.second, sql);
+			CHECK_RETURN(rc, false, "field: %s, type:%d(%d,%d) error", 
+					i.first.c_str(), i.second.type, i.second.flags, i.second.length);
 		}
 		sql << ") ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8";
 		bool rc = mysql->runCommand(sql.str());
@@ -467,6 +459,104 @@ BEGIN_NAMESPACE_SLAM {
 	}
 
 	bool MessageStatement::RetrieveMessage(std::string table, u64 entityid, Message* message) {
+		CHECK_RETURN(this->_tables.find(table) != this->_tables.end(), false, "not found table: %s", table.c_str());
+		CHECK_RETURN(message, false, "message is nullptr");
+
+		const Descriptor* descriptor = message->GetDescriptor();
+		const Reflection* ref = message->GetReflection();
+		assert(descriptor);
+		assert(ref);
+		
+		std::ostringstream sql;
+		sql << "SELECT * FROM `" << table << "` WHERE id = " << entityid;
+		MySQLResult* result = this->_dbhandler->runQuery(sql.str());
+		CHECK_RETURN(result, false, "retrieve: %s error", sql.str().c_str());
+		u32 rowNumber = result->rowNumber();
+		if (rowNumber) {
+			SafeDelete(result);
+			return false;
+		}
+
+		message->Clear();
+		
+		MYSQL_ROW row = result->fetchRow();
+		assert(row);
+		
+		u32 fieldNumber = result->fieldNumber();
+		MYSQL_FIELD* fields = result->fetchField(); 
+		for (u32 i = 0; i < fieldNumber; ++i) {
+			const MYSQL_FIELD& mysql_field = fields[i];
+			std::string field_name = mysql_field.org_name;
+			const FieldDescriptor* field = descriptor->FindFieldByName(field_name);
+			CHECK_CONTINUE(field, "not declare field: %s", mysql_field.org_name);
+			if (field->is_repeated()) {
+				//
+				// all repeated fields would be encoded to json string
+				rapidjson::Document root;  // Default template parameter uses UTF8 and MemoryPoolAllocator.
+				CHECK_CONTINUE(root.Parse(row[i]).HasParseError() == false, "illegal repeated field: %s", mysql_field.org_name);
+				CHECK_CONTINUE(root.IsArray(), "not repeated field: %s", mysql_field.org_name);
+				for (size_t n = 0; n < root.Size(); ++n) {
+					rapidjson::Value& value = root[n];				
+					switch (field->cpp_type()) {
+#define CASE_FIELD_TYPE(CPPTYPE, METHOD_TYPE, value)	\
+						case google::protobuf::FieldDescriptor::CPPTYPE_##CPPTYPE: \
+							ref->SetRepeated##METHOD_TYPE(message, field, n, value); break;
+							
+						CASE_FIELD_TYPE(INT32, Int32, value.GetInt());
+						CASE_FIELD_TYPE(INT64, Int64, value.GetInt64());
+						CASE_FIELD_TYPE(UINT32, UInt32, value.GetUint());
+						CASE_FIELD_TYPE(UINT64, UInt64, value.GetUint64());
+						CASE_FIELD_TYPE(DOUBLE, Double, value.GetDouble());
+						CASE_FIELD_TYPE(FLOAT, Float, value.GetFloat());
+						CASE_FIELD_TYPE(BOOL, Bool, value.IsTrue());
+						CASE_FIELD_TYPE(ENUM, EnumValue, value.GetInt());
+#undef CASE_FIELD_TYPE				
+						case google::protobuf::FieldDescriptor::CPPTYPE_STRING: {
+							std::string valueString = value.GetString();
+							ref->SetRepeatedString(message, field, n, valueString);
+							} break;				
+						case google::protobuf::FieldDescriptor::CPPTYPE_MESSAGE: {
+							Message* submessage = ref->MutableRepeatedMessage(message, field, n);
+							assert(submessage);
+							std::string valueString = value.GetString();
+							bool rc = submessage->ParseFromString(valueString);
+							CHECK_RETURN(rc, false, "field: %s ParseFromString: %s error", field->name().c_str(), submessage->GetTypeName().c_str());
+							} break;
+						default: CHECK_RETURN(false, false, "illegal repeated field->cpp_type: %d,%s", field->cpp_type(), field->name().c_str());
+					}
+				}				
+			}
+			else {
+				switch (field->cpp_type()) {
+#define CASE_FIELD_TYPE(CPPTYPE, METHOD_TYPE, value)	\
+					case google::protobuf::FieldDescriptor::CPPTYPE_##CPPTYPE: \
+							ref->Set##METHOD_TYPE(message, field, value); break;
+					CASE_FIELD_TYPE(INT32, Int32, std::stol(row[i]));
+					CASE_FIELD_TYPE(INT64, Int64, std::stoll(row[i]));
+					CASE_FIELD_TYPE(UINT32, UInt32, std::stoul(row[i]));
+					CASE_FIELD_TYPE(UINT64, UInt64, std::stoull(row[i]));
+					CASE_FIELD_TYPE(DOUBLE, Double, std::stod(row[i]));
+					CASE_FIELD_TYPE(FLOAT, Float, std::stof(row[i]));
+					CASE_FIELD_TYPE(BOOL, Bool, std::stoi(row[i]) != 0);
+					CASE_FIELD_TYPE(ENUM, EnumValue, std::stoi(row[i]));
+#undef CASE_FIELD_TYPE			
+					case google::protobuf::FieldDescriptor::CPPTYPE_STRING: { // TYPE_STRING, TYPE_BYTES
+						std::string value = row[i];
+						ref->SetString(message, field, value);
+						} break;							
+					case google::protobuf::FieldDescriptor::CPPTYPE_MESSAGE: { // TYPE_MESSAGE, TYPE_GROUP
+						std::string value = row[i];
+						Message* submessage = ref->MutableMessage(message, field, nullptr);
+						assert(submessage);
+						bool rc = submessage->ParseFromString(value);
+						CHECK_RETURN(rc, false, "field: %s ParseFromString: %s error", field->name().c_str(), submessage->GetTypeName().c_str());
+						} break;
+					default: CHECK_RETURN(false, false, "illegal field->cpp_type: %d,%s", field->cpp_type(), field->name().c_str());
+				}
+			}			
+		}		
+		
+		SafeDelete(result);
 		return true;
 	}
 

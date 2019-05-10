@@ -37,87 +37,9 @@ BEGIN_NAMESPACE_SLAM {
 	}
 	
 	bool StorageHandler::RetrieveEntityFromTable(u32 shard, std::string table, u64 entityid, Entity* entity) {
-#if false	
 		assert(shard == this->id);
-		assert(this->_dbhandler);
-		std::ostringstream sql;
-		sql << "SELECT * FROM `" << table << "` WHERE id = " << entityid;
-		MySQLResult* result = this->_dbhandler->runQuery(sql.str());
-		if (!result) {
-			return false;
-		}
-		entity->Clear();
-		
-		u32 rowNumber = result->rowNumber();
-		if (rowNumber == 0) {
-			SafeDelete(result);
-			return false;
-		}
-		
-		MYSQL_FIELD* fields = result->fetchField(); 
-		MYSQL_ROW rows = result->fetchRow();
-		assert(rows);
-		
-		u32 fieldNumber = result->fieldNumber();
-		for (u32 i = 0; i < fieldNumber; ++i) {
-			const MYSQL_FIELD& field = fields[i];
-			switch (field.type) {
-				// NULL
-				case MYSQL_TYPE_NULL:
-					entity->mutable_values()->operator[](field.org_name).set_type(valuetype_nil);
-					break; 
-				
-				// bool
-				case MYSQL_TYPE_TINY:
-					entity->mutable_values()->operator[](field.org_name).set_type(valuetype_bool);
-					entity->mutable_values()->operator[](field.org_name).set_value_bool(std::stoi(rows[i]) != 0);
-					break; 
-			
-				// int64
-				case MYSQL_TYPE_SHORT:
-				case MYSQL_TYPE_LONG:
-					entity->mutable_values()->operator[](field.org_name).set_type(valuetype_int64);
-					entity->mutable_values()->operator[](field.org_name).set_value_int64(std::stol(rows[i]));
-					break; 
-					
-				case MYSQL_TYPE_LONGLONG:
-					if (strcmp(field.org_name, "id") == 0) {
-						entity->set_id(std::stoull(rows[i]));
-					}
-					else {
-						entity->mutable_values()->operator[](field.org_name).set_type(valuetype_int64);
-						entity->mutable_values()->operator[](field.org_name).set_value_int64(std::stoll(rows[i]));
-					}				
-					break; 
-			
-				// string
-				case MYSQL_TYPE_TIMESTAMP:
-				case MYSQL_TYPE_STRING:
-				case MYSQL_TYPE_VAR_STRING:
-				case MYSQL_TYPE_TINY_BLOB:
-				case MYSQL_TYPE_BLOB:
-				case MYSQL_TYPE_MEDIUM_BLOB:
-				case MYSQL_TYPE_LONG_BLOB:
-					entity->mutable_values()->operator[](field.org_name).set_type(valuetype_string);
-					entity->mutable_values()->operator[](field.org_name).set_value_string(rows[i]);
-					break; 
-			
-				// float
-				case MYSQL_TYPE_DOUBLE:
-				case MYSQL_TYPE_FLOAT:
-					entity->mutable_values()->operator[](field.org_name).set_type(valuetype_float);
-					entity->mutable_values()->operator[](field.org_name).set_value_float(std::stof(rows[i]));
-					break; 
-			
-				default: 
-					SafeDelete(result);
-					CHECK_RETURN(false, false, "unknown MYSQL type: %d, field: %s, table: %s, shard: %d", field.type, field.org_name, table.c_str(), shard);
-			}
-		}
-		
-		SafeDelete(result);
-#endif		
-		return true;
+		CHECK_RETURN(this->_dbhandler && this->_messageStatement, 0, "StorageHandler: %d not initiated", shard);
+		return this->_messageStatement->RetrieveMessage(table, entityid, entity);
 	}
 
 	bool StorageHandler::UpdateEntityToTable(u32 shard, std::string table, Entity* entity) {

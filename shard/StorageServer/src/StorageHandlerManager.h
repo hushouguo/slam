@@ -13,7 +13,7 @@ BEGIN_NAMESPACE_SLAM {
 
 		public:
 			u64 InsertEntityToTable(u32 shard, std::string table, const Entity* entity);
-			Entity* RetrieveEntityFromTable(u32 shard, std::string table, u64 entityid);
+			bool RetrieveEntityFromTable(u32 shard, std::string table, u64 entityid, Entity* entity);
 	};
 }
 
