@@ -4,6 +4,7 @@ package protocol;
 
 message Friend {
 	uint32 id = 1;
+	string name = 2;
 }
 
 message Entity {
@@ -16,4 +17,7 @@ message Entity {
 	bytes  bag			=	5;
 	bytes  mailbox		=	6;
 	Friend friendlist			=	7;
+	repeated int32 enemy = 8;
+	repeated string alias = 9;
+	map<int32,int32> aaa = 10;
 }

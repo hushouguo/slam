@@ -20,6 +20,7 @@
 // @@protoc_insertion_point(includes)
 
 namespace protobuf_entity_2eproto {
+extern PROTOBUF_INTERNAL_EXPORT_protobuf_entity_2eproto ::google::protobuf::internal::SCCInfo<0> scc_info_Entity_AaaEntry_DoNotUse;
 extern PROTOBUF_INTERNAL_EXPORT_protobuf_entity_2eproto ::google::protobuf::internal::SCCInfo<0> scc_info_Friend;
 }  // namespace protobuf_entity_2eproto
 namespace protocol {
@@ -28,6 +29,11 @@ class FriendDefaultTypeInternal {
   ::google::protobuf::internal::ExplicitlyConstructed<Friend>
       _instance;
 } _Friend_default_instance_;
+class Entity_AaaEntry_DoNotUseDefaultTypeInternal {
+ public:
+  ::google::protobuf::internal::ExplicitlyConstructed<Entity_AaaEntry_DoNotUse>
+      _instance;
+} _Entity_AaaEntry_DoNotUse_default_instance_;
 class EntityDefaultTypeInternal {
  public:
   ::google::protobuf::internal::ExplicitlyConstructed<Entity>
@@ -49,6 +55,19 @@ static void InitDefaultsFriend() {
 ::google::protobuf::internal::SCCInfo<0> scc_info_Friend =
     {{ATOMIC_VAR_INIT(::google::protobuf::internal::SCCInfoBase::kUninitialized), 0, InitDefaultsFriend}, {}};
 
+static void InitDefaultsEntity_AaaEntry_DoNotUse() {
+  GOOGLE_PROTOBUF_VERIFY_VERSION;
+
+  {
+    void* ptr = &::protocol::_Entity_AaaEntry_DoNotUse_default_instance_;
+    new (ptr) ::protocol::Entity_AaaEntry_DoNotUse();
+  }
+  ::protocol::Entity_AaaEntry_DoNotUse::InitAsDefaultInstance();
+}
+
+::google::protobuf::internal::SCCInfo<0> scc_info_Entity_AaaEntry_DoNotUse =
+    {{ATOMIC_VAR_INIT(::google::protobuf::internal::SCCInfoBase::kUninitialized), 0, InitDefaultsEntity_AaaEntry_DoNotUse}, {}};
+
 static void InitDefaultsEntity() {
   GOOGLE_PROTOBUF_VERIFY_VERSION;
 
@@ -60,16 +79,18 @@ static void InitDefaultsEntity() {
   ::protocol::Entity::InitAsDefaultInstance();
 }
 
-::google::protobuf::internal::SCCInfo<1> scc_info_Entity =
-    {{ATOMIC_VAR_INIT(::google::protobuf::internal::SCCInfoBase::kUninitialized), 1, InitDefaultsEntity}, {
-      &protobuf_entity_2eproto::scc_info_Friend.base,}};
+::google::protobuf::internal::SCCInfo<2> scc_info_Entity =
+    {{ATOMIC_VAR_INIT(::google::protobuf::internal::SCCInfoBase::kUninitialized), 2, InitDefaultsEntity}, {
+      &protobuf_entity_2eproto::scc_info_Friend.base,
+      &protobuf_entity_2eproto::scc_info_Entity_AaaEntry_DoNotUse.base,}};
 
 void InitDefaults() {
   ::google::protobuf::internal::InitSCC(&scc_info_Friend.base);
+  ::google::protobuf::internal::InitSCC(&scc_info_Entity_AaaEntry_DoNotUse.base);
   ::google::protobuf::internal::InitSCC(&scc_info_Entity.base);
 }
 
-::google::protobuf::Metadata file_level_metadata[2];
+::google::protobuf::Metadata file_level_metadata[3];
 
 const ::google::protobuf::uint32 TableStruct::offsets[] GOOGLE_PROTOBUF_ATTRIBUTE_SECTION_VARIABLE(protodesc_cold) = {
   ~0u,  // no _has_bits_
@@ -78,6 +99,16 @@ const ::google::protobuf::uint32 TableStruct::offsets[] GOOGLE_PROTOBUF_ATTRIBUT
   ~0u,  // no _oneof_case_
   ~0u,  // no _weak_field_map_
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::protocol::Friend, id_),
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::protocol::Friend, name_),
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::protocol::Entity_AaaEntry_DoNotUse, _has_bits_),
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::protocol::Entity_AaaEntry_DoNotUse, _internal_metadata_),
+  ~0u,  // no _extensions_
+  ~0u,  // no _oneof_case_
+  ~0u,  // no _weak_field_map_
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::protocol::Entity_AaaEntry_DoNotUse, key_),
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::protocol::Entity_AaaEntry_DoNotUse, value_),
+  0,
+  1,
   ~0u,  // no _has_bits_
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::protocol::Entity, _internal_metadata_),
   ~0u,  // no _extensions_
@@ -90,14 +121,19 @@ const ::google::protobuf::uint32 TableStruct::offsets[] GOOGLE_PROTOBUF_ATTRIBUT
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::protocol::Entity, bag_),
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::protocol::Entity, mailbox_),
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::protocol::Entity, friendlist_),
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::protocol::Entity, enemy_),
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::protocol::Entity, alias_),
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::protocol::Entity, aaa_),
 };
 static const ::google::protobuf::internal::MigrationSchema schemas[] GOOGLE_PROTOBUF_ATTRIBUTE_SECTION_VARIABLE(protodesc_cold) = {
   { 0, -1, sizeof(::protocol::Friend)},
-  { 6, -1, sizeof(::protocol::Entity)},
+  { 7, 14, sizeof(::protocol::Entity_AaaEntry_DoNotUse)},
+  { 16, -1, sizeof(::protocol::Entity)},
 };
 
 static ::google::protobuf::Message const * const file_default_instances[] = {
   reinterpret_cast<const ::google::protobuf::Message*>(&::protocol::_Friend_default_instance_),
+  reinterpret_cast<const ::google::protobuf::Message*>(&::protocol::_Entity_AaaEntry_DoNotUse_default_instance_),
   reinterpret_cast<const ::google::protobuf::Message*>(&::protocol::_Entity_default_instance_),
 };
 
@@ -116,20 +152,23 @@ void protobuf_AssignDescriptorsOnce() {
 void protobuf_RegisterTypes(const ::std::string&) GOOGLE_PROTOBUF_ATTRIBUTE_COLD;
 void protobuf_RegisterTypes(const ::std::string&) {
   protobuf_AssignDescriptorsOnce();
-  ::google::protobuf::internal::RegisterAllTypes(file_level_metadata, 2);
+  ::google::protobuf::internal::RegisterAllTypes(file_level_metadata, 3);
 }
 
 void AddDescriptorsImpl() {
   InitDefaults();
   static const char descriptor[] GOOGLE_PROTOBUF_ATTRIBUTE_SECTION_VARIABLE(protodesc_cold) = {
-      "\n\014entity.proto\022\010protocol\"\024\n\006Friend\022\n\n\002id"
-      "\030\001 \001(\r\"\206\001\n\006Entity\022\n\n\002id\030\001 \001(\004\022\014\n\004gold\030\002 "
-      "\001(\004\022\017\n\007diamond\030\003 \001(\004\022\r\n\005level\030\004 \001(\r\022\013\n\003b"
-      "ag\030\005 \001(\014\022\017\n\007mailbox\030\006 \001(\014\022$\n\nfriendlist\030"
-      "\007 \001(\0132\020.protocol.Friendb\006proto3"
+      "\n\014entity.proto\022\010protocol\"\"\n\006Friend\022\n\n\002id"
+      "\030\001 \001(\r\022\014\n\004name\030\002 \001(\t\"\370\001\n\006Entity\022\n\n\002id\030\001 "
+      "\001(\004\022\014\n\004gold\030\002 \001(\004\022\017\n\007diamond\030\003 \001(\004\022\r\n\005le"
+      "vel\030\004 \001(\r\022\013\n\003bag\030\005 \001(\014\022\017\n\007mailbox\030\006 \001(\014\022"
+      "$\n\nfriendlist\030\007 \001(\0132\020.protocol.Friend\022\r\n"
+      "\005enemy\030\010 \003(\005\022\r\n\005alias\030\t \003(\t\022&\n\003aaa\030\n \003(\013"
+      "2\031.protocol.Entity.AaaEntry\032*\n\010AaaEntry\022"
+      "\013\n\003key\030\001 \001(\005\022\r\n\005value\030\002 \001(\005:\0028\001b\006proto3"
   };
   ::google::protobuf::DescriptorPool::InternalAddGeneratedFile(
-      descriptor, 191);
+      descriptor, 319);
   ::google::protobuf::MessageFactory::InternalRegisterGeneratedFile(
     "entity.proto", &protobuf_RegisterTypes);
 }
@@ -153,6 +192,7 @@ void Friend::InitAsDefaultInstance() {
 }
 #if !defined(_MSC_VER) || _MSC_VER >= 1900
 const int Friend::kIdFieldNumber;
+const int Friend::kNameFieldNumber;
 #endif  // !defined(_MSC_VER) || _MSC_VER >= 1900
 
 Friend::Friend()
@@ -166,11 +206,16 @@ Friend::Friend(const Friend& from)
   : ::google::protobuf::Message(),
       _internal_metadata_(NULL) {
   _internal_metadata_.MergeFrom(from._internal_metadata_);
+  name_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  if (from.name().size() > 0) {
+    name_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.name_);
+  }
   id_ = from.id_;
   // @@protoc_insertion_point(copy_constructor:protocol.Friend)
 }
 
 void Friend::SharedCtor() {
+  name_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   id_ = 0u;
 }
 
@@ -180,6 +225,7 @@ Friend::~Friend() {
 }
 
 void Friend::SharedDtor() {
+  name_.DestroyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
 
 void Friend::SetCachedSize(int size) const {
@@ -202,6 +248,7 @@ void Friend::Clear() {
   // Prevent compiler warnings about cached_has_bits being unused
   (void) cached_has_bits;
 
+  name_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   id_ = 0u;
   _internal_metadata_.Clear();
 }
@@ -224,6 +271,22 @@ bool Friend::MergePartialFromCodedStream(
           DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
                    ::google::protobuf::uint32, ::google::protobuf::internal::WireFormatLite::TYPE_UINT32>(
                  input, &id_)));
+        } else {
+          goto handle_unusual;
+        }
+        break;
+      }
+
+      // string name = 2;
+      case 2: {
+        if (static_cast< ::google::protobuf::uint8>(tag) ==
+            static_cast< ::google::protobuf::uint8>(18u /* 18 & 0xFF */)) {
+          DO_(::google::protobuf::internal::WireFormatLite::ReadString(
+                input, this->mutable_name()));
+          DO_(::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
+            this->name().data(), static_cast<int>(this->name().length()),
+            ::google::protobuf::internal::WireFormatLite::PARSE,
+            "protocol.Friend.name"));
         } else {
           goto handle_unusual;
         }
@@ -261,6 +324,16 @@ void Friend::SerializeWithCachedSizes(
     ::google::protobuf::internal::WireFormatLite::WriteUInt32(1, this->id(), output);
   }
 
+  // string name = 2;
+  if (this->name().size() > 0) {
+    ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
+      this->name().data(), static_cast<int>(this->name().length()),
+      ::google::protobuf::internal::WireFormatLite::SERIALIZE,
+      "protocol.Friend.name");
+    ::google::protobuf::internal::WireFormatLite::WriteStringMaybeAliased(
+      2, this->name(), output);
+  }
+
   if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
     ::google::protobuf::internal::WireFormat::SerializeUnknownFields(
         (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()), output);
@@ -280,6 +353,17 @@ void Friend::SerializeWithCachedSizes(
     target = ::google::protobuf::internal::WireFormatLite::WriteUInt32ToArray(1, this->id(), target);
   }
 
+  // string name = 2;
+  if (this->name().size() > 0) {
+    ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
+      this->name().data(), static_cast<int>(this->name().length()),
+      ::google::protobuf::internal::WireFormatLite::SERIALIZE,
+      "protocol.Friend.name");
+    target =
+      ::google::protobuf::internal::WireFormatLite::WriteStringToArray(
+        2, this->name(), target);
+  }
+
   if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
     target = ::google::protobuf::internal::WireFormat::SerializeUnknownFieldsToArray(
         (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()), target);
@@ -297,6 +381,13 @@ size_t Friend::ByteSizeLong() const {
       ::google::protobuf::internal::WireFormat::ComputeUnknownFieldsSize(
         (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()));
   }
+  // string name = 2;
+  if (this->name().size() > 0) {
+    total_size += 1 +
+      ::google::protobuf::internal::WireFormatLite::StringSize(
+        this->name());
+  }
+
   // uint32 id = 1;
   if (this->id() != 0) {
     total_size += 1 +
@@ -331,6 +422,10 @@ void Friend::MergeFrom(const Friend& from) {
   ::google::protobuf::uint32 cached_has_bits = 0;
   (void) cached_has_bits;
 
+  if (from.name().size() > 0) {
+
+    name_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.name_);
+  }
   if (from.id() != 0) {
     set_id(from.id());
   }
@@ -360,6 +455,8 @@ void Friend::Swap(Friend* other) {
 }
 void Friend::InternalSwap(Friend* other) {
   using std::swap;
+  name_.Swap(&other->name_, &::google::protobuf::internal::GetEmptyStringAlreadyInited(),
+    GetArenaNoVirtual());
   swap(id_, other->id_);
   _internal_metadata_.Swap(&other->_internal_metadata_);
 }
@@ -367,6 +464,23 @@ void Friend::InternalSwap(Friend* other) {
 ::google::protobuf::Metadata Friend::GetMetadata() const {
   protobuf_entity_2eproto::protobuf_AssignDescriptorsOnce();
   return ::protobuf_entity_2eproto::file_level_metadata[kIndexInFileMessages];
+}
+
+
+// ===================================================================
+
+Entity_AaaEntry_DoNotUse::Entity_AaaEntry_DoNotUse() {}
+Entity_AaaEntry_DoNotUse::Entity_AaaEntry_DoNotUse(::google::protobuf::Arena* arena) : SuperType(arena) {}
+void Entity_AaaEntry_DoNotUse::MergeFrom(const Entity_AaaEntry_DoNotUse& other) {
+  MergeFromInternal(other);
+}
+::google::protobuf::Metadata Entity_AaaEntry_DoNotUse::GetMetadata() const {
+  ::protobuf_entity_2eproto::protobuf_AssignDescriptorsOnce();
+  return ::protobuf_entity_2eproto::file_level_metadata[1];
+}
+void Entity_AaaEntry_DoNotUse::MergeFrom(
+    const ::google::protobuf::Message& other) {
+  ::google::protobuf::Message::MergeFrom(other);
 }
 
 
@@ -384,6 +498,9 @@ const int Entity::kLevelFieldNumber;
 const int Entity::kBagFieldNumber;
 const int Entity::kMailboxFieldNumber;
 const int Entity::kFriendlistFieldNumber;
+const int Entity::kEnemyFieldNumber;
+const int Entity::kAliasFieldNumber;
+const int Entity::kAaaFieldNumber;
 #endif  // !defined(_MSC_VER) || _MSC_VER >= 1900
 
 Entity::Entity()
@@ -395,8 +512,11 @@ Entity::Entity()
 }
 Entity::Entity(const Entity& from)
   : ::google::protobuf::Message(),
-      _internal_metadata_(NULL) {
+      _internal_metadata_(NULL),
+      enemy_(from.enemy_),
+      alias_(from.alias_) {
   _internal_metadata_.MergeFrom(from._internal_metadata_);
+  aaa_.MergeFrom(from.aaa_);
   bag_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   if (from.bag().size() > 0) {
     bag_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.bag_);
@@ -455,6 +575,9 @@ void Entity::Clear() {
   // Prevent compiler warnings about cached_has_bits being unused
   (void) cached_has_bits;
 
+  enemy_.Clear();
+  alias_.Clear();
+  aaa_.Clear();
   bag_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   mailbox_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   if (GetArenaNoVirtual() == NULL && friendlist_ != NULL) {
@@ -569,6 +692,61 @@ bool Entity::MergePartialFromCodedStream(
         break;
       }
 
+      // repeated int32 enemy = 8;
+      case 8: {
+        if (static_cast< ::google::protobuf::uint8>(tag) ==
+            static_cast< ::google::protobuf::uint8>(66u /* 66 & 0xFF */)) {
+          DO_((::google::protobuf::internal::WireFormatLite::ReadPackedPrimitive<
+                   ::google::protobuf::int32, ::google::protobuf::internal::WireFormatLite::TYPE_INT32>(
+                 input, this->mutable_enemy())));
+        } else if (
+            static_cast< ::google::protobuf::uint8>(tag) ==
+            static_cast< ::google::protobuf::uint8>(64u /* 64 & 0xFF */)) {
+          DO_((::google::protobuf::internal::WireFormatLite::ReadRepeatedPrimitiveNoInline<
+                   ::google::protobuf::int32, ::google::protobuf::internal::WireFormatLite::TYPE_INT32>(
+                 1, 66u, input, this->mutable_enemy())));
+        } else {
+          goto handle_unusual;
+        }
+        break;
+      }
+
+      // repeated string alias = 9;
+      case 9: {
+        if (static_cast< ::google::protobuf::uint8>(tag) ==
+            static_cast< ::google::protobuf::uint8>(74u /* 74 & 0xFF */)) {
+          DO_(::google::protobuf::internal::WireFormatLite::ReadString(
+                input, this->add_alias()));
+          DO_(::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
+            this->alias(this->alias_size() - 1).data(),
+            static_cast<int>(this->alias(this->alias_size() - 1).length()),
+            ::google::protobuf::internal::WireFormatLite::PARSE,
+            "protocol.Entity.alias"));
+        } else {
+          goto handle_unusual;
+        }
+        break;
+      }
+
+      // map<int32, int32> aaa = 10;
+      case 10: {
+        if (static_cast< ::google::protobuf::uint8>(tag) ==
+            static_cast< ::google::protobuf::uint8>(82u /* 82 & 0xFF */)) {
+          Entity_AaaEntry_DoNotUse::Parser< ::google::protobuf::internal::MapField<
+              Entity_AaaEntry_DoNotUse,
+              ::google::protobuf::int32, ::google::protobuf::int32,
+              ::google::protobuf::internal::WireFormatLite::TYPE_INT32,
+              ::google::protobuf::internal::WireFormatLite::TYPE_INT32,
+              0 >,
+            ::google::protobuf::Map< ::google::protobuf::int32, ::google::protobuf::int32 > > parser(&aaa_);
+          DO_(::google::protobuf::internal::WireFormatLite::ReadMessageNoVirtual(
+              input, &parser));
+        } else {
+          goto handle_unusual;
+        }
+        break;
+      }
+
       default: {
       handle_unusual:
         if (tag == 0) {
@@ -633,6 +811,66 @@ void Entity::SerializeWithCachedSizes(
       7, this->_internal_friendlist(), output);
   }
 
+  // repeated int32 enemy = 8;
+  if (this->enemy_size() > 0) {
+    ::google::protobuf::internal::WireFormatLite::WriteTag(8, ::google::protobuf::internal::WireFormatLite::WIRETYPE_LENGTH_DELIMITED, output);
+    output->WriteVarint32(static_cast< ::google::protobuf::uint32>(
+        _enemy_cached_byte_size_));
+  }
+  for (int i = 0, n = this->enemy_size(); i < n; i++) {
+    ::google::protobuf::internal::WireFormatLite::WriteInt32NoTag(
+      this->enemy(i), output);
+  }
+
+  // repeated string alias = 9;
+  for (int i = 0, n = this->alias_size(); i < n; i++) {
+    ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
+      this->alias(i).data(), static_cast<int>(this->alias(i).length()),
+      ::google::protobuf::internal::WireFormatLite::SERIALIZE,
+      "protocol.Entity.alias");
+    ::google::protobuf::internal::WireFormatLite::WriteString(
+      9, this->alias(i), output);
+  }
+
+  // map<int32, int32> aaa = 10;
+  if (!this->aaa().empty()) {
+    typedef ::google::protobuf::Map< ::google::protobuf::int32, ::google::protobuf::int32 >::const_pointer
+        ConstPtr;
+    typedef ::google::protobuf::internal::SortItem< ::google::protobuf::int32, ConstPtr > SortItem;
+    typedef ::google::protobuf::internal::CompareByFirstField<SortItem> Less;
+
+    if (output->IsSerializationDeterministic() &&
+        this->aaa().size() > 1) {
+      ::std::unique_ptr<SortItem[]> items(
+          new SortItem[this->aaa().size()]);
+      typedef ::google::protobuf::Map< ::google::protobuf::int32, ::google::protobuf::int32 >::size_type size_type;
+      size_type n = 0;
+      for (::google::protobuf::Map< ::google::protobuf::int32, ::google::protobuf::int32 >::const_iterator
+          it = this->aaa().begin();
+          it != this->aaa().end(); ++it, ++n) {
+        items[static_cast<ptrdiff_t>(n)] = SortItem(&*it);
+      }
+      ::std::sort(&items[0], &items[static_cast<ptrdiff_t>(n)], Less());
+      ::std::unique_ptr<Entity_AaaEntry_DoNotUse> entry;
+      for (size_type i = 0; i < n; i++) {
+        entry.reset(aaa_.NewEntryWrapper(
+            items[static_cast<ptrdiff_t>(i)].second->first, items[static_cast<ptrdiff_t>(i)].second->second));
+        ::google::protobuf::internal::WireFormatLite::WriteMessageMaybeToArray(
+            10, *entry, output);
+      }
+    } else {
+      ::std::unique_ptr<Entity_AaaEntry_DoNotUse> entry;
+      for (::google::protobuf::Map< ::google::protobuf::int32, ::google::protobuf::int32 >::const_iterator
+          it = this->aaa().begin();
+          it != this->aaa().end(); ++it) {
+        entry.reset(aaa_.NewEntryWrapper(
+            it->first, it->second));
+        ::google::protobuf::internal::WireFormatLite::WriteMessageMaybeToArray(
+            10, *entry, output);
+      }
+    }
+  }
+
   if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
     ::google::protobuf::internal::WireFormat::SerializeUnknownFields(
         (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()), output);
@@ -688,6 +926,72 @@ void Entity::SerializeWithCachedSizes(
         7, this->_internal_friendlist(), deterministic, target);
   }
 
+  // repeated int32 enemy = 8;
+  if (this->enemy_size() > 0) {
+    target = ::google::protobuf::internal::WireFormatLite::WriteTagToArray(
+      8,
+      ::google::protobuf::internal::WireFormatLite::WIRETYPE_LENGTH_DELIMITED,
+      target);
+    target = ::google::protobuf::io::CodedOutputStream::WriteVarint32ToArray(
+        static_cast< ::google::protobuf::int32>(
+            _enemy_cached_byte_size_), target);
+    target = ::google::protobuf::internal::WireFormatLite::
+      WriteInt32NoTagToArray(this->enemy_, target);
+  }
+
+  // repeated string alias = 9;
+  for (int i = 0, n = this->alias_size(); i < n; i++) {
+    ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
+      this->alias(i).data(), static_cast<int>(this->alias(i).length()),
+      ::google::protobuf::internal::WireFormatLite::SERIALIZE,
+      "protocol.Entity.alias");
+    target = ::google::protobuf::internal::WireFormatLite::
+      WriteStringToArray(9, this->alias(i), target);
+  }
+
+  // map<int32, int32> aaa = 10;
+  if (!this->aaa().empty()) {
+    typedef ::google::protobuf::Map< ::google::protobuf::int32, ::google::protobuf::int32 >::const_pointer
+        ConstPtr;
+    typedef ::google::protobuf::internal::SortItem< ::google::protobuf::int32, ConstPtr > SortItem;
+    typedef ::google::protobuf::internal::CompareByFirstField<SortItem> Less;
+
+    if (deterministic &&
+        this->aaa().size() > 1) {
+      ::std::unique_ptr<SortItem[]> items(
+          new SortItem[this->aaa().size()]);
+      typedef ::google::protobuf::Map< ::google::protobuf::int32, ::google::protobuf::int32 >::size_type size_type;
+      size_type n = 0;
+      for (::google::protobuf::Map< ::google::protobuf::int32, ::google::protobuf::int32 >::const_iterator
+          it = this->aaa().begin();
+          it != this->aaa().end(); ++it, ++n) {
+        items[static_cast<ptrdiff_t>(n)] = SortItem(&*it);
+      }
+      ::std::sort(&items[0], &items[static_cast<ptrdiff_t>(n)], Less());
+      ::std::unique_ptr<Entity_AaaEntry_DoNotUse> entry;
+      for (size_type i = 0; i < n; i++) {
+        entry.reset(aaa_.NewEntryWrapper(
+            items[static_cast<ptrdiff_t>(i)].second->first, items[static_cast<ptrdiff_t>(i)].second->second));
+        target = ::google::protobuf::internal::WireFormatLite::
+                   InternalWriteMessageNoVirtualToArray(
+                       10, *entry, deterministic, target);
+;
+      }
+    } else {
+      ::std::unique_ptr<Entity_AaaEntry_DoNotUse> entry;
+      for (::google::protobuf::Map< ::google::protobuf::int32, ::google::protobuf::int32 >::const_iterator
+          it = this->aaa().begin();
+          it != this->aaa().end(); ++it) {
+        entry.reset(aaa_.NewEntryWrapper(
+            it->first, it->second));
+        target = ::google::protobuf::internal::WireFormatLite::
+                   InternalWriteMessageNoVirtualToArray(
+                       10, *entry, deterministic, target);
+;
+      }
+    }
+  }
+
   if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
     target = ::google::protobuf::internal::WireFormat::SerializeUnknownFieldsToArray(
         (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()), target);
@@ -705,6 +1009,44 @@ size_t Entity::ByteSizeLong() const {
       ::google::protobuf::internal::WireFormat::ComputeUnknownFieldsSize(
         (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()));
   }
+  // repeated int32 enemy = 8;
+  {
+    size_t data_size = ::google::protobuf::internal::WireFormatLite::
+      Int32Size(this->enemy_);
+    if (data_size > 0) {
+      total_size += 1 +
+        ::google::protobuf::internal::WireFormatLite::Int32Size(
+            static_cast< ::google::protobuf::int32>(data_size));
+    }
+    int cached_size = ::google::protobuf::internal::ToCachedSize(data_size);
+    GOOGLE_SAFE_CONCURRENT_WRITES_BEGIN();
+    _enemy_cached_byte_size_ = cached_size;
+    GOOGLE_SAFE_CONCURRENT_WRITES_END();
+    total_size += data_size;
+  }
+
+  // repeated string alias = 9;
+  total_size += 1 *
+      ::google::protobuf::internal::FromIntSize(this->alias_size());
+  for (int i = 0, n = this->alias_size(); i < n; i++) {
+    total_size += ::google::protobuf::internal::WireFormatLite::StringSize(
+      this->alias(i));
+  }
+
+  // map<int32, int32> aaa = 10;
+  total_size += 1 *
+      ::google::protobuf::internal::FromIntSize(this->aaa_size());
+  {
+    ::std::unique_ptr<Entity_AaaEntry_DoNotUse> entry;
+    for (::google::protobuf::Map< ::google::protobuf::int32, ::google::protobuf::int32 >::const_iterator
+        it = this->aaa().begin();
+        it != this->aaa().end(); ++it) {
+      entry.reset(aaa_.NewEntryWrapper(it->first, it->second));
+      total_size += ::google::protobuf::internal::WireFormatLite::
+          MessageSizeNoVirtual(*entry);
+    }
+  }
+
   // bytes bag = 5;
   if (this->bag().size() > 0) {
     total_size += 1 +
@@ -781,6 +1123,9 @@ void Entity::MergeFrom(const Entity& from) {
   ::google::protobuf::uint32 cached_has_bits = 0;
   (void) cached_has_bits;
 
+  enemy_.MergeFrom(from.enemy_);
+  alias_.MergeFrom(from.alias_);
+  aaa_.MergeFrom(from.aaa_);
   if (from.bag().size() > 0) {
 
     bag_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.bag_);
@@ -830,6 +1175,9 @@ void Entity::Swap(Entity* other) {
 }
 void Entity::InternalSwap(Entity* other) {
   using std::swap;
+  enemy_.InternalSwap(&other->enemy_);
+  alias_.InternalSwap(CastToBase(&other->alias_));
+  aaa_.Swap(&other->aaa_);
   bag_.Swap(&other->bag_, &::google::protobuf::internal::GetEmptyStringAlreadyInited(),
     GetArenaNoVirtual());
   mailbox_.Swap(&other->mailbox_, &::google::protobuf::internal::GetEmptyStringAlreadyInited(),
@@ -854,6 +1202,9 @@ namespace google {
 namespace protobuf {
 template<> GOOGLE_PROTOBUF_ATTRIBUTE_NOINLINE ::protocol::Friend* Arena::CreateMaybeMessage< ::protocol::Friend >(Arena* arena) {
   return Arena::CreateInternal< ::protocol::Friend >(arena);
+}
+template<> GOOGLE_PROTOBUF_ATTRIBUTE_NOINLINE ::protocol::Entity_AaaEntry_DoNotUse* Arena::CreateMaybeMessage< ::protocol::Entity_AaaEntry_DoNotUse >(Arena* arena) {
+  return Arena::CreateInternal< ::protocol::Entity_AaaEntry_DoNotUse >(arena);
 }
 template<> GOOGLE_PROTOBUF_ATTRIBUTE_NOINLINE ::protocol::Entity* Arena::CreateMaybeMessage< ::protocol::Entity >(Arena* arena) {
   return Arena::CreateInternal< ::protocol::Entity >(arena);

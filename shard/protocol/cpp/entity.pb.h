@@ -29,6 +29,9 @@
 #include <google/protobuf/message.h>
 #include <google/protobuf/repeated_field.h>  // IWYU pragma: export
 #include <google/protobuf/extension_set.h>  // IWYU pragma: export
+#include <google/protobuf/map.h>  // IWYU pragma: export
+#include <google/protobuf/map_entry.h>
+#include <google/protobuf/map_field_inl.h>
 #include <google/protobuf/unknown_field_set.h>
 // @@protoc_insertion_point(includes)
 #define PROTOBUF_INTERNAL_EXPORT_protobuf_entity_2eproto 
@@ -38,7 +41,7 @@ namespace protobuf_entity_2eproto {
 struct TableStruct {
   static const ::google::protobuf::internal::ParseTableField entries[];
   static const ::google::protobuf::internal::AuxillaryParseTableField aux[];
-  static const ::google::protobuf::internal::ParseTable schema[2];
+  static const ::google::protobuf::internal::ParseTable schema[3];
   static const ::google::protobuf::internal::FieldMetadata field_metadata[];
   static const ::google::protobuf::internal::SerializationTable serialization_table[];
   static const ::google::protobuf::uint32 offsets[];
@@ -49,6 +52,9 @@ namespace protocol {
 class Entity;
 class EntityDefaultTypeInternal;
 extern EntityDefaultTypeInternal _Entity_default_instance_;
+class Entity_AaaEntry_DoNotUse;
+class Entity_AaaEntry_DoNotUseDefaultTypeInternal;
+extern Entity_AaaEntry_DoNotUseDefaultTypeInternal _Entity_AaaEntry_DoNotUse_default_instance_;
 class Friend;
 class FriendDefaultTypeInternal;
 extern FriendDefaultTypeInternal _Friend_default_instance_;
@@ -56,6 +62,7 @@ extern FriendDefaultTypeInternal _Friend_default_instance_;
 namespace google {
 namespace protobuf {
 template<> ::protocol::Entity* Arena::CreateMaybeMessage<::protocol::Entity>(Arena*);
+template<> ::protocol::Entity_AaaEntry_DoNotUse* Arena::CreateMaybeMessage<::protocol::Entity_AaaEntry_DoNotUse>(Arena*);
 template<> ::protocol::Friend* Arena::CreateMaybeMessage<::protocol::Friend>(Arena*);
 }  // namespace protobuf
 }  // namespace google
@@ -150,6 +157,20 @@ class Friend : public ::google::protobuf::Message /* @@protoc_insertion_point(cl
 
   // accessors -------------------------------------------------------
 
+  // string name = 2;
+  void clear_name();
+  static const int kNameFieldNumber = 2;
+  const ::std::string& name() const;
+  void set_name(const ::std::string& value);
+  #if LANG_CXX11
+  void set_name(::std::string&& value);
+  #endif
+  void set_name(const char* value);
+  void set_name(const char* value, size_t size);
+  ::std::string* mutable_name();
+  ::std::string* release_name();
+  void set_allocated_name(::std::string* name);
+
   // uint32 id = 1;
   void clear_id();
   static const int kIdFieldNumber = 1;
@@ -160,10 +181,32 @@ class Friend : public ::google::protobuf::Message /* @@protoc_insertion_point(cl
  private:
 
   ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
+  ::google::protobuf::internal::ArenaStringPtr name_;
   ::google::protobuf::uint32 id_;
   mutable ::google::protobuf::internal::CachedSize _cached_size_;
   friend struct ::protobuf_entity_2eproto::TableStruct;
 };
+// -------------------------------------------------------------------
+
+class Entity_AaaEntry_DoNotUse : public ::google::protobuf::internal::MapEntry<Entity_AaaEntry_DoNotUse, 
+    ::google::protobuf::int32, ::google::protobuf::int32,
+    ::google::protobuf::internal::WireFormatLite::TYPE_INT32,
+    ::google::protobuf::internal::WireFormatLite::TYPE_INT32,
+    0 > {
+public:
+  typedef ::google::protobuf::internal::MapEntry<Entity_AaaEntry_DoNotUse, 
+    ::google::protobuf::int32, ::google::protobuf::int32,
+    ::google::protobuf::internal::WireFormatLite::TYPE_INT32,
+    ::google::protobuf::internal::WireFormatLite::TYPE_INT32,
+    0 > SuperType;
+  Entity_AaaEntry_DoNotUse();
+  Entity_AaaEntry_DoNotUse(::google::protobuf::Arena* arena);
+  void MergeFrom(const Entity_AaaEntry_DoNotUse& other);
+  static const Entity_AaaEntry_DoNotUse* internal_default_instance() { return reinterpret_cast<const Entity_AaaEntry_DoNotUse*>(&_Entity_AaaEntry_DoNotUse_default_instance_); }
+  void MergeFrom(const ::google::protobuf::Message& other) final;
+  ::google::protobuf::Metadata GetMetadata() const;
+};
+
 // -------------------------------------------------------------------
 
 class Entity : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:protocol.Entity) */ {
@@ -201,7 +244,7 @@ class Entity : public ::google::protobuf::Message /* @@protoc_insertion_point(cl
                &_Entity_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    1;
+    2;
 
   void Swap(Entity* other);
   friend void swap(Entity& a, Entity& b) {
@@ -251,7 +294,51 @@ class Entity : public ::google::protobuf::Message /* @@protoc_insertion_point(cl
 
   // nested types ----------------------------------------------------
 
+
   // accessors -------------------------------------------------------
+
+  // repeated int32 enemy = 8;
+  int enemy_size() const;
+  void clear_enemy();
+  static const int kEnemyFieldNumber = 8;
+  ::google::protobuf::int32 enemy(int index) const;
+  void set_enemy(int index, ::google::protobuf::int32 value);
+  void add_enemy(::google::protobuf::int32 value);
+  const ::google::protobuf::RepeatedField< ::google::protobuf::int32 >&
+      enemy() const;
+  ::google::protobuf::RepeatedField< ::google::protobuf::int32 >*
+      mutable_enemy();
+
+  // repeated string alias = 9;
+  int alias_size() const;
+  void clear_alias();
+  static const int kAliasFieldNumber = 9;
+  const ::std::string& alias(int index) const;
+  ::std::string* mutable_alias(int index);
+  void set_alias(int index, const ::std::string& value);
+  #if LANG_CXX11
+  void set_alias(int index, ::std::string&& value);
+  #endif
+  void set_alias(int index, const char* value);
+  void set_alias(int index, const char* value, size_t size);
+  ::std::string* add_alias();
+  void add_alias(const ::std::string& value);
+  #if LANG_CXX11
+  void add_alias(::std::string&& value);
+  #endif
+  void add_alias(const char* value);
+  void add_alias(const char* value, size_t size);
+  const ::google::protobuf::RepeatedPtrField< ::std::string>& alias() const;
+  ::google::protobuf::RepeatedPtrField< ::std::string>* mutable_alias();
+
+  // map<int32, int32> aaa = 10;
+  int aaa_size() const;
+  void clear_aaa();
+  static const int kAaaFieldNumber = 10;
+  const ::google::protobuf::Map< ::google::protobuf::int32, ::google::protobuf::int32 >&
+      aaa() const;
+  ::google::protobuf::Map< ::google::protobuf::int32, ::google::protobuf::int32 >*
+      mutable_aaa();
 
   // bytes bag = 5;
   void clear_bag();
@@ -321,6 +408,15 @@ class Entity : public ::google::protobuf::Message /* @@protoc_insertion_point(cl
  private:
 
   ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
+  ::google::protobuf::RepeatedField< ::google::protobuf::int32 > enemy_;
+  mutable int _enemy_cached_byte_size_;
+  ::google::protobuf::RepeatedPtrField< ::std::string> alias_;
+  ::google::protobuf::internal::MapField<
+      Entity_AaaEntry_DoNotUse,
+      ::google::protobuf::int32, ::google::protobuf::int32,
+      ::google::protobuf::internal::WireFormatLite::TYPE_INT32,
+      ::google::protobuf::internal::WireFormatLite::TYPE_INT32,
+      0 > aaa_;
   ::google::protobuf::internal::ArenaStringPtr bag_;
   ::google::protobuf::internal::ArenaStringPtr mailbox_;
   ::protocol::Friend* friendlist_;
@@ -355,6 +451,61 @@ inline void Friend::set_id(::google::protobuf::uint32 value) {
   id_ = value;
   // @@protoc_insertion_point(field_set:protocol.Friend.id)
 }
+
+// string name = 2;
+inline void Friend::clear_name() {
+  name_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+inline const ::std::string& Friend::name() const {
+  // @@protoc_insertion_point(field_get:protocol.Friend.name)
+  return name_.GetNoArena();
+}
+inline void Friend::set_name(const ::std::string& value) {
+  
+  name_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
+  // @@protoc_insertion_point(field_set:protocol.Friend.name)
+}
+#if LANG_CXX11
+inline void Friend::set_name(::std::string&& value) {
+  
+  name_.SetNoArena(
+    &::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::move(value));
+  // @@protoc_insertion_point(field_set_rvalue:protocol.Friend.name)
+}
+#endif
+inline void Friend::set_name(const char* value) {
+  GOOGLE_DCHECK(value != NULL);
+  
+  name_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
+  // @@protoc_insertion_point(field_set_char:protocol.Friend.name)
+}
+inline void Friend::set_name(const char* value, size_t size) {
+  
+  name_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
+      ::std::string(reinterpret_cast<const char*>(value), size));
+  // @@protoc_insertion_point(field_set_pointer:protocol.Friend.name)
+}
+inline ::std::string* Friend::mutable_name() {
+  
+  // @@protoc_insertion_point(field_mutable:protocol.Friend.name)
+  return name_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+inline ::std::string* Friend::release_name() {
+  // @@protoc_insertion_point(field_release:protocol.Friend.name)
+  
+  return name_.ReleaseNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+inline void Friend::set_allocated_name(::std::string* name) {
+  if (name != NULL) {
+    
+  } else {
+    
+  }
+  name_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), name);
+  // @@protoc_insertion_point(field_set_allocated:protocol.Friend.name)
+}
+
+// -------------------------------------------------------------------
 
 // -------------------------------------------------------------------
 
@@ -576,9 +727,128 @@ inline void Entity::set_allocated_friendlist(::protocol::Friend* friendlist) {
   // @@protoc_insertion_point(field_set_allocated:protocol.Entity.friendlist)
 }
 
+// repeated int32 enemy = 8;
+inline int Entity::enemy_size() const {
+  return enemy_.size();
+}
+inline void Entity::clear_enemy() {
+  enemy_.Clear();
+}
+inline ::google::protobuf::int32 Entity::enemy(int index) const {
+  // @@protoc_insertion_point(field_get:protocol.Entity.enemy)
+  return enemy_.Get(index);
+}
+inline void Entity::set_enemy(int index, ::google::protobuf::int32 value) {
+  enemy_.Set(index, value);
+  // @@protoc_insertion_point(field_set:protocol.Entity.enemy)
+}
+inline void Entity::add_enemy(::google::protobuf::int32 value) {
+  enemy_.Add(value);
+  // @@protoc_insertion_point(field_add:protocol.Entity.enemy)
+}
+inline const ::google::protobuf::RepeatedField< ::google::protobuf::int32 >&
+Entity::enemy() const {
+  // @@protoc_insertion_point(field_list:protocol.Entity.enemy)
+  return enemy_;
+}
+inline ::google::protobuf::RepeatedField< ::google::protobuf::int32 >*
+Entity::mutable_enemy() {
+  // @@protoc_insertion_point(field_mutable_list:protocol.Entity.enemy)
+  return &enemy_;
+}
+
+// repeated string alias = 9;
+inline int Entity::alias_size() const {
+  return alias_.size();
+}
+inline void Entity::clear_alias() {
+  alias_.Clear();
+}
+inline const ::std::string& Entity::alias(int index) const {
+  // @@protoc_insertion_point(field_get:protocol.Entity.alias)
+  return alias_.Get(index);
+}
+inline ::std::string* Entity::mutable_alias(int index) {
+  // @@protoc_insertion_point(field_mutable:protocol.Entity.alias)
+  return alias_.Mutable(index);
+}
+inline void Entity::set_alias(int index, const ::std::string& value) {
+  // @@protoc_insertion_point(field_set:protocol.Entity.alias)
+  alias_.Mutable(index)->assign(value);
+}
+#if LANG_CXX11
+inline void Entity::set_alias(int index, ::std::string&& value) {
+  // @@protoc_insertion_point(field_set:protocol.Entity.alias)
+  alias_.Mutable(index)->assign(std::move(value));
+}
+#endif
+inline void Entity::set_alias(int index, const char* value) {
+  GOOGLE_DCHECK(value != NULL);
+  alias_.Mutable(index)->assign(value);
+  // @@protoc_insertion_point(field_set_char:protocol.Entity.alias)
+}
+inline void Entity::set_alias(int index, const char* value, size_t size) {
+  alias_.Mutable(index)->assign(
+    reinterpret_cast<const char*>(value), size);
+  // @@protoc_insertion_point(field_set_pointer:protocol.Entity.alias)
+}
+inline ::std::string* Entity::add_alias() {
+  // @@protoc_insertion_point(field_add_mutable:protocol.Entity.alias)
+  return alias_.Add();
+}
+inline void Entity::add_alias(const ::std::string& value) {
+  alias_.Add()->assign(value);
+  // @@protoc_insertion_point(field_add:protocol.Entity.alias)
+}
+#if LANG_CXX11
+inline void Entity::add_alias(::std::string&& value) {
+  alias_.Add(std::move(value));
+  // @@protoc_insertion_point(field_add:protocol.Entity.alias)
+}
+#endif
+inline void Entity::add_alias(const char* value) {
+  GOOGLE_DCHECK(value != NULL);
+  alias_.Add()->assign(value);
+  // @@protoc_insertion_point(field_add_char:protocol.Entity.alias)
+}
+inline void Entity::add_alias(const char* value, size_t size) {
+  alias_.Add()->assign(reinterpret_cast<const char*>(value), size);
+  // @@protoc_insertion_point(field_add_pointer:protocol.Entity.alias)
+}
+inline const ::google::protobuf::RepeatedPtrField< ::std::string>&
+Entity::alias() const {
+  // @@protoc_insertion_point(field_list:protocol.Entity.alias)
+  return alias_;
+}
+inline ::google::protobuf::RepeatedPtrField< ::std::string>*
+Entity::mutable_alias() {
+  // @@protoc_insertion_point(field_mutable_list:protocol.Entity.alias)
+  return &alias_;
+}
+
+// map<int32, int32> aaa = 10;
+inline int Entity::aaa_size() const {
+  return aaa_.size();
+}
+inline void Entity::clear_aaa() {
+  aaa_.Clear();
+}
+inline const ::google::protobuf::Map< ::google::protobuf::int32, ::google::protobuf::int32 >&
+Entity::aaa() const {
+  // @@protoc_insertion_point(field_map:protocol.Entity.aaa)
+  return aaa_.GetMap();
+}
+inline ::google::protobuf::Map< ::google::protobuf::int32, ::google::protobuf::int32 >*
+Entity::mutable_aaa() {
+  // @@protoc_insertion_point(field_mutable_map:protocol.Entity.aaa)
+  return aaa_.MutableMap();
+}
+
 #ifdef __GNUC__
   #pragma GCC diagnostic pop
 #endif  // __GNUC__
+// -------------------------------------------------------------------
+
 // -------------------------------------------------------------------
 
 

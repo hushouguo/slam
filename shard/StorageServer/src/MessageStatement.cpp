@@ -109,9 +109,11 @@ BEGIN_NAMESPACE_SLAM {
 				newlen = 32;
 			}
 			if (descriptor.type != newtype || newlen > descriptor.length) {
+#if false
 				Debug("field: %s from (%d,%ld) to (%d,%ld)", field->name().c_str(), 
 					descriptor.type, descriptor.length,
 					newtype, newlen);
+#endif				
 				descriptor.type = newtype;
 				descriptor.length = newlen;
 			}
@@ -222,52 +224,43 @@ BEGIN_NAMESPACE_SLAM {
 		for (auto& i : this->_tables) {
 			Debug << "\ttable: " << i.first;
 			for (auto& v : i.second) {
-				Debug << "\t\tfield: " << v.first << ", flags: " << v.second.flags << ", length: " << v.second.length;
+				Debug("\t\tfield:%16s(%d)\tlength: %-12ld\tflags: %s %s", v.first.c_str(), v.second.type, v.second.length, 
+						IS_UNSIGNED(v.second.flags) ? "UNSIGNED" : "",
+						IS_NOT_NULL(v.second.flags) ? "NOT NULL" : "");
 			}
 		}
 	}
 
 	bool GetFieldSet(const Message& message, const Reflection* ref, const FieldDescriptor* field, FieldSet& fieldSet) {
 		CHECK_RETURN(__msg2field.find(field->cpp_type()) != __msg2field.end(), false, "illegal cpp_type:%d", field->cpp_type());
-		//
-		// NOTE: 
-		// 	all fields without filling values will not be written to the database,
-		// 	for existing fields, the default values of the database are automatically used.
-		if (ref->HasField(message, field)) {
-			if (field->is_repeated()) {
-				//
-				// all repeated fields would be encoded to json string
-				fieldSet[field->name()] = __msg2field[FieldDescriptor::CPPTYPE_MESSAGE];
-			}
-			else {
+		if (field->is_repeated()) {
+			//
+			// all repeated fields would be encoded to json string
+			fieldSet[field->name()] = __msg2field[FieldDescriptor::CPPTYPE_MESSAGE];
+		}
+		else {
+			//if (ref->HasField(message, field)) {
 				fieldSet[field->name()] = __msg2field[field->cpp_type()];
 				ExtendField(message, field, ref, fieldSet[field->name()]);
-			}
+			//}
 		}
 		return true;
 	}
 	
 	bool ScrapeStatement(const Message& message, const Reflection* ref, const FieldDescriptor* field, std::ostringstream& sql_fields, std::ostringstream& sql_values) {
-		//
-		// NOTE: 
-		// 	all fields without filling values will not be written to the database,
-		// 	for existing fields, the default values of the database are automatically used.
-		if (!ref->HasField(message, field)) { 
-			return true; 
-		}
-		
+
 		if (sql_fields.tellp() > 0) { sql_fields << ","; }
+		sql_fields << field->name();
 		if (sql_values.tellp() > 0) { sql_values << ","; }
 
-		sql_fields << field->name();
 		if (field->is_repeated()) {
 			//
 			// all repeated fields would be encoded to json string
-			sql_values << "'" << "[";
+			sql_values << "\"" << "[";
 			for (int i = 0; i < ref->FieldSize(message, field); ++i) {
 				switch (field->cpp_type()) {
 #define CASE_FIELD_TYPE(CPPTYPE, METHOD_TYPE)	\
-					case google::protobuf::FieldDescriptor::CPPTYPE_##CPPTYPE: {\
+					case google::protobuf::FieldDescriptor::CPPTYPE_##CPPTYPE: \
 						if (i > 0) {\
 							sql_values << ",";\
 						}\
@@ -296,9 +289,9 @@ BEGIN_NAMESPACE_SLAM {
 					default: CHECK_RETURN(false, false, "illegal repeated field->cpp_type: %d,%s", field->cpp_type(), field->name().c_str());
 				}
 			}
-			sql_values << "]" << "'";
+			sql_values << "]" << "\"";
 		}
-		else {		
+		else {
 			switch (field->cpp_type()) {
 #define CASE_FIELD_TYPE(CPPTYPE, METHOD_TYPE)	\
 				case google::protobuf::FieldDescriptor::CPPTYPE_##CPPTYPE: \
@@ -341,12 +334,6 @@ BEGIN_NAMESPACE_SLAM {
 						&& ScrapeStatement(message, ref, field, sql_fields, sql_values);
 			});
 			CHECK_RETURN(rc, false, "DecodeMessage to table: %s failure", table.c_str());			
-#if true		
-			Debug << "Message: " << message->GetTypeName();
-			for (auto& i : fieldSet) {
-				Debug << "\t" << i.first << " => " << i.second.type << "," << i.second.flags << "," << i.second.length;
-			}
-#endif
 			rc = CreateTable(this->_dbhandler, table, fieldSet);
 			CHECK_RETURN(rc, false, "create table: %s, message: %s error", table.c_str(), message->GetTypeName().c_str());
 		}
@@ -370,9 +357,13 @@ BEGIN_NAMESPACE_SLAM {
 				}
 				else {
 					const DatabaseFieldDescriptor& descriptor = lastSet[i.first];
-					Debug("field:%s, newlen: %ld, len: %ld", i.first.c_str(), i.second.length, descriptor.length);
-					if (i.second.type != descriptor.type
-							|| i.second.length > descriptor.length
+					//Debug("field:%s, newlen: %ld, len: %ld", i.first.c_str(), i.second.length, descriptor.length);
+					if (i.second.type != descriptor.type // FIX: modify different field type should be forbidden
+							//
+							// only VARCHAR field allow to convert
+							|| (descriptor.type == MYSQL_TYPE_VAR_STRING && i.second.length > descriptor.length)
+							//
+							// only UNSIGNED & NOT NULL flags will be set
 							|| ((IS_UNSIGNED(i.second.flags) && !IS_UNSIGNED(descriptor.flags))
 									|| (IS_NOT_NULL(i.second.flags) && !IS_NOT_NULL(descriptor.flags))
 								) 

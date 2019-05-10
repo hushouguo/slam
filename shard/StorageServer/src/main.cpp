@@ -65,7 +65,15 @@ int main(int argc, char* argv[]) {
 		entity.set_bag("this is a bagaaa背包sdfsd");
 		entity.set_level(123);
 		entity.mutable_friendlist()->set_id(101);
-		//entity.mutable_list()->operator[](10) = 10;
+		entity.mutable_friendlist()->set_name("hushouguo");
+		for (int i = 10;i<20;++i) {
+			entity.add_enemy(i);
+		}
+		for (char c = 'a'; c <= 'z'; ++c) {
+			std::ostringstream o;
+			o << c;
+			entity.add_alias(o.str());
+		}
 		u64 entityid = m.InsertEntityToTable(1, "user", &entity);
 		Debug << "entityid: " << entityid;
 		goto exit_failure;

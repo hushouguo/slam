@@ -169,7 +169,7 @@ BEGIN_NAMESPACE_SLAM {
 	void Registry::dump() {
 		Trace << "all registry:";
 		for (auto& i : this->_values) {
-			Trace << "    " << i.first << ": " << i.second;
+			Trace << std::setw(24) << std::setfill(' ') << i.first << ": " << i.second;
 		}
 	}
 }
