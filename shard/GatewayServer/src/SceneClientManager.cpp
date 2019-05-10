@@ -50,7 +50,6 @@ BEGIN_NAMESPACE_SLAM {
 					return false;
 				}
 				return true;
-			}
 		});
 		return sceneClient;
 	}

@@ -65,7 +65,7 @@ int main(int argc, char* argv[]) {
 		entity.set_bag("this is a bagaaa背包sdfsd");
 		entity.set_level(123);
 		entity.mutable_friendlist()->set_id(101);
-		entity.mutable_list()->operator[](10) = 10;
+		//entity.mutable_list()->operator[](10) = 10;
 		u64 entityid = m.InsertEntityToTable(1, "user", &entity);
 		Debug << "entityid: " << entityid;
 		goto exit_failure;

@@ -206,9 +206,7 @@ using namespace net;
 using namespace logger;
 
 #include "tools/Singleton.h"
-#include "tools/Callback.h"
 #include "tools/Constructor.h"
-#include "tools/Noncopyable.h"
 #include "tools/base64.h"
 #include "tools/ByteBuffer.h"
 #include "tools/Entry.h"
