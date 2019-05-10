@@ -55,45 +55,61 @@ int main(int argc, char* argv[]) {
 
 	sThreadPool.init(sConfig.get("Service.threads", sConfig.threads));
 
-	if (false) {
-		StorageHandlerManager m;
-		CHECK_GOTO(m.init(), exit_failure, "StorageHandlerManager init failure");
-		Entity entity;
-		//entity.set_id(100);
-		entity.set_gold(100);
-		entity.set_diamond(200);
-		entity.set_bag("this is a bagaaa背包sdfsd");
-		entity.set_level(123);
-		entity.mutable_friendlist()->set_id(101);
-		entity.mutable_friendlist()->set_name("hushouguo");
-		for (int i = 10;i<20;++i) {
-			entity.add_enemy(i);
-		}
-		for (char c = 'a'; c <= 'z'; ++c) {
-			std::ostringstream o;
-			o << c;
-			entity.add_alias(o.str());
-		}
-		entity.set_mailbox("mailbox");
-		u64 entityid = m.InsertEntityToTable(1, "user", &entity);
-		Debug << "entityid: " << entityid;
-		DumpMessage(&entity);
-		goto exit_failure;
-	}
-	else {
-		StorageHandlerManager m;
-		CHECK_GOTO(m.init(), exit_failure, "StorageHandlerManager init failure");
-		Entity entity;
-		bool rc = m.RetrieveEntityFromTable(1, "user", 1, &entity);
-		if (rc) {
+	if (true) {
+		auto createEntity = [](StorageHandlerManager& m) {
+			Entity entity;
+			//entity.set_id(100);
+			entity.set_gold(100);
+			entity.set_diamond(200);
+			entity.set_bag("this is a bagaaa背包sdfsd");
+			entity.set_level(123);
+			entity.mutable_friendlist()->set_id(101);
+			entity.mutable_friendlist()->set_name("hushouguo");
+			for (int i = 10;i<20;++i) {
+				entity.add_enemy(i);
+			}
+			for (char c = 'a'; c <= 'z'; ++c) {
+				std::ostringstream o;
+				o << c;
+				entity.add_alias(o.str());
+			}
+			entity.set_mailbox("mailbox");
+			u64 entityid = m.InsertEntityToTable(1, "user", &entity);
+			Debug << "entityid: " << entityid;
 			DumpMessage(&entity);
-		}
-		else {
-			Error << "RetrieveEntityFromTable failure";
-		}
-		goto exit_failure;
-	}
+		};
 
+		auto loadEntity = [](StorageHandlerManager& m, u64 entityid) {
+			Entity entity;
+			bool rc = m.RetrieveEntityFromTable(1, "user", entityid, &entity);
+			if (rc) {
+				DumpMessage(&entity);
+			}
+			else {
+				Error << "loadEntity error: " << entityid;
+			}
+		};
+
+		auto updateEntity = [](StorageHandlerManager& m, u64 entityid, Entity* entity) {
+			entity->set_diamond(entity->diamond() + 1);
+			bool rc = m.UpdateEntityToTable(1, "user", entityid, entity);
+			if (rc) {
+				loadEntity(m, entityid);
+			}
+			else {
+				Error << "updateEntity error: " << entityid;
+			}
+		};
+
+		StorageHandlerManager m;
+		CHECK_GOTO(m.init(), exit_failure, "StorageHandlerManager init failure");
+		loadEntity(m, 1);
+		Entity entity;
+		entity.set_mailbox("this is new mailbox");
+		updateEntity(m, 1, &entity);
+		goto exit_failure;		
+	}
+	
 	CHECK_GOTO(sStorageProcessManager.init(
 		sConfig.get("Service.threads", sConfig.threads)),
 		exit_failure, "StorageProcessManager init failure");

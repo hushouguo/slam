@@ -18,7 +18,7 @@ BEGIN_NAMESPACE_SLAM {
 		public:
 			u64  InsertEntityToTable(u32 shard, std::string table, const Entity* entity);
 			bool RetrieveEntityFromTable(u32 shard, std::string table, u64 entityid, Entity* entity);
-			bool UpdateEntityToTable(u32 shard, std::string table, Entity* entity);
+			bool UpdateEntityToTable(u32 shard, std::string table, u64 entityid, const Entity* entity);
 		
 		private:
 			MySQL* _dbhandler = nullptr;

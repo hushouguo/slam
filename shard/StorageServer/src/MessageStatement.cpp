@@ -316,11 +316,18 @@ BEGIN_NAMESPACE_SLAM {
 		return true;
 	}
 	
-	bool ScrapeStatement(const Message& message, const Reflection* ref, const FieldDescriptor* field, std::ostringstream& sql_fields, std::ostringstream& sql_values) {
-
-		if (sql_fields.tellp() > 0) { sql_fields << ","; }
-		sql_fields << field->name();
-		if (sql_values.tellp() > 0) { sql_values << ","; }
+	bool ScrapeStatement(const Message& message, const Reflection* ref, const FieldDescriptor* field, std::ostringstream& sql_fields, std::ostringstream& sql_values, bool isInsert) {
+		//
+		// isInsert is true make insert statement, otherwise it make update statement
+		if (isInsert) {
+			if (sql_fields.tellp() > 0) { sql_fields << ","; }
+			sql_fields << field->name();
+			if (sql_values.tellp() > 0) { sql_values << ","; }
+		}
+		else {
+			if (sql_values.tellp() > 0) { sql_values << ","; }
+			sql_values << field->name() << "=";
+		}
 
 		if (field->is_repeated()) {
 			//
@@ -392,6 +399,8 @@ BEGIN_NAMESPACE_SLAM {
 	}
 	
 	bool MessageStatement::CreateMessage(std::string table, const Message* message, u64* insertid) {
+		CHECK_RETURN(message, false, "message is nullptr");
+		
 		std::ostringstream sql_fields, sql_values;
 		if (this->_tables.find(table) == this->_tables.end()) {
 			//
@@ -400,7 +409,7 @@ BEGIN_NAMESPACE_SLAM {
 			bool rc = DecodeMessage(*message, message->GetDescriptor(), message->GetReflection(), 
 				[&fieldSet, &sql_fields, &sql_values](const Message& message, const Reflection* ref, const FieldDescriptor* field)->bool {
 					return GetFieldSet(message, ref, field, fieldSet) 
-						&& ScrapeStatement(message, ref, field, sql_fields, sql_values);
+						&& ScrapeStatement(message, ref, field, sql_fields, sql_values, true);
 			});
 			CHECK_RETURN(rc, false, "DecodeMessage to table: %s failure", table.c_str());			
 			rc = CreateTable(this->_dbhandler, table, fieldSet);
@@ -413,7 +422,7 @@ BEGIN_NAMESPACE_SLAM {
 			bool rc = DecodeMessage(*message, message->GetDescriptor(), message->GetReflection(),
 				[&fieldSet, &sql_fields, &sql_values](const Message& message, const Reflection* ref, const FieldDescriptor* field)->bool {
 					return GetFieldSet(message, ref, field, fieldSet) 
-						&& ScrapeStatement(message, ref, field, sql_fields, sql_values);
+						&& ScrapeStatement(message, ref, field, sql_fields, sql_values, true);
 			});
 			CHECK_RETURN(rc, false, "DecodeMessage to table: %s failure", table.c_str());
 			
@@ -487,6 +496,8 @@ BEGIN_NAMESPACE_SLAM {
 		for (u32 i = 0; i < fieldNumber; ++i) {
 			const MYSQL_FIELD& mysql_field = fields[i];
 			std::string field_name = mysql_field.org_name;
+			//
+			// Use field names to check backwards for the presence of messages
 			const FieldDescriptor* field = descriptor->FindFieldByName(field_name);
 			CHECK_CONTINUE(field, "not declare field: %s", mysql_field.org_name);
 			if (field->is_repeated()) {
@@ -561,15 +572,55 @@ BEGIN_NAMESPACE_SLAM {
 	}
 
 	bool MessageStatement::UpdateMessage(std::string table, u64 entityid, const Message* message) {
-#if false	
-		std::ostringstream sql, sql_fields, sql_values;
- 		CHECK_RETURN(this->UpdateTable(table, message, &sql_fields, &sql_values), false, "update table: %s error", table.c_str());
- 		sql << "UPDATE `" << table << "` (" << sql_fields.str() << ") VALUES (" << sql_values.str() << ")";
+		CHECK_RETURN(this->_tables.find(table) != this->_tables.end(), false, "not found table: %s", table.c_str());
+		CHECK_RETURN(message, false, "message is nullptr");
+
+		std::ostringstream sql_fields, sql_values;
+		
+		//
+		// alter table
+		FieldSet fieldSet;
+		bool rc = DecodeMessage(*message, message->GetDescriptor(), message->GetReflection(),
+			[&fieldSet, &sql_fields, &sql_values](const Message& message, const Reflection* ref, const FieldDescriptor* field)->bool {
+				return GetFieldSet(message, ref, field, fieldSet) 
+					&& ScrapeStatement(message, ref, field, sql_fields, sql_values, false);
+		});
+		CHECK_RETURN(rc, false, "DecodeMessage to table: %s failure", table.c_str());
+
+		FieldSet& lastSet = this->_tables[table];
+		for (auto& i : fieldSet) {
+			if (lastSet.find(i.first) == lastSet.end()) {
+				rc = AddField(this->_dbhandler, table, i.first, i.second);
+				CHECK_RETURN(rc, false, "add field: %s error", i.first.c_str());					
+				lastSet[i.first] = i.second;
+			}
+			else {
+				const DatabaseFieldDescriptor& descriptor = lastSet[i.first];
+				//Debug("field:%s, newlen: %ld, len: %ld", i.first.c_str(), i.second.length, descriptor.length);
+				if (i.second.type != descriptor.type // FIX: modify different field type should be forbidden
+						//
+						// only VARCHAR field allow to convert
+						|| (descriptor.type == MYSQL_TYPE_VAR_STRING && i.second.length > descriptor.length)
+						//
+						// only UNSIGNED & NOT NULL flags will be set
+						|| ((IS_UNSIGNED(i.second.flags) && !IS_UNSIGNED(descriptor.flags))
+								|| (IS_NOT_NULL(i.second.flags) && !IS_NOT_NULL(descriptor.flags))
+							) 
+				   ) {
+					rc = AlterField(this->_dbhandler, table, i.first, i.second);
+					CHECK_RETURN(rc, false, "alter field: %s error", i.first.c_str());
+					lastSet[i.first] = i.second;
+				}
+			}
+		}
+
+		//
+		// update entity to table
+		std::ostringstream sql;
+ 		sql << "UPDATE `" << table << "` SET " << sql_values.str() << " WHERE id = " << entityid;
 		bool rc = this->_dbhandler->runCommand(sql.str());
-		CHECK_RETURN(rc, 0, "run sql: %s error", sql.str().c_str());
- 		//return entity->id() == 0 ? this->_dbhandler->insertId() : entity->id();
- 		//TODO:
-#endif 		
+		CHECK_RETURN(rc, false, "run sql: %s error", sql.str().c_str());
+		Debug << "update sql: " << sql.str();
 		return true;
 	}
 	

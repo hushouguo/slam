@@ -42,8 +42,10 @@ BEGIN_NAMESPACE_SLAM {
 		return this->_messageStatement->RetrieveMessage(table, entityid, entity);
 	}
 
-	bool StorageHandler::UpdateEntityToTable(u32 shard, std::string table, Entity* entity) {
-		return false;
+	bool StorageHandler::UpdateEntityToTable(u32 shard, std::string table, u64 entityid, const Entity* entity) {
+		assert(shard == this->id);
+		CHECK_RETURN(this->_dbhandler && this->_messageStatement, 0, "StorageHandler: %d not initiated", shard);
+		return this->_messageStatement->UpdateMessage(table, entityid, entity);
 	}
 	
 	bool StorageHandler::init(std::string host, std::string user, std::string password, std::string database, int port) {

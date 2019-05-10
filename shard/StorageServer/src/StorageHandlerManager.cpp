@@ -49,7 +49,7 @@ BEGIN_NAMESPACE_SLAM {
 		return rc;	
 	}
 
-	u64 StorageHandlerManager::InsertEntityToTable(u32 shard, std::string table, const Entity* entity) {
+	u64  StorageHandlerManager::InsertEntityToTable(u32 shard, std::string table, const Entity* entity) {
 		StorageHandler* storageHandler = this->find(shard);
 		return storageHandler ? storageHandler->InsertEntityToTable(shard, table, entity) : 0;
 	}
@@ -57,6 +57,11 @@ BEGIN_NAMESPACE_SLAM {
 	bool StorageHandlerManager::RetrieveEntityFromTable(u32 shard, std::string table, u64 entityid, Entity* entity) {
 		StorageHandler* storageHandler = this->find(shard);
 		return storageHandler ? storageHandler->RetrieveEntityFromTable(shard, table, entityid, entity) : false;
+	}
+
+	bool StorageHandlerManager::UpdateEntityToTable(u32 shard, std::string table, u64 entityid, const Entity* entity) {
+		StorageHandler* storageHandler = this->find(shard);
+		return storageHandler ? storageHandler->UpdateEntityToTable(shard, table, entityid, entity) : false;
 	}
 }
 
