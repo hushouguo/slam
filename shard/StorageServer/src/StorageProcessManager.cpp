@@ -35,13 +35,10 @@ BEGIN_NAMESPACE_SLAM {
 	}
 
 	void StorageProcessManager::stop() {
-		struct StorageProcessCallback : public Callback<StorageProcess> {
-			bool invoke(StorageProcess* entry) {
-				SafeDelete(entry);				
-				return true;
-			}
-		}eee;
-		this->traverse(eee);
+		this->traverse([](StorageProcess* entry)->bool{
+			SafeDelete(entry);
+			return true;
+		});
 		this->clear();
 	}
 

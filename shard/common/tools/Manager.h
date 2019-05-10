@@ -36,9 +36,9 @@ BEGIN_NAMESPACE_SLAM {
 				return i == this->__entries.end() ? nullptr : i->second;
 			}
 
-			bool traverse(Callback<ENTRY>& eee) {
-				for (auto& entry : this->__entries) {
-					if (!eee.invoke(entry.second)) {
+			bool traverse(std::function<bool(ENTRY*)> func) {
+ 				for (auto& entry : this->__entries) {
+ 					if (!func(entry.second)) {
 						return false;
 					}
 				}

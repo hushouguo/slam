@@ -43,32 +43,25 @@ BEGIN_NAMESPACE_SLAM {
 	}
 
 	SceneClient* SceneClientManager::findSceneClient(u64 sceneServerid) {
-		struct SceneClientCallback : public Callback<SceneClient> {
-			SceneClient* sceneClient = nullptr;
-			u64 sceneServerid = 0;
-			SceneClientCallback(u64 _sceneServerid) : sceneServerid(_sceneServerid) {}
-			bool invoke(SceneClient* entry) {
-				if (entry->sceneServerid() == this->sceneServerid) {
-					this->sceneClient = entry;
+		SceneClient* sceneClient = nullptr;
+		this->traverse([sceneServerid, &sceneClient](SceneClient* entry)->bool{
+				if (entry->sceneServerid() == sceneServerid) {
+					sceneClient = entry;
 					return false;
 				}
 				return true;
 			}
-		}eee(sceneServerid);
-		this->traverse(eee);
-		return eee.sceneClient;
+		});
+		return sceneClient;
 	}
 
 	void SceneClientManager::stop() {
 		//
 		// cleanup SceneClient
-		struct SceneClientCallback : public Callback<SceneClient> {
-			bool invoke(SceneClient* entry) {
-				SafeDelete(entry);
-				return true;
-			}
-		}eee;
-		this->traverse(eee);
+		this->traverse([](SceneClient* entry)->bool{
+			SafeDelete(entry);
+			return true;
+		});
 		this->clear();
 
 		//
