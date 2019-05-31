@@ -2,179 +2,299 @@
 -- match.lua
 --
 
-
-local cc = _G
-local runassingle = true
-local runasmultiple = false
-local runonclient = true
-local runonserver = false
-
---
--- dump table
-table.dump = function(t)  
-    local dump_cache={}
-    local function sub_dump(t,indent)
-        if (dump_cache[tostring(t)]) then
-            cc.WriteLog(indent.."*"..tostring(t))
-        else
-            dump_cache[tostring(t)]=true
-            if (type(t)=="table") then
-                for pos,val in pairs(t) do
-                    if (type(val)=="table") then
-                        cc.WriteLog(indent.."["..pos.."] => "..tostring(t).." {")
-                        sub_dump(val,indent..string.rep(" ",string.len(pos)+8))
-                        cc.WriteLog(indent..string.rep(" ",string.len(pos)+6).."}")
-                    elseif (type(val)=="string") then
-                        cc.WriteLog(indent.."["..pos..'] => "'..val..'"')
-                    else
-                        cc.WriteLog(indent.."["..pos.."] => "..tostring(val))
-                    end
-                end
-            else
-                cc.WriteLog(indent..tostring(t))
-            end
-        end
-    end
-    if (type(t)=="table") then
-        cc.WriteLog(tostring(t).." {")
-        sub_dump(t,"  ")
-        cc.WriteLog("}")
-    else
-        sub_dump(t,"  ")
-    end
---    cc.WriteLog()
-end
-
+require('common')
+require('tools')
+require('buff')
+require('card')
+require('entity')
+require('monster')
 
 --
--- clear table
-table.clear = function(t)
-	assert(type(t) == "table")
-	for k in pairs (t) do t[k] = nil end
-end
-
+------------------- Match class -------------------
 --
--- get size of table
-table.size = function(t)
-	assert(type(t) == "table")
-	local size = 0
-	for k, v in pairs (t) do 
-		if v ~= nil then size = size + 1 end
-	end
-	return size
-end
 
-
---
--- Entity object
-local Entity = {	
-	id = nil, -- entity.id
-	baseid = nil, -- entity.baseid
-	base = nil, -- {field_name=field_value}, related entity.xls
-	host = nil, -- userdata(host entity)
-	side = nil, -- 0, 1: allies, enemy
+local Match = {
+	isstart = false, -- indicate whether the match has started
+	isdone = false, -- indicate whether the match has done
 	
-	stack_base = nil, -- {card_baseid, card_baseid, ...}	
-	stack_discard = nil, -- {card_baseid, card_baseid, ...}
-	stack_discard_shuffle = function(self)
-		for k, v in pairs(self.stack_discard) do
-			self.stack_base
+	--
+	-- entity instances
+	entities = {}, -- key: entityid, value: Entity instance
+	entity_size = function(self, side)
+		local size = 0
+		for _, entity in pairs(self.entities) do
+			if entity.side == side then size = size + 1 end
 		end
-		assert(table.size(cards_base) > 0)	
+		return size
 	end,
-	
-	stack_exhaust = nil, -- {card_baseid, card_baseid, ...},
-	stack_exhaust_shuffle = function(self)
-	end,
-	
-	cards_hold = nil, -- {card_baseid, card_baseid, ...}
-	card_deal = function(self)
-	end,
-	card_play = function(self, card_baseid)
-	end,	
-	card_discard = function(self, card_baseid)
-	end,
-
-	round_end = function(self)
-	end,
-	
-	buff = nil, -- {buff_baseid, buff_baseid, ...}
-	buff_add = function(self, buff_baseid)
-	end,
-	buff_remove = function(self, buff_baseid)
-	end,
-	buff_effect = function(self)
-	end,
-	
-	equip = nil, -- {[slot]=equip_baseid, [slot]=equip_baseid, ...}
-	puppet = nil,		
+	dead_entities = {}, -- key: entityid, value: Entity instance
 
 	--
-	-- arg: entity_host is userdata, related with entity of host layer
-	constructor = function(self, entity_host, side)
-		self.id = entity_host:ID()
-		self.baseid = entity_host:Baseid()
-		self.base = cc.LookupTable("entity", self.baseid)
-		self.host = entity_host
-		self.side = side
-		assert(side == 0 or side == 1)
-		assert(self.base ~= nil)
-		self.stack_base = entity_host:GetBaseCards()
-		assert(self.stack_base ~= nil and table.size(self.stack_base) > 0)
-		self.stack_discard = {}
-		self.stack_exhaust = {}
-		self.cards_hold = {}
-		self.buff = {}
-		self.equip = {}
-		self.puppet = {}
-		-- init cards cache
-		for k, card_baseid in pairs(self.stack_base) do
-			if cards[card_baseid] == nil then
-				cards[card_baseid] = cc.LookupTable("card", card_baseid)
-				assert(cards[card_baseid] ~= nil)
+	-- round list
+	round_total = 0, -- 
+	round_entityid = nil,
+	round_side = Side.ALLIES,
+	init_round_list = function(self)
+		self.round_total = 0
+		self.round_entityid = nil
+		self.round_side = Side.ALLIES
+		for _, entity in pairs(self.entities) do
+			entity.round_total = 0
+		end
+	end,		
+	next_round_entity = function(self)
+		self.round_total = self.round_total + 1
+		local round_entity = nil
+		local round_total = 0
+		for _, entity in pairs(self.entities) do
+			if entity.side == self.round_side and 
+				(round_entity == nil or entity.round_total < round_total) 
+			then
+				round_entity = entity
+				round_total = entity.round_total
 			end
 		end
-	end
-}
-
-function Entity:new(entity_host, side)
-	local entity = {}
-	self.__index = self -- Entity.__index = function(key) return Entity[key] end
-	setmetatable(entity, self)
-	entity:constructor(entity_host, side)
-	return entity
-end
-
---
--- key: card_baseid, value: card
-local cards = {}
-
---
--- key: entityid, value: Entity
-local entities = {}
-
---
--- Match
-local Match = {
-	start = false, -- indicate whether the match has started
-	
-	round_entityid = nil, -- entity currently play card
-	next_round_entity = function(self) -- Queue
-		for k, v in pairs(side_allies) do
-			assert(v ~= nil)
-			return k -- entityid
-		end
-		return nil		
+		assert(round_entity ~= nil and not round_entity.death)
+		round_entity.round_total = round_entity.round_total + 1
+		self.round_entityid = round_entity.id
+		self.round_side = (self.round_side == Side.ALLIES and Side.ENEMY or Side.ALLIES)
+		Debug(nil, nil, nil, "*************************************** 回合: " .. self.round_total .. ", entity: " .. self.round_entityid .. " ******************************")
+		return self.round_entityid
+	end,
+	remove_round_entity = function(self, entityid)
+	    assert(entityid ~= nil)
+		assert(self.entities[entityid] == nil)
+		assert(self.dead_entities[entityid] ~= nil)
+	    Debug(nil, nil, nil, "remove round entityid: " .. tostring(entityid))
 	end,
 
-	constructor = function(self)
-		self.start = false
-		self.round_entityid = nil
+	--
+	-- bool card_play_judge(entityid, cardid, pick_entityid)
+	--
+	card_play_judge = function(self, entityid, cardid, pick_entityid)
+		if not self.isstart or self.isdone then
+			Error(nil, nil, nil, "self.isstart: " .. tostring(self.isstart) .. ", self.isdone: " .. tostring(self.isdone))
+			return false
+		end
+
+		if entityid ~= self.round_entityid then
+			Error(nil, nil, nil, "self.round_entityid" .. tostring(self.round_entityid))
+			return false
+		end
+		
+		return self.entities[entityid]:card_play_judge(cardid, pick_entityid)
+	end,
+	
+	--
+	-- bool card_play(entityid, cardid, pick_entityid)
+	--
+	card_play = function(self, entityid, cardid, pick_entityid)
+		if not self.isstart or self.isdone then
+			Error(nil, nil, nil, "self.isstart: " .. tostring(self.isstart) .. ", self.isdone: " .. tostring(self.isdone))
+			return false
+		end
+
+		if entityid ~= self.round_entityid then
+			Error(nil, nil, nil, "self.round_entityid" .. tostring(self.round_entityid))
+			return false
+		end
+
+		return self.entities[entityid]:card_play(cardid, pick_entityid)
+	end,
+
+	--
+	-- bool card_discard_judge(entityid, cardid)
+	--
+	card_discard_judge = function(self, entityid, cardid)
+		if not self.isstart or self.isdone then
+			Error(nil, nil, nil, "self.isstart: " .. tostring(self.isstart) .. ", self.isdone: " .. tostring(self.isdone))
+			return false
+		end
+
+		if entityid ~= self.round_entityid then
+			Error(nil, nil, nil, "self.round_entityid" .. tostring(self.round_entityid))
+			return false
+		end
+
+		return self.entities[entityid]:card_discard_judge(cardid)
+	end,
+	
+	--
+	-- bool card_discard(entityid, cardid)
+	--
+	card_discard = function(self, entityid, cardid)
+		if not self.isstart or self.isdone then
+			Error(nil, nil, nil, "self.isstart: " .. tostring(self.isstart) .. ", self.isdone: " .. tostring(self.isdone))
+			return false
+		end
+
+		if entityid ~= self.round_entityid then
+			Error(nil, nil, nil, "self.round_entityid" .. tostring(self.round_entityid))
+			return false
+		end
+
+		return self.entities[entityid]:card_discard(cardid, false)
+	end,
+
+	--
+	-- void abort()
+	-- 
+	abort = function(self, entityid)
+		if not self.isstart or self.isdone then
+			Error(nil, nil, nil, "self.isstart: " .. tostring(self.isstart) .. ", self.isdone: " .. tostring(self.isdone))
+			return
+		end
+		self:done(self.entities[entityid].side == Side.ALLIES and Side.ENEMY or Side.ALLIES)
+	end,	
+
+	--
+	-- void update()
+	--
+	update = function(self, delta)
+		if not self.isstart or self.isdone then
+			--Error(nil, nil, nil, "self.isstart: " .. tostring(self.isstart) .. ", self.isdone: " .. tostring(self.isdone))
+			return
+		end
+		
+		for _, entity in pairs(self.entities) do
+			entity:update(delta)
+		end
+	end,
+
+	--
+	-- void round_end(entityid)
+	--
+	round_end = function(self, entityid)
+		if not self.isstart or self.isdone then
+			Error(nil, nil, nil, "self.isstart: " .. tostring(self.isstart) .. ", self.isdone: " .. tostring(self.isdone))
+			return
+		end
+
+		if entityid ~= self.round_entityid then
+			Error(nil, nil, nil, "self.round_entityid" .. tostring(self.round_entityid))
+			return
+		end
+
+		self.entities[entityid]:round_end()
+				
 		self:next_round_entity()
+		assert(self.round_entityid ~= nil)
+		self.entities[self.round_entityid]:round_begin()			
+	end,
+
+	--
+	-- void prepare()
+	--
+	prepare = function(self)
+		if self.isstart then
+			Error(nil, nil, nil, "self.isstart: " .. tostring(self.isstart) .. ", self.isdone: " .. tostring(self.isdone))
+			return
+		end
+		Debug(nil, nil, nil, "prepare")
+	end,
+
+	--
+	-- void add_member(entityid, side)
+	--
+	add_member = function(self, entityid, side)
+		if self.isstart then
+			Error(nil, nil, nil, "self.isstart: " .. tostring(self.isstart) .. ", self.isdone: " .. tostring(self.isdone))
+			return
+		end
+
+		if self.entities[entityid] ~= nil then
+			Error(nil, nil, nil, "entityid: " .. tostring(entityid) .. " already exit")
+			return
+		end
+		
+		self.entities[entityid] = Entity:new(entityid, side)
+		--table.dump(entity)
+		Debug(nil, nil, nil, "add member: " .. tostring(entityid) .. ", side: " .. tostring(side))
+	end,
+
+	--
+	-- void start()
+	--
+	start = function(self)
+		if self.isstart then
+			Error(nil, nil, nil, "self.isstart: " .. tostring(self.isstart) .. ", self.isdone: " .. tostring(self.isdone))
+			return
+		end
+		
+		if self:entity_size(Side.ALLIES) < 1 or self:entity_size(Side.ENEMY) < 1 then
+			Error(nil, nil, nil, "ALLIES size: " .. self:entity_size(Side.ALLIES) .. ", ENEMY size: " .. self:entity_size(Side.ENEMY))
+			return
+		end
+
+		self.isstart = true
+		self.isdone = false
+		self:next_round_entity()
+		assert(self.round_entityid ~= nil)
+		self.entities[self.round_entityid]:round_begin()
+	end,
+
+    --
+    -- void die_entity(entityid)
+    --
+    die_entity = function(self, entityid)
+        assert(self.entities[entityid] ~= nil)
+        local entity = self.entities[entityid]
+        assert(entity.death)
+        self.entities[entityid] = nil
+        assert(self.dead_entities[entityid] == nil)
+        self.dead_entities[entityid] = entity
+        self:check_done()
+        if not self.isdone then
+            self:remove_round_entity(entityid)
+        end
+    end,
+    
+	--
+	-- bool check_done()
+	--
+	check_done = function(self)
+		local sides = {
+			[Side.ALLIES] = 0,
+			[Side.ENEMY] = 0
+		}
+		
+		for _, entity in pairs(self.entities) do
+			assert(sides[entity.side] ~= nil)
+			if not entity.death then sides[entity.side] = sides[entity.side] + 1 end
+		end
+		
+		assert(sides[Side.ALLIES] > 0 or sides[Side.ENEMY] > 0)
+		if sides[Side.ALLIES] > 0 and sides[Side.ENEMY] > 0 then return false end
+
+		self:done(sides[Side.ALLIES] > 0 and Side.ALLIES or Side.ENEMY)
+		return true
+	end,
+
+	--
+	-- void done(side_victory)
+	-- 
+	done = function(self, side_victory)
+		assert(self.isstart and not self.isdone)
+		-- notify allies members
+		for _, entity in pairs(self.entities) do
+			if entity.side == Side.ALLIES then
+				cc.MatchEnd(entity.id, side_victory == entity.side)
+			end
+		end
+		self.isdone = true
+		self.isstart = false
+		Debug(nil, nil, nil, "比赛结束, 胜利方: " .. (side_victory == Side.ALLIES and "allies" or "enemy"))
+	end,	
+    
+	constructor = function(self)
+		self.isstart = false
+		self.isdone = false
+		table.clear(self.entities)
+		self:init_round_list()
 	end
 }
 
-function Match:new()
+function Match:new()	
 	local match = {}
 	self.__index = self -- Match.__index = function(key) return Match[key] end
 	setmetatable(match, self)
@@ -182,101 +302,77 @@ function Match:new()
 	return match
 end
 
---
--- current match instance
-local match = nil
 
 --
--- entity currently play card
-local round_entityid = nil
-local function entity_init_round()
-	assert(match_start)
-	for k, v in pairs(side_allies) do
-		assert(v ~= nil)
-		return k -- entityid
-	end
-	return nil
-end
-
+------------------- lua APIs -------------------
+--
 
 --
 -- prepare match
 function lua_entry_match_prepare()
-	match = Match:new()
-	table.clear(cards)
-	table.clear(entities)
-	cc.WriteLog("match prepare")
+	g_match = Match:new()
+	g_match:prepare()
 end
 
 --
 -- add member of allies to match
-function lua_entry_add_member(entity_host)
-	assert(not match and not match.start)
-	assert(type(entity_host) == "userdata")
-	local entity = Entity:new(entity_host, 0)
-	entities[entity.id] = entity
-	cc.WriteLog("add member: " .. entity.id)
-	table.dump(entity)
+function lua_entry_add_member(entityid)
+	assert(g_match)
+	g_match:add_member(entityid, Side.ALLIES)
 end
 
 --
 -- add member of enemy to match
-function lua_entry_add_opponent(entity_host)
-	assert(not match and not match.start)
-	assert(type(entity_host) == "userdata")
-	local entity = Entity:new(entity_host, 1)
-	entities[entity.id] = entity
-	cc.WriteLog("add opponent: " .. entity.id)
-	table.dump(entity)
+function lua_entry_add_opponent(entityid)
+	assert(g_match)
+	g_match:add_member(entityid, Side.ENEMY)
 end
 
 --
 -- start match
 function lua_entry_match_start()
-	assert(not match and not match.start)
-	assert(table.size(entities) > 0)
-	match.start = true
-	round_entityid = entity_init_round()
-	assert(round_entityid ~= nil)
-	-- TODO: need new api to notify host, which entity is round
-	cc.WriteLog("match start, entities: " .. table.size(entities) .. ", round: " .. round_entityid)
-	local entity = entities[round_entityid]
-	entity:card_deal()
+	assert(g_match)
+	g_match:start()
+end
+
+--
+-- the play if can play a card
+function lua_entry_card_play_judge(entityid, cardid, pick_entityid)
+	assert(g_match)
+	return g_match:card_play_judge(entityid, cardid, pick_entityid)
 end
 
 --
 -- the player play a card
-function lua_entry_card_play(entityid, card_baseid)
-	assert(match and match.start)
-	assert(round_entityid == entityid)
-	cc.WriteLog("play card, entityid: " .. entityid .. ", card: " .. card_baseid)
-	local entity = entities[round_entityid]
-	entity:card_play(card_baseid)
+function lua_entry_card_play(entityid, cardid, pick_entityid)
+	assert(g_match)
+	g_match:card_play(entityid, cardid, pick_entityid)
+end
+
+--
+-- the player if can discard a card
+function lua_entry_card_discard_judge(entityid, cardid)
+	assert(g_match)
+	return g_match:card_discard_judge(entityid, cardid)
 end
 
 --
 -- the player discard a card
-function lua_entry_card_discard(entityid, baseid)
-	assert(match and match.start)
-	assert(round_entityid == entityid)
-	cc.WriteLog("discard card, entityid: " .. entityid .. ", card: " .. card_baseid)
-	local entity = entities[round_entityid]
-	entity:card_discard(card_baseid)
+function lua_entry_card_discard(entityid, cardid)
+	assert(g_match)
+	g_match:card_discard(entityid, cardid)
 end
 
 --
 -- the player end this round
 function lua_entry_round_end(entityid)
-	assert(match and match.start)
-	assert(round_entityid == entityid)
-	cc.WriteLog("round end, entityid: " .. entityid)
-	local entity = entities[round_entityid]
-	entity:round_end()
+	assert(g_match)
+	g_match:round_end(entityid)
 end
 
 --
 -- call me for every frame
 function lua_entry_update(delta)
-	--if not match_start then return end
+	if g_match ~= nil then g_match:update(delta) end
 end
 
