@@ -27,6 +27,13 @@ local Match = {
 		end
 		return size
 	end,
+	entity_side = function(self, side)
+		local t = {}
+		for _, entity in pairs(self.entities) do
+			if entity.side == side then t[entity.id] = entity end
+		end
+		return t
+	end,
 	dead_entities = {}, -- key: entityid, value: Entity instance
 
 	--

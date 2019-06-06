@@ -174,6 +174,18 @@ Entity = {
 	end,
 
 	--
+	-- new card and put it into stack_hold
+	--
+	stack_hold_newone = function(self, card_baseid)
+		local cardid = cc.CardNew(self.id, card_baseid)
+		assert(cardid ~= nil)
+		local card = Card:new(cardid, card_baseid)
+		assert(card ~= nil)
+		self:stack_hold_insert(card)
+		return card
+	end,
+
+	--
 	-- shuffle stack_discard to stack_deal
 	--
 	shuffle_stackdiscard = function(self)
@@ -338,7 +350,11 @@ Entity = {
 	card_play = function(self, cardid, pick_entityid)	
 	    assert(not self.death)
 		local card = self.stack_hold[cardid]
-		assert(card ~= nil)
+		--assert(card ~= nil)
+		if card == nil then
+			Error(self, nil, nil, "cardid: " .. tostring(cardid) .. " not exist when card_play")
+			return
+		end
 	    Breakpoint(self, card, pick_entityid, BreakPoint.CARD_PLAY_A)		
 		if card.base.require_career ~= 0 and card.base.require_career ~= self.base.career then 
 			Error(self, card, nil, "require career: " .. card.base.require_career .. ", self: " .. self.base.career)
@@ -347,8 +363,16 @@ Entity = {
 
 		-- TODO: check gender
 
+		--
+		-- cost mp
 		if self.mp < card.base.cost_mp then	Error(self, card, nil, "not enough mp")	return end
 		self:mp_modify(-card.base.cost_mp)
+
+		--
+		-- resume mp
+		if card.base.resume_mp ~= nil and card.base.resume_mp ~= 0 then
+			self:mp_modify(card.base.resume_mp)
+		end
 
 		Debug(self, card, nil, "PlayCard")
 
@@ -393,7 +417,11 @@ Entity = {
 	card_discard = function(self, cardid, passive)
 	    assert(not self.death)
 		local card = self.stack_hold[cardid]
-		assert(card ~= nil)
+		--assert(card ~= nil)
+		if card == nil then
+			Error(self, nil, nil, "cardid: " .. tostring(cardid) .. " not exist when card_discard")
+			return
+		end		
 		Breakpoint(self, card, nil, BreakPoint.CARD_DISCARD_A)
 
 		--
