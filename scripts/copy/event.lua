@@ -24,11 +24,11 @@ Event = {
 }
 
 function Event:new(eventid, event_baseid, coord)
-	local event = {}
-	self.__index = self -- event.__index = function(key) return event[key] end
-	setmetatable(event, self)
-	event:constructor(eventid, event_baseid, coord)
-	return event
+	local object = {}
+	self.__index = self
+	setmetatable(object, self)
+	object:constructor(eventid, event_baseid, coord)
+	return object
 end
 
 

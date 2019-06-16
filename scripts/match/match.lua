@@ -302,84 +302,11 @@ local Match = {
 }
 
 function Match:new()	
-	local match = {}
-	self.__index = self -- Match.__index = function(key) return Match[key] end
-	setmetatable(match, self)
-	match:constructor()
-	return match
+	local object = {}
+	self.__index = self
+	setmetatable(object, self)
+	object:constructor()
+	return object
 end
 
-
---
-------------------- lua APIs -------------------
---
-
---
--- prepare match
-function lua_entry_match_prepare()
-	g_match = Match:new()
-	g_match:prepare()
-end
-
---
--- add member of allies to match
-function lua_entry_add_member(entityid)
-	assert(g_match)
-	g_match:add_member(entityid, Side.ALLIES)
-end
-
---
--- add member of enemy to match
-function lua_entry_add_opponent(entityid)
-	assert(g_match)
-	g_match:add_member(entityid, Side.ENEMY)
-end
-
---
--- start match
-function lua_entry_match_start()
-	assert(g_match)
-	g_match:start()
-end
-
---
--- the play if can play a card
-function lua_entry_card_play_judge(entityid, cardid, pick_entityid)
-	assert(g_match)
-	return g_match:card_play_judge(entityid, cardid, pick_entityid)
-end
-
---
--- the player play a card
-function lua_entry_card_play(entityid, cardid, pick_entityid)
-	assert(g_match)
-	g_match:card_play(entityid, cardid, pick_entityid)
-end
-
---
--- the player if can discard a card
-function lua_entry_card_discard_judge(entityid, cardid)
-	assert(g_match)
-	return g_match:card_discard_judge(entityid, cardid)
-end
-
---
--- the player discard a card
-function lua_entry_card_discard(entityid, cardid)
-	assert(g_match)
-	g_match:card_discard(entityid, cardid)
-end
-
---
--- the player end this round
-function lua_entry_round_end(entityid)
-	assert(g_match)
-	g_match:round_end(entityid)
-end
-
---
--- call me for every frame
-function lua_entry_update(delta)
-	if g_match ~= nil then g_match:update(delta) end
-end
 

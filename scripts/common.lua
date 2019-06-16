@@ -1,6 +1,7 @@
 require("modules.main")
 
 cc = _G
+cc.print = cc.WriteLog
 
 --
 ------------------- global instance -------------------

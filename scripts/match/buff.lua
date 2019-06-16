@@ -8,7 +8,7 @@ Buff = {
 	baseid = nil, -- buff.baseid
 	base = nil, -- {field_name=field_value}, related buff.xls
 	entity = nil, -- related with entity object
-	func_script = nil, -- script for func
+	script_func = nil,
 	
 	layers = 0, -- buff layers
 	layers_modify = function(self, value)
@@ -31,8 +31,8 @@ Buff = {
 		self.baseid = buff_baseid
 		self.base = cc.LookupTable("Buff", buff_baseid)
 		assert(self.base ~= nil)
-		self.func_script = self.base.script -- loadstring(self.base.script)
-		assert(self.func_script ~= nil and type(self.func_script) == "function")
+		self.script_func = self.base.script_func -- loadstring(self.base.script_func)
+		assert(self.script_func ~= nil and type(self.script_func) == "function")
 		self.entity = entity
 		assert(self.entity ~= nil)
 		
@@ -42,10 +42,10 @@ Buff = {
 }
 
 function Buff:new(entity, buffid, buff_baseid, layers)
-	local buff = {}
-	self.__index = self -- Buff.__index = function(key) return Buff[key] end
-	setmetatable(buff, self)
-	buff:constructor(entity, buffid, buff_baseid, layers)
-	return buff
+	local object = {}
+	self.__index = self
+	setmetatable(object, self)
+	object:constructor(entity, buffid, buff_baseid, layers)
+	return object
 end
 

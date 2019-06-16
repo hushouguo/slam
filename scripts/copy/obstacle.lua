@@ -22,10 +22,10 @@ Obstacle = {
 }
 
 function Obstacle:new(obstacleid, obstacle_baseid, coord)
-	local obstacle = {}
-	self.__index = self -- obstacle.__index = function(key) return obstacle[key] end
-	setmetatable(obstacle, self)
-	obstacle:constructor(obstacleid, obstacle_baseid, coord)
-	return obstacle
+	local object = {}
+	self.__index = self
+	setmetatable(object, self)
+	object:constructor(obstacleid, obstacle_baseid, coord)
+	return object
 end
 

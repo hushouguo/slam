@@ -14,11 +14,6 @@ Entity = {
 
     round_cards = nil,
     max_hold_cards = nil,
-
-    --
-    -- coord
-    --
-    coord = nil, -- {x = ? , y = ?}
     
     --
     -- death state
@@ -214,279 +209,6 @@ Entity = {
 		Debug(self, nil, nil, "shuffle from stackexhaust")
 	end,
 
-	--
-	-- void round_begin()
-	--
-	round_begin = function(self)
-	    assert(not self.death)
-		Breakpoint(self, nil, nil, BreakPoint.ROUND_BEGIN_A)
-		
-		--
-		-- effect buff
-		--
-		for _, buff in pairs(self.buffs) do
-			self:buff_handle(buff, BuffSettlePoint.ROUND_BEGIN)
-		end
-		
-		--
-		-- resume mp
-		--
-		assert(self.mp >= 0 and self.base.round_mp > 0)
-		if self.mp < self.base.round_mp then
-			self:mp_modify(self.base.round_mp - self.mp)
-		end
-
-		Breakpoint(self, nil, nil, BreakPoint.ROUND_BEGIN_Z)
-		
-		--
-		-- deal card
-		--
-		self:card_deal()
-	end,
-	
-	--
-	-- void card_deal()
-	--
-	card_deal = function(self)
-	    assert(not self.death)
-	    Breakpoint(self, nil, nil, BreakPoint.CARD_DEAL_A)
-		local round_cards = self.round_cards
-		assert(round_cards > 0)
-		local debugstring = "CardDeal: "
-		while round_cards > 0 do
-			assert(self.stack_deal_size >= 0)
-			if self.stack_deal_size == 0 then
-				self:shuffle_stackdiscard() -- stack_deal not enough for round_cards
-			end
-			--assert(self.stack_deal_size > 0)
-			if self.stack_deal_size == 0 then
-				Error(self, nil, nil, "cards not enough")
-				break
-			end
-			local cardid = table.random(self.stack_deal, self.stack_deal_size, self.random_func)
-			assert(cardid ~= nil and self.stack_deal[cardid] ~= nil)
-			self:stack_hold_insert(self.stack_deal[cardid])
-			self:stack_deal_remove(cardid)
-			round_cards = round_cards - 1
-			debugstring = debugstring .. " " .. tostring(self.stack_hold[cardid].baseid) .. "(" .. tostring(self.stack_hold[cardid].base.name.cn) .. ")"
-		end
-        Debug(self, nil, nil, debugstring)		
-		Breakpoint(self, nil, nil, BreakPoint.CARD_DEAL_Z)
-	end,
-
-	--
-	-- void card_draw_from_stackdeal(draw_cards)
-	--
-	card_draw_from_stackdeal = function(self, draw_cards)
-		while draw_cards > 0 and self.stack_deal_size > 0 do
-			local cardid = table.random(self.stack_deal, self.stack_deal_size, self.random_func)
-			assert(cardid ~= nil and self.stack_deal[cardid] ~= nil)
-			self:stack_hold_insert(self.stack_deal[cardid])
-			self:stack_deal_remove(cardid)
-			draw_cards = draw_cards - 1
-		end
-	end,
-	
-	--
-	-- void card_draw_from_stackdiscard(draw_cards)
-	--
-	card_draw_from_stackdiscard = function(self, draw_cards)
-		while draw_cards > 0 and self.stack_discard_size > 0 do
-			local cardid = table.random(self.stack_discard, self.stack_discard_size, self.random_func)
-			assert(cardid ~= nil and self.stack_discard[cardid] ~= nil)
-			self:stack_hold_insert(self.stack_discard[cardid])
-			self:stack_discard_remove(cardid)
-			draw_cards = draw_cards - 1
-		end
-	end,
-
-	--
-	-- void card_draw_from_stackexhaust(draw_cards)
-	--
-	card_draw_from_stackexhaust = function(self, draw_cards)
-		while draw_cards > 0 and self.stack_exhaust_size > 0 do
-			local cardid = table.random(self.stack_exhaust, self.stack_exhaust_size, self.random_func)
-			assert(cardid ~= nil and self.stack_exhaust[cardid] ~= nil)
-			self:stack_hold_insert(self.stack_exhaust[cardid])
-			self:stack_exhaust_remove(cardid)
-			draw_cards = draw_cards - 1
-		end
-	end,
-
-	--
-	-- bool card_play_judge(cardid, pick_entityid)
-	--
-	card_play_judge = function(self, cardid, pick_entityid)	
-		local card = self.stack_hold[cardid]
-		assert(card ~= nil)
-
-		--
-		-- check career
-		--
-		if card.base.require_career ~= 0 and card.base.require_career ~= self.base.career then 
-			Error(self, card, nil, "require career: " .. card.base.require_career .. ", self: " .. self.base.career)
-			return false
-		end
-
-		--
-		-- TODO: check gender
-
-		--
-		-- check require MP
-		if self.mp < card.base.cost_mp then
-			Error(self, card, nil, "cost_mp: " .. card.base.cost_mp .. ", self: " .. self.mp)
-			return false
-		end
-
-		--
-		-- check target type
-		if pick_entityid ~= nil then
-			local targets = CardGetTargets(self, card, pick_entityid)
-			return targets ~= nil and targets[pick_entityid] ~= nil 
-		end
-
-		return true
-	end,
-
-	
-	--
-	-- bool card_play(cardid, pick_entityid)
-	--
-	card_play = function(self, cardid, pick_entityid)	
-	    assert(not self.death)
-		local card = self.stack_hold[cardid]
-		--assert(card ~= nil)
-		if card == nil then
-			Error(self, nil, nil, "cardid: " .. tostring(cardid) .. " not exist when card_play")
-			return
-		end
-	    Breakpoint(self, card, pick_entityid, BreakPoint.CARD_PLAY_A)		
-		if card.base.require_career ~= 0 and card.base.require_career ~= self.base.career then 
-			Error(self, card, nil, "require career: " .. card.base.require_career .. ", self: " .. self.base.career)
-			return
-		end
-
-		-- TODO: check gender
-
-		--
-		-- cost mp
-		if self.mp < card.base.cost_mp then	Error(self, card, nil, "not enough mp")	return end
-		self:mp_modify(-card.base.cost_mp)
-
-		--
-		-- resume mp
-		if card.base.resume_mp ~= nil and card.base.resume_mp ~= 0 then
-			self:mp_modify(card.base.resume_mp)
-		end
-
-		Debug(self, card, nil, "PlayCard")
-
-        Breakpoint(self, card, pick_entityid, BreakPoint.CARD_PLAY_Z)
-
-		--
-		-- remove from stack_hold
-		self:stack_hold_remove(card.id)
-
-		--
-		-- decide to into discard, exhaust or destroy
-		if card.base.into_stackdiscard then self:stack_discard_insert(card)			
-		elseif card.base.into_stackexhaust then	self:stack_exhaust_insert(card) 
-		--elseif card.base.into_destroy then
-		else
-			Debug(self, card, nil, "CardDestroy")
-			cc.CardDestroy(self.id, cardid)
-		end
-	end,
-
-	--
-	-- bool card_discard_judge(cardid)
-	--
-	card_discard_judge = function(self, cardid)
-		local card = self.stack_hold[cardid]
-		assert(card ~= nil)
-		
-		--
-		-- check card is allow to discard
-		--
-		if not card.base.enable_discard then
-			Error(self, card, nil, "discard card: " .. card.baseid .. " not allow")
-			return false
-		end
-
-		return true
-	end,
-	
-	--
-	-- void card_discard(cardid, passive)
-	--
-	card_discard = function(self, cardid, passive)
-	    assert(not self.death)
-		local card = self.stack_hold[cardid]
-		--assert(card ~= nil)
-		if card == nil then
-			Error(self, nil, nil, "cardid: " .. tostring(cardid) .. " not exist when card_discard")
-			return
-		end		
-		Breakpoint(self, card, nil, BreakPoint.CARD_DISCARD_A)
-
-		--
-		-- check card is allow to discard
-		--
-		if not card.base.enable_discard then
-			Error(self, card, nil, "discard card: " .. card.baseid .. " not allow")
-			--
-			-- in PASSIVE mode, force to discard or destroy this card
-			if not passive then return end
-		end
-
-		--
-		-- Settle when discarding card not in PASSIVE mode
-		--if not passive and card.base.settle_discard then
-		--	if g_match.isdone then return end -- check match done
-		--end
-		
-		Debug(self, card, nil, "DiscardCard")
-
-		--
-		-- remove from stack_hold
-		self:stack_hold_remove(card.id)
-
-		--
-		-- decide to into discard, exhaust or destroy
-		if card.base.into_stackdiscard then self:stack_discard_insert(card)			
-		elseif card.base.into_stackexhaust then	self:stack_exhaust_insert(card) 
-		--elseif card.base.into_destroy then
-		else
-			cc.CardDestroy(self.id, cardid)
-		end
-
-		Breakpoint(self, card, nil, BreakPoint.CARD_DISCARD_Z)
-	end,
-
-	--
-	-- void round_end()
-	--
-	round_end = function(self)
-	    assert(not self.death)
-	    Breakpoint(self, nil, nil, BreakPoint.ROUND_END_A)
-
-		--
-		-- discard extra cards
-		--
-		while self.stack_hold_size > 0 and self.stack_hold_size > self.max_hold_cards do
-			local cardid = self:stack_hold_retrieve()
-			self:card_discard(cardid, true)
-		end
-		
-		--
-		-- effect buff
-		--
-		for _, buff in pairs(self.buffs) do
-			self:buff_handle(buff, BuffSettlePoint.ROUND_END)
-		end
-
-		Breakpoint(self, nil, nil, BreakPoint.ROUND_END_Z)
-	end,
 
 	--
 	-- Buff
@@ -644,9 +366,284 @@ Entity = {
 }
 
 function Entity:new(entityid, side)
-	local entity = {}
-	self.__index = self -- Entity.__index = function(key) return Entity[key] end
-	setmetatable(entity, self)
-	entity:constructor(entityid, side)
-	return entity
+	local object = {}
+	self.__index = self
+	setmetatable(object, self)
+	object:constructor(entityid, side)
+	return object
 end
+
+--
+-- void round_begin()
+--
+function Entity:round_begin()
+    assert(not self.death)
+	Breakpoint(self, nil, nil, BreakPoint.ROUND_BEGIN_A)
+	
+	--
+	-- effect buff
+	--
+	for _, buff in pairs(self.buffs) do
+		self:buff_handle(buff, BuffSettlePoint.ROUND_BEGIN)
+	end
+	
+	--
+	-- resume mp
+	--
+	assert(self.mp >= 0 and self.base.round_mp > 0)
+	if self.mp < self.base.round_mp then
+		self:mp_modify(self.base.round_mp - self.mp)
+	end
+
+	Breakpoint(self, nil, nil, BreakPoint.ROUND_BEGIN_Z)
+	
+	--
+	-- deal card
+	--
+	self:card_deal()
+end
+
+--
+-- void card_deal()
+--
+function Entity:card_deal()
+    assert(not self.death)
+    Breakpoint(self, nil, nil, BreakPoint.CARD_DEAL_A)
+	local round_cards = self.round_cards
+	assert(round_cards > 0)
+	local debugstring = "CardDeal: "
+	while round_cards > 0 do
+		assert(self.stack_deal_size >= 0)
+		if self.stack_deal_size == 0 then
+			self:shuffle_stackdiscard() -- stack_deal not enough for round_cards
+		end
+		--assert(self.stack_deal_size > 0)
+		if self.stack_deal_size == 0 then
+			Error(self, nil, nil, "cards not enough")
+			break
+		end
+		local cardid = table.random(self.stack_deal, self.stack_deal_size, self.random_func)
+		assert(cardid ~= nil and self.stack_deal[cardid] ~= nil)
+		self:stack_hold_insert(self.stack_deal[cardid])
+		self:stack_deal_remove(cardid)
+		round_cards = round_cards - 1
+		debugstring = debugstring .. " " .. tostring(self.stack_hold[cardid].baseid) .. "(" .. tostring(self.stack_hold[cardid].base.name.cn) .. ")"
+	end
+    Debug(self, nil, nil, debugstring)		
+	Breakpoint(self, nil, nil, BreakPoint.CARD_DEAL_Z)
+end
+
+--
+-- void card_draw_from_stackdeal(draw_cards)
+--
+function Entity:card_draw_from_stackdeal(draw_cards)
+	while draw_cards > 0 and self.stack_deal_size > 0 do
+		local cardid = table.random(self.stack_deal, self.stack_deal_size, self.random_func)
+		assert(cardid ~= nil and self.stack_deal[cardid] ~= nil)
+		self:stack_hold_insert(self.stack_deal[cardid])
+		self:stack_deal_remove(cardid)
+		draw_cards = draw_cards - 1
+	end
+end
+
+--
+-- void card_draw_from_stackdiscard(draw_cards)
+--
+function Entity:card_draw_from_stackdiscard(draw_cards)
+	while draw_cards > 0 and self.stack_discard_size > 0 do
+		local cardid = table.random(self.stack_discard, self.stack_discard_size, self.random_func)
+		assert(cardid ~= nil and self.stack_discard[cardid] ~= nil)
+		self:stack_hold_insert(self.stack_discard[cardid])
+		self:stack_discard_remove(cardid)
+		draw_cards = draw_cards - 1
+	end
+end
+
+--
+-- void card_draw_from_stackexhaust(draw_cards)
+--
+function Entity:card_draw_from_stackexhaust(draw_cards)
+	while draw_cards > 0 and self.stack_exhaust_size > 0 do
+		local cardid = table.random(self.stack_exhaust, self.stack_exhaust_size, self.random_func)
+		assert(cardid ~= nil and self.stack_exhaust[cardid] ~= nil)
+		self:stack_hold_insert(self.stack_exhaust[cardid])
+		self:stack_exhaust_remove(cardid)
+		draw_cards = draw_cards - 1
+	end
+end
+
+--
+-- bool card_play_judge(cardid, pick_entityid)
+--
+function Entity:card_play_judge(cardid, pick_entityid)	
+	local card = self.stack_hold[cardid]
+	assert(card ~= nil)
+
+	--
+	-- check career
+	--
+	if card.base.require_career ~= 0 and card.base.require_career ~= self.base.career then 
+		Error(self, card, nil, "require career: " .. card.base.require_career .. ", self: " .. self.base.career)
+		return false
+	end
+
+	--
+	-- TODO: check gender
+
+	--
+	-- check require MP
+	if self.mp < card.base.cost_mp then
+		Error(self, card, nil, "cost_mp: " .. card.base.cost_mp .. ", self: " .. self.mp)
+		return false
+	end
+
+	--
+	-- check target type
+	if pick_entityid ~= nil then
+		local targets = CardGetTargets(self, card, pick_entityid)
+		return targets ~= nil and targets[pick_entityid] ~= nil 
+	end
+
+	return true
+end
+
+
+--
+-- bool card_play(cardid, pick_entityid)
+--
+function Entity:card_play(cardid, pick_entityid)	
+    assert(not self.death)
+	local card = self.stack_hold[cardid]
+	--assert(card ~= nil)
+	if card == nil then
+		Error(self, nil, nil, "cardid: " .. tostring(cardid) .. " not exist when card_play")
+		return
+	end
+    Breakpoint(self, card, pick_entityid, BreakPoint.CARD_PLAY_A)		
+	if card.base.require_career ~= 0 and card.base.require_career ~= self.base.career then 
+		Error(self, card, nil, "require career: " .. card.base.require_career .. ", self: " .. self.base.career)
+		return
+	end
+
+	-- TODO: check gender
+
+	--
+	-- cost mp
+	if self.mp < card.base.cost_mp then	Error(self, card, nil, "not enough mp")	return end
+	self:mp_modify(-card.base.cost_mp)
+
+	--
+	-- resume mp
+	if card.base.resume_mp ~= nil and card.base.resume_mp ~= 0 then
+		self:mp_modify(card.base.resume_mp)
+	end
+
+	Debug(self, card, nil, "PlayCard")
+
+    Breakpoint(self, card, pick_entityid, BreakPoint.CARD_PLAY_Z)
+
+	--
+	-- remove from stack_hold
+	self:stack_hold_remove(card.id)
+
+	--
+	-- decide to into discard, exhaust or destroy
+	if card.base.into_stackdiscard then self:stack_discard_insert(card)			
+	elseif card.base.into_stackexhaust then	self:stack_exhaust_insert(card) 
+	--elseif card.base.into_destroy then
+	else
+		Debug(self, card, nil, "CardDestroy")
+		cc.CardDestroy(self.id, cardid)
+	end
+end
+
+--
+-- bool card_discard_judge(cardid)
+--
+function Entity:card_discard_judge(cardid)
+	local card = self.stack_hold[cardid]
+	assert(card ~= nil)
+	
+	--
+	-- check card is allow to discard
+	--
+	if not card.base.enable_discard then
+		Error(self, card, nil, "discard card: " .. card.baseid .. " not allow")
+		return false
+	end
+
+	return true
+end
+
+--
+-- void card_discard(cardid, passive)
+--
+function Entity:card_discard(cardid, passive)
+    assert(not self.death)
+	local card = self.stack_hold[cardid]
+	--assert(card ~= nil)
+	if card == nil then
+		Error(self, nil, nil, "cardid: " .. tostring(cardid) .. " not exist when card_discard")
+		return
+	end		
+	Breakpoint(self, card, nil, BreakPoint.CARD_DISCARD_A)
+
+	--
+	-- check card is allow to discard
+	--
+	if not card.base.enable_discard then
+		Error(self, card, nil, "discard card: " .. card.baseid .. " not allow")
+		--
+		-- in PASSIVE mode, force to discard or destroy this card
+		if not passive then return end
+	end
+
+	--
+	-- Settle when discarding card not in PASSIVE mode
+	--if not passive and card.base.settle_discard then
+	--	if g_match.isdone then return end -- check match done
+	--end
+	
+	Debug(self, card, nil, "DiscardCard")
+
+	--
+	-- remove from stack_hold
+	self:stack_hold_remove(card.id)
+
+	--
+	-- decide to into discard, exhaust or destroy
+	if card.base.into_stackdiscard then self:stack_discard_insert(card)			
+	elseif card.base.into_stackexhaust then	self:stack_exhaust_insert(card) 
+	--elseif card.base.into_destroy then
+	else
+		cc.CardDestroy(self.id, cardid)
+	end
+
+	Breakpoint(self, card, nil, BreakPoint.CARD_DISCARD_Z)
+end,
+
+--
+-- void round_end()
+--
+function Entity:round_end()
+    assert(not self.death)
+    Breakpoint(self, nil, nil, BreakPoint.ROUND_END_A)
+
+	--
+	-- discard extra cards
+	--
+	while self.stack_hold_size > 0 and self.stack_hold_size > self.max_hold_cards do
+		local cardid = self:stack_hold_retrieve()
+		self:card_discard(cardid, true)
+	end
+	
+	--
+	-- effect buff
+	--
+	for _, buff in pairs(self.buffs) do
+		self:buff_handle(buff, BuffSettlePoint.ROUND_END)
+	end
+
+	Breakpoint(self, nil, nil, BreakPoint.ROUND_END_Z)
+end
+

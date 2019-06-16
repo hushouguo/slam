@@ -7,22 +7,22 @@ Card = {
 	id = nil, -- card.id
 	baseid = nil, -- card.baseid
 	base = nil, -- {field_name=field_value}, related card.xls
-	func_script = nil, -- script for func
+	script_func = nil,
 
 	constructor = function(self, cardid, card_baseid)
 		self.id = cardid
 		self.baseid = card_baseid
 		self.base = cc.LookupTable("Card", card_baseid)
 		assert(self.base ~= nil)
-		self.func_script = self.base.script -- loadstring(self.base.script)
-		assert(self.func_script ~= nil and type(self.func_script) == "function")
+		self.script_func = self.base.script_func -- loadstring(self.base.script_func)
+		assert(self.script_func ~= nil and type(self.script_func) == "function")
 	end
 }
 
 function Card:new(cardid, card_baseid)
-	local card = {}
-	self.__index = self -- Card.__index = function(key) return Card[key] end
-	setmetatable(card, self)
-	card:constructor(cardid, card_baseid)
-	return card
+	local object = {}
+	self.__index = self
+	setmetatable(object, self)
+	object:constructor(cardid, card_baseid)
+	return object
 end

@@ -185,11 +185,11 @@ function Breakpoint(entity, card, pick_entityid, bp)
 	assert(entity ~= nil)
 	local pick_entity = pick_entityid ~= nil and g_match.entities[pick_entityid] or nil
 	if card ~= nil and card.base.enable_script then
-		card.func_script(entity, card, nil, pick_entity, bp)
+		card.script_func(entity, card, nil, pick_entity, bp)
 	end
 	for _, buff in pairs(entity.buffs) do
 		if buff.base.enable_script then
-			buff.func_script(entity, card, buff, pick_entity, bp)
+			buff.script_func(entity, card, buff, pick_entity, bp)
 		end
 	end
 end
