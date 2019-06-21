@@ -106,59 +106,18 @@ table.random = function(t, table_size, random_func)
 	return nil, nil
 end
 
+--
+-- table table.dup(t)
+--
+table.dup = function(t)
+	assert(type(t) == "table")
+	local tt = {}
+	for KEY, VALUE in pairs(t) do tt[KEY] = VALUE end
+	return tt
+end
+
 function File() return debug.getinfo(2,'S').source end
 function Line() return debug.getinfo(2, 'l').currentline end
-
---
--- table RecordCopyCreate(entityid, copy_baseid)
---
-function RecordCopyCreate(entityid, copy_baseid)
-    return {
-        layer = 1,
-    }
-end
-
---
--- table RecordCreate(entityid, copy_baseid)
---
-function RecordCreate(entityid, copy_baseid)
-    local createtime = os.time()
-    return {
-        member = entityid, 
-        createtime = createtime,
-        seed = createtime * 100 + entityid,
-        copies = {
-            [copy_baseid] = RecordCopyCreate(entityid, copy_baseid)
-        }
-    }
-end
-
---
--- void RecordSerialize(entityid, t)
---
-function RecordSerialize(entityid, t)
-    local json = require('tools/json')
-    cc.EntitySerialize(entityid, json.encode(t))
-end
-
---
--- table RecordUnserialize(entityid, copy_baseid)
---
-function RecordUnserialize(entityid, copy_baseid)
-    local json = require('tools/json')
-    local record = cc.EntityUnserialize(entityid)
-    if record ~= nil then
-        local t = json.decode(record)
-        assert(t, tostring(record))
-        if t.copies == nil then t.copies = {} end
-        if t.copies[copy_baseid] == nil then t.copies[copy_baseid] = RecordCopyCreate(entityid, copy_baseid) end
-        return t
-    end
-    local t = RecordCreate(entityid, copy_baseid)
-    RecordSerialize(entityid, t)
-    return t
-end
-
 
 function Debug(entity, card, buff, debugstring)
 	if not g_enable_debug then return end
@@ -181,16 +140,4 @@ function Error(entity, card, buff, errorstring)
 	cc.WriteLog(">>>>>>>>>>>> Error: " .. File() .. ":" .. Line() .. " " .. entity_string .. card_string .. buff_string .. (errorstring ~= nil and errorstring or ""))
 end
 
-function Breakpoint(entity, card, pick_entityid, bp)
-	assert(entity ~= nil)
-	local pick_entity = pick_entityid ~= nil and g_match.entities[pick_entityid] or nil
-	if card ~= nil and card.base.enable_script then
-		card.script_func(entity, card, nil, pick_entity, bp)
-	end
-	for _, buff in pairs(entity.buffs) do
-		if buff.base.enable_script then
-			buff.script_func(entity, card, buff, pick_entity, bp)
-		end
-	end
-end
 

@@ -1,7 +1,6 @@
 require("modules.main")
 
 cc = _G
-cc.print = cc.WriteLog
 
 --
 ------------------- global instance -------------------
@@ -11,11 +10,6 @@ g_enable_debug = true
 
 g_runonclient = true    -- single
 g_runonserver = false   -- single or multiple
-
-g_match = nil
-
-g_json = require('tools/json')
-assert(g_json)
 
 g_copy = nil
 
@@ -212,7 +206,7 @@ function CardGetTargets(entity, card, pick_entityid)
                 return {}
             end
             
-            local target = g_match.entities[pick_entityid]
+            local target = g_copy.scene.match.entities[pick_entityid]
             if target == nil then
                 Error(entity, card, nil, "pick_entityid is not exist")
                 return {}
@@ -232,7 +226,7 @@ function CardGetTargets(entity, card, pick_entityid)
                 return {}
             end
             
-            local target = g_match.entities[pick_entityid]
+            local target = g_copy.scene.match.entities[pick_entityid]
             if target == nil then
                 Error(entity, card, nil, "pick_entityid is not exist")
                 return {}
@@ -261,7 +255,7 @@ function CardGetTargets(entity, card, pick_entityid)
         
         [CardTargetType.ALLIES_ALL] = function(entity, card, pick_entityid)
             local targets = {}
-            for targetid, target in pairs(g_match.entities) do
+            for targetid, target in pairs(g_copy.scene.match.entities) do
                 if entity.side == target.side then targets[targetid] = targetid end
             end
             return targets
@@ -274,7 +268,7 @@ function CardGetTargets(entity, card, pick_entityid)
         
         [CardTargetType.ENEMY_ALL] = function(entity, card, pick_entityid)
             local targets = {}
-            for targetid, target in pairs(g_match.entities) do
+            for targetid, target in pairs(g_copy.scene.match.entities) do
                 if entity.side ~= target.side then targets[targetid] = targetid end
             end
             return targets
@@ -287,7 +281,7 @@ function CardGetTargets(entity, card, pick_entityid)
         
         [CardTargetType.ENEMY_RANDOM] = function(entity, card, pick_entityid)
             if pick_entityid ~= nil then
-                local target = g_match.entities[pick_entityid]
+                local target = g_copy.scene.match.entities[pick_entityid]
                 if target == nil then
                     --Error(entity, card, nil, "pick_entityid: " .. tostring(pick_entityid) .. " is not exist")
                     return {}
@@ -301,7 +295,7 @@ function CardGetTargets(entity, card, pick_entityid)
                 return {[pick_entityid] = pick_entityid}
             else
                 local targets = {}
-                for targetid, target in pairs(g_match.entities) do
+                for targetid, target in pairs(g_copy.scene.match.entities) do
                     if entity.side ~= target.side then targets[targetid] = targetid end
                 end
                 local entityid = table.random(targets, table.size(targets), entity.random_func)
@@ -311,7 +305,7 @@ function CardGetTargets(entity, card, pick_entityid)
         
         [CardTargetType.ALLIES_RANDOM] = function(entity, card, pick_entityid)
             if pick_entityid ~= nil then
-                local target = g_match.entities[pick_entityid]
+                local target = g_copy.scene.match.entities[pick_entityid]
                 if target == nil then
                     --Error(entity, card, nil, "pick_entityid: " .. tostring(pick_entityid) .. " is not exist")
                     return {}
@@ -325,7 +319,7 @@ function CardGetTargets(entity, card, pick_entityid)
                 return {[pick_entityid] = pick_entityid}
             else
                 local targets = {}
-                for targetid, target in pairs(g_match.entities) do
+                for targetid, target in pairs(g_copy.scene.match.entities) do
                     if entity.side == target.side then targets[targetid] = targetid end
                 end
                 local entityid = table.random(targets, table.size(targets), entity.random_func)
@@ -335,7 +329,7 @@ function CardGetTargets(entity, card, pick_entityid)
         
         [CardTargetType.ALL] = function(entity, card, pick_entityid)
             local targets = {}
-            for targetid, target in pairs(g_match.entities) do targets[targetid] = targetid end
+            for targetid, target in pairs(g_copy.scene.match.entities) do targets[targetid] = targetid end
             return targets
         end,
     }
@@ -402,8 +396,9 @@ end
 --
 function CardSettle(entity, card, pick_entity)
     local CardSettleTargetStage1 = function(entity, card, target_entityid)
-        local target = g_match.entities[target_entityid]
-        assert(target ~= nil)
+        local target = g_copy.scene.match.entities[target_entityid]
+        -- assert(target ~= nil)
+        if target == nil then return end -- perhaps target is die
 
         -- TODO: buff_defense_attack
         
@@ -411,8 +406,9 @@ function CardSettle(entity, card, pick_entity)
     end
 
     local CardSettleTargetStage2 = function(entity, card, target_entityid)
-        local target = g_match.entities[target_entityid]
-        assert(target ~= nil)
+        local target = g_copy.scene.match.entities[target_entityid]
+        -- assert(target ~= nil)
+        if target == nil then return end -- perhaps target is die
         
         --
         -- effect hp
@@ -453,6 +449,8 @@ function CardSettle(entity, card, pick_entity)
         CardSettleTargetStage2(entity, card, target_entityid)
     end
 
+    if entity.death then return end -- perhaps entity is death
+    
     --
     -- draw_stackdeal
     if card.base.draw_stackdeal > 0 then
@@ -535,6 +533,7 @@ function BuffSettle(entity, buff)
         assert(target ~= nil)
 
         BuffSettleDamage(target, buff)
+        if target.death then return end
         
         --
         -- effect mp
@@ -555,9 +554,11 @@ function BuffSettle(entity, buff)
 
     assert(entity ~= nil)
     assert(buff ~= nil)
-    
-    BuffSettleTarget(entity, buff)
 
+    if not entity.death then
+        BuffSettleTarget(entity, buff)
+    end
+    
     --
     -- TODO: reserve attribute values   
 end

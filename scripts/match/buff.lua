@@ -10,7 +10,7 @@ Buff = {
 	entity = nil, -- related with entity object
 	script_func = nil,
 	
-	layers = 0, -- buff layers
+	layers = nil, -- buff layers
 	layers_modify = function(self, value)
 	    self.layers = self.layers + value
 	    if self.layers < 0 then self.layers = 0 end
@@ -20,7 +20,7 @@ Buff = {
 		cc.BuffUpdateLayers(self.entity.id, self.id, self.layers)
 	end,
 	
-	survive_value = 0, -- dynamic value
+	survive_value = nil, -- dynamic value
 	survive_value_modify = function(self, value)
 	    self.survive_value = self.survive_value + value
 	    if self.survive_value < 0 then self.survive_value = 0 end
@@ -35,8 +35,11 @@ Buff = {
 		assert(self.script_func ~= nil and type(self.script_func) == "function")
 		self.entity = entity
 		assert(self.entity ~= nil)
-		
+
+		self.layers = 0
 		self:layers_modify(layers)
+		
+		self.survive_value = 0
 		self:survive_value_modify(self.base.survive_value)
 	end
 }

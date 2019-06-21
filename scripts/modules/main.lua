@@ -1,6 +1,5 @@
--- 
--- 策划脚本入口
--- by bw
+--- 策划脚本入口
+-- @author bw 
 
 
 require 'modules.extend'

@@ -10,6 +10,10 @@ Event = {
 	coord = nil, -- {x = ?, y = ?}
 
 	objectCategory = nil, -- GridObjectCategory
+    
+	content = nil, -- event.script_func() ->
+	accomplish = nil,
+	reward = nil,
 
 	constructor = function(self, eventid, event_baseid, coord)
 		self.id = eventid
@@ -20,6 +24,9 @@ Event = {
 		assert(self.script_func ~= nil and type(self.script_func) == "function")
 		self.coord = coord
 	    self.objectCategory = GridObjectCategory.EVENT
+	    self.content = nil
+	    self.accomplish = false
+	    self.reward = false
 	end
 }
 

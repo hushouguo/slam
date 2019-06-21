@@ -8,7 +8,7 @@
 --               table 
 --+++++++++++++++++++++++++++++++++++++++++++++++++++
 do
-    --- [[ 序列化table表 ]]
+    --- 序列化table表
     -- @param  obj    待转lua对象
     -- @return string 返回的字符串
     table.serialize = function (obj)
@@ -41,10 +41,10 @@ do
         return lua
     end
 
-    --- [[数组映射]]
+    --- 数组映射
     -- @param tbl table 数组
     -- @param fn  function 映射函数
-    -- return table 映射后的新表
+    -- @return table 映射后的新表
     table.imap = function (tbl, fn)
         local out = {}
         for i,v in ipairs(tbl) do
@@ -53,10 +53,10 @@ do
         return out
     end
 
-    --- [[字典映射]]
+    --- 字典映射
     -- @param tbl table 字典
     -- @param fn  function 映射函数
-    -- return table    映射后的新字典
+    -- @return table    映射后的新字典
     table.map = function (tbl,fn)
         local out = {}
         for k,v in pairs(tbl) do
@@ -65,8 +65,9 @@ do
         return out
     end
 
-    --- [[表格求和]]
+    --- 表格求和
     -- @param tbl table 数组
+    -- @return number 
     table.itotal = function (tbl)
         local r = 0
         for i,v in ipairs(tbl) do
@@ -75,7 +76,9 @@ do
         return r
     end
 
-    -- [[字典求和]]
+    --- 字典求和
+    -- @param tbl table 字典
+    -- @return number 
     table.total = function (tbl)
         local r = 0
         for k,v in pairs(tbl) do
@@ -101,7 +104,10 @@ do
         return true
     end
 
-    -- [[数组筛选]]
+    --- 数组筛选
+    -- @param tbl table 数组
+    -- @param check_func function 筛选函数
+    -- @return table 对象列表
     function table.ifilter (tbl,check_func) 
         local r = {}
         for i,v in ipairs(tbl) do
@@ -112,7 +118,10 @@ do
         return r
     end
 
-    -- [[字典筛选]]
+    --- 字典筛选
+    -- @param dict table
+    -- @param check_func function 筛选函数
+    -- @return table 对象列表
     function table.filter (dict,check_func) 
         local r = {}
         for k,v in pairs(dict) do
@@ -128,16 +137,16 @@ end
 --               math 
 --+++++++++++++++++++++++++++++++++++++++++++++++++++
 do 
-    --- [[clamp01]]
+    --- clamp01
     -- @param v number
-    -- @rreturn 截取后的结果
+    -- @return 截取后的结果
     math.clamp01 = function (v)
         if v < 0 then return 0 end
         if v > 1 then return 1 end
         return v
     end
 
-    --- [[clamp]]
+    --- clamp
     -- @param v   待截取的数字
     -- @param min 截取的下限
     -- @param max 截取的上限
@@ -148,9 +157,8 @@ do
         return v
     end
 
-    --- [[截断小数]]
-    -- math.round(9.025,0.01)=9.02
-    -- math.round(9.025) = 9
+    --- 截断小数
+    -- @usage math.round(9.025,0.01)=9.02
     -- @param num  一个数字
     -- @param point number eg:0.001 表示截断3位
     math.round = function (num,point)
@@ -173,8 +181,8 @@ end
 --+++++++++++++++++++++++++++++++++++++++++++++++++++
 do
     --- python化的字符串Format
-    -- string.pyformat("${name} ${age}",{name="hello",age="world"})
-    -- @param s       string 待格式化的字符串
+    -- @usage string.pyformat("${name} ${age}",{name="hello",age="world"})
+    -- @param self      string 待格式化的字符串
     -- @param format    table  用来格式化字符串的table
     -- @return 返回格式化后的字符串
     string.pyformat = function (self,format)
@@ -183,6 +191,7 @@ do
 
     --- 分割字符串
     -- string.split(s,sep) / s:split(sep)
+    -- @param self
     -- @param sep    分割的符号，默认是冒号：
     -- @return table 结果数组
     string.split = function(self,sep)
