@@ -48,7 +48,7 @@ function Bag:new(entity)
 end
 
 function Bag:add_card(card_baseid)
-    local cardid = cc.CardNew(card_baseid)
+    local cardid = cc.CardNew(self.entity.id, card_baseid)
     assert(self.cards[cardid] == nil)
     local card = Card:new(cardid, card_baseid)
     self.cards[cardid] = card
