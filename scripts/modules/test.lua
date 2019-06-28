@@ -2,7 +2,8 @@
 
 package.path = package.path ..';..\\?.lua';
 
-require 'modules.main'
+require 'modules.module'
+require 'tests.test_logic'
 
 -- require 'modules.main'
 
@@ -10,7 +11,7 @@ require 'modules.main'
 --     print(k,v)
 -- end
 
--- print(table.serialize(CopyScript.common(1,2,3,10)))
+-- print(table.serialize(CopyScript.common(1,2,3,10)))b
 -- --[[ 
 -- 结果:
 -- {
@@ -30,14 +31,12 @@ require 'modules.main'
 -- print(Random.randomNormal(3,1))
 
 
-
-
 -- print(table.serialize(constructMonster({101,203,3})))
 
 
-print(table.serialize(EventScript.pickElite(1,2,3,45,5)));
-print(table.serialize(EventScript.pickBoss(1,2,3,45,5)));
-print(table.serialize(EventScript.pickMonster(1,2,3,45,5)));
+-- print(table.serialize(EventScript.pickShop(1,2,3,45,5)));
+-- print(table.serialize(EventScript.pickBoss(1,2,3,45,5)));
+-- print(table.serialize(EventScript.pickMonster(1,2,3,45,5)));
 
 
 

@@ -47,15 +47,22 @@ function Bag:new(entity)
 	return object
 end
 
+--
+-- card add_card(card_baseid)
+--
 function Bag:add_card(card_baseid)
     local cardid = cc.CardNew(self.entity.id, card_baseid)
     assert(self.cards[cardid] == nil)
-    local card = Card:new(cardid, card_baseid)
+    local card = Card:new(self.entity, cardid, card_baseid)
     self.cards[cardid] = card
     cc.WriteLog(string.format("entity: %d add card: %d,%d to Bag", self.entity.id, card.id, card.baseid))
     cc.BagAddCard(self.entity.id, cardid)
+    return card
 end
 
+--
+-- void remove_card(cardid)
+--
 function Bag:remove_card(cardid)
     assert(self.cards[cardid] ~= nil)
     self.cards[cardid] = nil
@@ -63,16 +70,26 @@ function Bag:remove_card(cardid)
     cc.BagRemoveCard(self.entity.id, cardid)
 end
 
+--
+-- item add_item(item_baseid, number)
+--
 function Bag:add_item(item_baseid, number)
     cc.WriteLog("Bag:add_item not implement yet")
     -- TODO: notify client ??
 end
 
+--
+-- void remove_item(itemid)
+--
 function Bag:remove_item(itemid)
     cc.WriteLog("Bag:remove_item not implement yet")
     -- TODO: notify client ??
 end
 
+
+--
+-- void add_gold(value)
+--
 function Bag:add_gold(value)
     assert(self.gold >= 0)
     local gold_old = self.gold
@@ -81,5 +98,4 @@ function Bag:add_gold(value)
     cc.WriteLog(string.format("entity: %d add_gold: %d, gold: %d", self.entity.id, value, self.gold))
     cc.BagSetGold(self.entity.id, self.gold, gold_old)
 end
-
 

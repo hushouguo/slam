@@ -1,4 +1,4 @@
-require("modules.main")
+-- require("modules.main")
 
 cc = _G
 
@@ -84,36 +84,6 @@ CardDamageType = {
 }
 
 --
--- BuffSurviveType
---
-BuffSurviveType = {
-    NONE = 0, ROUND_BEGIN = 1, ROUND_END = 2, TIMES_EFFECT = 3
-}
-
---
--- BuffSettlePoint
---
-BuffSettlePoint = {
-    NONE = 0, ROUND_BEGIN = 1, ROUND_END = 2
-}
-
---
--- BuffDefenseDamageType
---
-BuffDefenseDamageType = {
-    NONE = 0, HP = 1, MP = 2
-}
-
--- 
--- BuffTierType
---
-BuffTierType = {
-    NONE                =   0,  --无类型
-    EXPAND_DURATION     =   1,  --延长生存时间
-    ENLARGE_EFFECT      =   2,  --放大BUFF效果
-}
-
---
 -- ObstacleCategory
 --
 ObstacleCategory = {
@@ -135,8 +105,8 @@ ObstacleCategory = {
 --
 BlockCategory = {
 	NONE				=	0,	--无阻挡
-	STATIC				=	1,	--静态阻挡
-	DYNAMIC				=	2,	--动态阻挡, 破损后阻挡消失
+	DYNAMIC				=	1,	--动态阻挡, 破损后阻挡消失
+	STATIC				=	2,	--静态阻挡
 }
 
 --
@@ -150,6 +120,7 @@ EventCategory = {
 	SHOP_BUY_CARD		=	4,	--购卡商店
 	SHOP_DESTROY_CARD	=	5,	--销卡商店
 	STORY 				=	6,	--剧情事件
+	SHOP_LEVELUP_CARD   =   7,  --升级卡商店
 }
 
 
@@ -184,6 +155,11 @@ BreakPoint = {
     CARD_DISCARD_Z      =   8,  -- 弃牌后
     ROUND_END_A         =   9,  -- 回合结束前
     ROUND_END_Z         =   10, -- 回合结束后
+    BUFF_ADD_A          =   11, -- 添加BUFF开始
+    BUFF_ADD_Z          =   12, -- 添加BUFF结束
+    BUFF_REMOVE_A       =   13, -- 移除BUFF开始
+    BUFF_REMOVE_Z       =   14, -- 移除BUFF结束
+    ENTITY_SUFFER_DAMAGE=   15, -- 受到伤害
 }
 
 --
@@ -202,18 +178,18 @@ function CardGetTargets(entity, card, pick_entityid)
         
         [CardTargetType.PICK_SINGLE_ALLIES] = function(entity, card, pick_entityid)
             if pick_entityid == nil then
-                Error(entity, card, nil, "pick_entityid is nil")
+				cc.WriteLog(string.format(">>>>>>> entity: %d, card: %d,%d, pick_entityid is nil", entity.id, card.id, card.baseid))
                 return {}
             end
             
             local target = g_copy.scene.match.entities[pick_entityid]
             if target == nil then
-                Error(entity, card, nil, "pick_entityid is not exist")
+				cc.WriteLog(string.format(">>>>>>> entity: %d, card: %d,%d, pick_entityid is not exist", entity.id, card.id, card.baseid))
                 return {}
             end
 
             if target.side ~= entity.side then
-                Error(entity, card, nil, "target.side: " .. tostring(target.side) .. ", entity.side: " .. tostring(entity.side))
+				cc.WriteLog(string.format(">>>>>>> entity: %d, card: %d,%d, side is equal", entity.id, card.id, card.baseid))
                 return {}
             end
             
@@ -222,18 +198,18 @@ function CardGetTargets(entity, card, pick_entityid)
         
         [CardTargetType.PICK_SINGLE_ENEMY] = function(entity, card, pick_entityid)
             if pick_entityid == nil then
-                Error(entity, card, nil, "pick_entityid is nil")
+				cc.WriteLog(string.format(">>>>>>> entity: %d, card: %d,%d, pick_entityid is nil", entity.id, card.id, card.baseid))
                 return {}
             end
             
             local target = g_copy.scene.match.entities[pick_entityid]
             if target == nil then
-                Error(entity, card, nil, "pick_entityid is not exist")
+				cc.WriteLog(string.format(">>>>>>> entity: %d, card: %d,%d, pick_entityid is not exist", entity.id, card.id, card.baseid))
                 return {}
             end
 
             if target.side == entity.side then
-                Error(entity, card, nil, "target.side: " .. tostring(target.side) .. ", entity.side: " .. tostring(entity.side))
+				cc.WriteLog(string.format(">>>>>>> entity: %d, card: %d,%d, side not equal", entity.id, card.id, card.baseid))
                 return {}
             end
             
@@ -242,7 +218,7 @@ function CardGetTargets(entity, card, pick_entityid)
         
         [CardTargetType.SELF] = function(entity, card, pick_entityid)
             if pick_entityid ~= nil and pick_entityid ~= entity.id then
-                Error(entity, card, nil, "entity.id: " .. tostring(entity.id) .. ", pick_entityid: " .. tostring(pick_entityid))
+				cc.WriteLog(string.format(">>>>>>> entity: %d, card: %d,%d, pick_entityid not self", entity.id, card.id, card.baseid))
                 return {}
             end
             return {[entity.id] = entity.id}
@@ -283,12 +259,10 @@ function CardGetTargets(entity, card, pick_entityid)
             if pick_entityid ~= nil then
                 local target = g_copy.scene.match.entities[pick_entityid]
                 if target == nil then
-                    --Error(entity, card, nil, "pick_entityid: " .. tostring(pick_entityid) .. " is not exist")
                     return {}
                 end
 
                 if target.side == entity.side then
-                    --Error(entity, card, nil, "target.side: " .. tostring(target.side) .. ", entity.side: " .. tostring(entity.side))
                     return {}
                 end
 
@@ -307,12 +281,10 @@ function CardGetTargets(entity, card, pick_entityid)
             if pick_entityid ~= nil then
                 local target = g_copy.scene.match.entities[pick_entityid]
                 if target == nil then
-                    --Error(entity, card, nil, "pick_entityid: " .. tostring(pick_entityid) .. " is not exist")
                     return {}
                 end
 
                 if target.side ~= entity.side then
-                    --Error(entity, card, nil, "target.side: " .. tostring(target.side) .. ", entity.side: " .. tostring(entity.side))
                     return {}
                 end
 
@@ -364,11 +336,11 @@ function CardSettleDamage(entity, card, target)
             local damage = (card.base.damage_value + entity.strength) * entity.weakness
             damage = math.floor(damage + 0.5)
             if damage < target.armor then
-                target:armor_modify(-damage)
+                target:armor_add(-damage)
             else
                 damage = damage - target.armor
-                target:armor_modify(-target.armor)
-                target:hp_modify(-damage)
+                target:armor_add(-target.armor)
+                target:hp_add(-damage)
                 cc.Damage(target.id, damage)
             end
         end,
@@ -376,11 +348,11 @@ function CardSettleDamage(entity, card, target)
             local damage = (card.base.damage_value + entity.strength) * entity.weakness
             damage = math.floor(damage + 0.5)
             if damage < target.shield then
-                target:shield_modify(-damage)
+                target:shield_add(-damage)
             else
                 damage = damage - target.shield
-                target:shield_modify(-target.shield)
-                target:hp_modify(-damage)
+                target:shield_add(-target.shield)
+                target:hp_add(-damage)
                 cc.Damage(target.id, damage)
             end
         end,
@@ -412,23 +384,23 @@ function CardSettle(entity, card, pick_entity)
         
         --
         -- effect hp
-        target:hp_modify(card.base.effect_hp)
+        target:hp_add(card.base.effect_hp)
 
         --
         -- effect mp
-        target:mp_modify(card.base.effect_mp)
+        target:mp_add(card.base.effect_mp)
 
         --
         -- effect strength
-        target:strength_modify(card.base.effect_strength)
+        target:strength_add(card.base.effect_strength)
         
         --
         -- effect armor
-        target:armor_modify(card.base.effect_armor)
+        target:armor_add(card.base.effect_armor)
 
         --
         -- effect shield
-        target:shield_modify(card.base.effect_shield)
+        target:shield_add(card.base.effect_shield)
 
         --
         -- effect buff
@@ -499,11 +471,11 @@ function BuffSettleDamage(target, buff)
             local damage = buff.layers * buff.base.damage_value * buff.base.layer_value
             if damage > 0 then
                 if damage < target.armor then
-                    target:armor_modify(-damage)
+                    target:armor_add(-damage)
                 else
                     damage = damage - target.armor
-                    target:armor_modify(-target.armor)
-                    target:hp_modify(-damage)
+                    target:armor_add(-target.armor)
+                    target:hp_add(-damage)
                     cc.Damage(target.id, damage)
                 end
             end
@@ -512,11 +484,11 @@ function BuffSettleDamage(target, buff)
             local damage = buff.layers * buff.base.damage_value * buff.base.layer_value
             if damage > 0 then
                 if damage < target.shield then
-                    target:shield_modify(-damage)
+                    target:shield_add(-damage)
                 else
                     damage = damage - target.shield
-                    target:shield_modify(-target.shield)
-                    target:hp_modify(-damage)
+                    target:shield_add(-target.shield)
+                    target:hp_add(-damage)
                     cc.Damage(target.id, damage)
                 end
             end
@@ -537,19 +509,19 @@ function BuffSettle(entity, buff)
         
         --
         -- effect mp
-        target:mp_modify(buff.base.effect_mp)
+        target:mp_add(buff.base.effect_mp)
 
         --
         -- effect strength
-        target:strength_modify(buff.base.effect_strength)
+        target:strength_add(buff.base.effect_strength)
         
         --
         -- effect armor
-        target:armor_modify(buff.base.effect_armor)
+        target:armor_add(buff.base.effect_armor)
 
         --
         -- effect shield
-        -- target:shield_modify(buff.base.effect_shield)
+        -- target:shield_add(buff.base.effect_shield)
     end,
 
     assert(entity ~= nil)

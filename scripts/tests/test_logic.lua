@@ -8,12 +8,16 @@ require('main')
 ------------------- unittest -------------------
 --
 
+--
+-- n: 1 means sleep 1 second
+-- n: 0.01 means sleep 10 milliseconds
+--
 local function Sleep(n)
 	os.execute("sleep " .. n)
 end
 
 -- table load, func: void func(baseid, t)
-local function table_load(dir, func)
+local function table_load_linux(dir, func)
 	local PATH = "../tables/" .. dir
 	local function GetFileName(file)
 		len = string.len(PATH)
@@ -34,6 +38,29 @@ local function table_load(dir, func)
 	end
 end
 
+-- table load, func: void func(baseid, t)
+local function table_load_windows(dir, func)
+	local lfs = require 'lfs'
+	local PATH = "D:\\SVN2\\LuaProj\\tables\\" .. dir 
+	for file in lfs.dir(PATH) do
+		local path = PATH .. "\\" .. file
+		if file ~= "." and file ~= ".." then
+			local chunk = loadfile(path)
+			local baseid = string.split(file,".")[1]
+			func(tonumber(baseid), chunk())
+		end
+	end
+end
+
+-- table load, func: void func(baseid, t)
+local function table_load(dir, func)
+    if os.name() == 'linux' then
+        table_load_linux(dir, func)
+    else
+        table_load_windows(dir, func)
+    end
+end
+
 Player = {
 	id = nil,
 	baseid = nil,
@@ -45,7 +72,9 @@ Player = {
 	coord = nil,
 	
 	career = nil,	
-	stack_hold = {},
+	stack_hold = nil,
+
+	lock_event = nil,
 
 	constructor = function(self, id, baseid)
 		self.id = id
@@ -64,6 +93,8 @@ Player = {
 
 		self.career = 1
 		self.stack_hold = {}
+
+		self.lock_event = nil
 	end
 }
 
@@ -76,7 +107,12 @@ function Player:new(id, baseid)
 end
 
 local function unittest()
-	cc.WriteLog = function(content) print(content) end
+    local logfile = io.open("./logic.log", "w")
+    
+	cc.WriteLog = function(content) 
+	    print(content) 
+	    logfile:write(content .. "\n")
+	end
 	cc.Milliseconds = function() return os.time() end
 
 	local tables_copy = {}
@@ -110,7 +146,9 @@ local function unittest()
 		return tables[table_name][baseid]
 	end
 
+	local exit_copy = false
     local members = {} -- {[entityid] = Player, ...}
+	local entityid = nil
     
     local identifier = {
         entity = 100,
@@ -121,7 +159,8 @@ local function unittest()
         item = 600,
         buff = 700
     }
-    
+
+
 	cc.EntityNew = function(entity_baseid)
 	    identifier.entity = identifier.entity + 1
 		assert(members[identifier.entity] == nil)
@@ -130,7 +169,7 @@ local function unittest()
 	end
 	cc.EntityDestroy = function(entityid)
 	end
-
+    
 	cc.MapNew = function(map_baseid)
 	    identifier.map = identifier.map + 1
 	    return identifier.map
@@ -158,6 +197,17 @@ local function unittest()
 	    return identifier.card
 	end
 	cc.CardDestroy = function(entityid, cardid)
+	    cc.WriteLog(string.format("CardDestroy: %d", cardid))
+	end
+
+	cc.CardSetField = function(entityid, cardid, name, value)
+	    cc.WriteLog(string.format("CardSetField, entityid: %d, cardid: %d, set name: %s to value: %s", 
+	            entityid, cardid, tostring(name), tostring(value)))
+	end
+
+	cc.BuffSetField = function(entityid, buffid, name, value)
+	    cc.WriteLog(string.format("BuffSetField, entityid: %d, buffid: %d, set name: %s to value: %s", 
+	            entityid, buffid, tostring(name), tostring(value)))
 	end
 
 	cc.GetBaseid = function(entityid) 
@@ -175,68 +225,92 @@ local function unittest()
 	end
 
 	cc.BagAddCard = function(entityid, cardid)
+	    members[entityid].bag.cards[cardid] = cardid
 	end
 	cc.BagRemoveCard = function(entityid, cardid)
+	    members[entityid].bag.cards[cardid] = nil
 	end
 
 	cc.BagAddItem = function(entityid, itemid)
+	    members[entityid].bag.items[itemid] = itemid
 	end
 	cc.BagRemoveItem = function(entityid, itemid)
+	    members[entityid].bag.items[itemid] = nil
 	end
 
 	cc.BagSetGold = function(entityid, gold_new, gold_old)
 	    assert(members[entityid] ~= nil)
 	    members[entityid].bag.gold = gold_new
+	    cc.WriteLog(string.format("BagSetGold from: %d to %d", gold_old, gold_new))
 	end
 
 	--------------------------------- Copy -----------------------------------
 
     cc.ExitCopy = function(entityid)
-        print('ExitCopy')
-        os.exit()
+        cc.WriteLog('ExitCopy')
+        -- os.exit()
+		exit_copy = true
     end
     
 	cc.EnterMap = function(entityid, mapid, layouts, coord)
 	    assert(members[entityid] ~= nil)
 	    members[entityid].sceneid = mapid
 	    members[entityid].coord = coord
+	    cc.WriteLog('EnterMap: ' .. tostring(mapid))
 	end
 
 	cc.ExitMap = function(entityid, mapid)
-		-- print('ExitMap')
+		cc.WriteLog('ExitMap')
+		members[entityid].lock_event = nil
 	end
 
 	cc.MoveTrigger = function(entityid, mapid, v)
 	    assert(members[entityid] ~= nil)
 	    --table.dump(v, "MoveTrigger")
-	    --print("MoveTrigger")
+	    --cc.WriteLog("MoveTrigger")
 		for _, coord in pairs(v) do
 			lua_entry_copy_move(entityid, members[entityid].sceneid, coord.x, coord.y)
 		end
 	end
 
 	cc.EventMonsterTrigger = function(entityid, mapid, eventid, content)
-		print("EventMonsterTrigger: " .. tostring(eventid))
+		cc.WriteLog("EventMonsterTrigger: " .. tostring(eventid))
+		table.clear(members[entityid].stack_hold)
     	lua_entry_match_start()
 	end
 	cc.EventShopTrigger = function(entityid, mapid, eventid, content)
-		print("EventShopTrigger: " .. tostring(eventid))
+		cc.WriteLog("EventShopTrigger: " .. tostring(eventid))
+		if content ~= nil and content.cards ~= nil then
+		    local card_baseid, price_gold = table.random(content.cards, table.size(content.cards))
+    		lua_entry_copy_purchase_card(entityid, mapid, eventid, card_baseid)
+		end
 	end
 	cc.EventOptionTrigger = function(entityid, mapid, eventid, content)
-		print("EventOptionTrigger: " .. tostring(eventid))
+		cc.WriteLog("EventOptionTrigger: " .. tostring(eventid))
+		cc.WriteLog(string.format("title: %s", content.title))
+		cc.WriteLog(string.format("text: %s", content.text))
+		for _, option in pairs(content.options) do
+		    cc.WriteLog(string.format("[%s] : %s", _, option))    
+		end
 	end
 	cc.EventDestroyCardTrigger = function(entityid, mapid, eventid, content)
-		print("EventDestroyCardTrigger: " .. tostring(eventid))
+		cc.WriteLog("EventDestroyCardTrigger: " .. tostring(eventid))
+		local t_size = table.size(members[entityid].bag.cards)
+		if t_size > 0 then
+    		--local cardid, _ = table.random(members[entityid].bag.cards, t_size)
+    		--lua_entry_copy_destroy_card(entityid, mapid, eventid, cardid)
+		end
 	end
 
 	cc.AccomplishEvent = function(entityid, mapid, eventid)
-		print("AccomplishEvent: " .. tostring(eventid))
+		cc.WriteLog("AccomplishEvent: " .. tostring(eventid))		
+		local event = g_copy.scene.events[eventid]
+		if event ~= nil and event.base.category == EventCategory.MONSTER then
+		    lua_entry_copy_event_reward(entityid, mapid, eventid, 1, 1)
+		end
+    	members[entityid].lock_event = nil
 	end
 
-	cc.EventAccomplish = function(entityid, mapid, eventid)
-		lua_entry_copy_event_reward(entityid, mapid, eventid, 1, 1)
-	end
-	
 	--------------------------------- Match -----------------------------------
 
 	cc.StackHoldAdd = function(entityid, cardid)
@@ -291,9 +365,16 @@ local function unittest()
 		--cc.WriteLog("entity: " .. entityid .. " SetShield: " .. value)
 	end
 
-	cc.Damage = function(entityid, value) 
-		--cc.WriteLog("entity: " .. entityid .. " Damage: " .. value)
+	cc.Damage = function(entityid, value, type) 
+		cc.WriteLog(string.format("entityid: %d, Damage value: %d, type:%s, func: %s", entityid, value, tostring(type), Function()))
 	end
+	cc.Recovery = function(entityid, value, type) 
+		cc.WriteLog(string.format("entityid: %d, Recovery value: %d, type:%s, func: %s", entityid, value, tostring(type), Function()))
+	end
+	cc.BuffTrigger = function(entityid, buffid)
+	    cc.WriteLog(string.format("entityid: %d, buffid: %d, func: %s", entityid, buffid, Function()))
+	end
+	
 	cc.Die = function(entityid) 
 		--cc.WriteLog("entity: " .. entityid .. " Die")
 	end
@@ -313,53 +394,104 @@ local function unittest()
 		--cc.WriteLog("update buff layers, entity: " .. entityid .. ", buffid: " .. buffid .. ", layers: " .. buff_layers)
 	end
 
-    local entity_baseid = 1001
-	local entityid = cc.EntityNew(entity_baseid)
-	members[entityid] = Player:new(entityid, entity_baseid)
-	
+	entityid = cc.EntityNew(1001)
 	lua_entry_copy_enter(entityid, table.random(tables_copy, table.size(tables_copy)))
 
-	while true do
-		Sleep(1)
-		lua_entry_update(1000)
+    local function match_loop()
+        while table.size(members[entityid].stack_hold) > 0 
+                and g_copy.scene.match ~= nil and not g_copy.scene.match.isdone do
+            local t_size = table.size(members[entityid].stack_hold)
+            assert(t_size > 0)
+            local cardid = table.random(members[entityid].stack_hold, t_size)
+            assert(cardid ~= nil)
+            if lua_entry_card_play_judge(entityid, cardid, nil) then
+                lua_entry_card_play(entityid, cardid, nil)
+            elseif lua_entry_card_discard_judge(entityid, cardid) then
+                lua_entry_card_discard(entityid, cardid)
+            else
+                members[entityid].stack_hold[cardid] = nil -- destroy card
+            end
+        end
+    	if g_copy.scene.match ~= nil and not g_copy.scene.match.isdone then
+    		table.clear(members[entityid].stack_hold)
+    		lua_entry_round_end(entityid)
+    	end
+    end
 
-		if g_copy.scene.match ~= nil then
-    		if table.size(members[entityid].stack_hold) > 0 then
-    			for cardid in pairs(members[entityid].stack_hold) do
-    				lua_entry_card_play(members[entityid].id, cardid)
-    				if g_copy.scene.match == nil or g_copy.scene.match.isdone then break end
-    			end
-    			if g_copy.scene.match ~= nil and not g_copy.scene.match.isdone then
-        			table.clear(members[entityid].stack_hold)
-        			lua_entry_round_end(members[entityid].id)
-    			end
-    		end
+    local function copy_explore()
+		--
+		-- event looking_normal_event()
+		--
+		local function looking_normal_event()
+        	for _, event in pairs(g_copy.scene.events) do
+        	    if not event.accomplish 
+        			and event.base.category ~= EventCategory.ENTRY 
+        			and event.base.category ~= EventCategory.EXIT
+        	    then
+        	        local rc = lua_entry_copy_move_request(entityid, members[entityid].sceneid, event.coord.x, event.coord.y)
+        	        if rc then
+						cc.WriteLog(string.format("lock event: %d, %s", event.baseid, event.base.name.cn))
+        	            return event
+        	        end
+        	    end
+        	end
+			return nil
+		end
+
+		--
+		-- event looking_exit_event()
+		--
+		local function looking_exit_event()
+        	for _, event in pairs(g_copy.scene.events) do
+        	    if not event.accomplish and event.base.category == EventCategory.EXIT then
+        	        local rc = lua_entry_copy_move_request(entityid, members[entityid].sceneid, event.coord.x, event.coord.y)
+        	        if rc then
+						cc.WriteLog(string.format("lock event: %d, %s", event.baseid, event.base.name.cn))
+						return event
+        	        end
+        	    end
+        	end
+			return nil
+		end
+
+		local member = members[entityid]
+        if member.lock_event == nil then
+			member.lock_event = looking_normal_event() -- find MONSTER or SHOP event
+			if member.lock_event == nil then
+				member.lock_event = looking_exit_event() -- find EXIT event
+			end
+
+			assert(member.lock_event ~= nil)
+
+			local src_coord = g_copy.members[entityid].coord
+			local dest_coord = member.lock_event.coord
+			cc.WriteLog(string.format("lock event: (%d, %d), src: (%d,%d)", dest_coord.x, dest_coord.y, src_coord.x, src_coord.y))
 		else
-    		local dest_coord = {
-    			x = math.random_between(0, 14), y = math.random_between(0, 14)
-    		}
+    		cc.WriteLog(string.format("lock event: %d, %s, try to move_request: (%d,%d)", member.lock_event.baseid, member.lock_event.base.name.cn, member.lock_event.coord.x, member.lock_event.coord.y))
 
-    		local events = {}
-    		for _, event in pairs(g_copy.scene.events) do
-        		if event.accomplish == false 
-        		    and event.base.category ~= EventCategory.ENTRY 
-        		    and event.base.category ~= EventCategory.EXIT
-        		    and event.base.category == EventCategory.MONSTER
-        		then
-        		    events[event.id] = event
-        		end
-    		end
+			local rc = lua_entry_copy_move_request(entityid, member.sceneid, member.lock_event.coord.x, member.lock_event.coord.y)
+			assert(rc)
+			member.lock_event = nil -- reset lock_event
+    	end
+    end
+   
+	local milliseconds = 10 -- milliseconds
+	while not exit_copy do
+		Sleep(milliseconds / 1000)
+		lua_entry_update(milliseconds / 1000)
 
-    		local t_size = table.size(events)
-    		if t_size > 0 then
-            	local _, event = table.random(events, t_size)
-            	assert(event.coord ~= nil)
-            	dest_coord.x = event.coord.x
-            	dest_coord.y = event.coord.y
-            end        			
-    		lua_entry_copy_move_request(entityid, members[entityid].sceneid, dest_coord.x, dest_coord.y)
+		if g_copy ~= nil and g_copy.scene ~= nil and not exit_copy then
+			if g_copy.scene.match ~= nil then
+			    match_loop()
+			else
+			    copy_explore()
+			end
 		end
 	end
+
+	cc.WriteLog("unittest exit")
+	
+	io.close(logfile)
 end
 unittest()
 

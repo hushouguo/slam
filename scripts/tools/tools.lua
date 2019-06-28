@@ -33,34 +33,34 @@ table.dump = function(t, prefix)
     local dump_cache = {}
     local function sub_dump(t, indent)
         if dump_cache[tostring(t)] then
-            print(indent .. "*" .. tostring(t))
+            cc.WriteLog(indent .. "*" .. tostring(t))
         else
             dump_cache[tostring(t)] = true
             if type(t) == "table" then
                 for pos, val in pairs(t) do
                     if type(val) == "table" then
-                        print(indent .. "[" .. pos .. "] => " .. tostring(t) .. " {")
+                        cc.WriteLog(indent .. "[" .. pos .. "] => " .. tostring(t) .. " {")
                         sub_dump(val, indent .. string.rep(" ", string.len(pos) + 8))
-                        print(indent .. string.rep(" ", string.len(pos) + 6) .. "}")
+                        cc.WriteLog(indent .. string.rep(" ", string.len(pos) + 6) .. "}")
                     elseif type(val) == "string" then
-                        print(indent .. "[" .. pos .. '] => "' .. val .. '"')
+                        cc.WriteLog(indent .. "[" .. pos .. '] => "' .. val .. '"')
                     else
-                        print(indent .. "[" .. pos .. "] => " .. tostring(val))
+                        cc.WriteLog(indent .. "[" .. pos .. "] => " .. tostring(val))
                     end
                 end
             else
-                print(indent .. tostring(t))
+                cc.WriteLog(indent .. tostring(t))
             end
         end
     end
     if type(t) == "table" then
 		if prefix ~= nil then
-			print(tostring(t) .. ", " ..  tostring(prefix) .. " {")
+			cc.WriteLog(tostring(t) .. ", " ..  tostring(prefix) .. " {")
 		else
-			print(tostring(t) .. " {")
+			cc.WriteLog(tostring(t) .. " {")
 		end
         sub_dump(t, "  ")
-        print("}")
+        cc.WriteLog("}")
     else
         sub_dump(t, "  ")
     end
@@ -110,34 +110,42 @@ end
 -- table table.dup(t)
 --
 table.dup = function(t)
-	assert(type(t) == "table")
-	local tt = {}
-	for KEY, VALUE in pairs(t) do tt[KEY] = VALUE end
-	return tt
+	if type(t) == 'table' then
+		local t_dup = {}
+		for name, value in pairs(t) do
+			t_dup[name] = table.dup(value)
+		end
+		return t_dup
+	else
+		return t
+	end
+end
+
+--
+-- bool table.equal(t1, t2)
+--
+table.equal = function(t1, t2)
+	if type(t1) ~= type(t2) then return false end
+	if type(t1) ~= 'table' then
+		return t1 == t2
+	end
+	for name, _ in pairs(t1) do
+		if not table.equal(t1[name], t2[name]) then return false end
+	end
+	return true
 end
 
 function File() return debug.getinfo(2,'S').source end
 function Line() return debug.getinfo(2, 'l').currentline end
-
-function Debug(entity, card, buff, debugstring)
-	if not g_enable_debug then return end
-	local entity_string = ""
-	if entity ~= nil then entity_string = "[" .. entity.base.name.cn .. ":" .. entity.id .. ":" .. entity.baseid .. "] " end
-	local card_string = ""
-	if card ~= nil then card_string = "[" .. card.base.name.cn .. ":" .. card.id .. ":" .. card.baseid .. "] " end
-	local buff_string = ""
-	if buff ~= nil then buff_string = "[" .. buff.base.name.cn .. ":" .. buff.id .. ":" .. buff.baseid .. "] " end
-	cc.WriteLog(entity_string .. card_string .. buff_string .. (debugstring ~= nil and debugstring or ""))
+function Function() 
+	local func = debug.getinfo(2, 'n').name
+	if func == nil then
+		func = debug.getinfo(2,'S').source .. ':' .. debug.getinfo(2, 'l').currentline
+	end
+	return func
 end
 
-function Error(entity, card, buff, errorstring)
-	local entity_string = ""
-	if entity ~= nil then entity_string = "[" .. entity.base.name.cn .. ":" .. entity.id .. ":" .. entity.baseid .. "] " end
-	local card_string = ""
-	if card ~= nil then card_string = "[" .. card.base.name.cn .. ":" .. card.id .. ":" .. card.baseid .. "] " end
-	local buff_string = ""
-	if buff ~= nil then buff_string = "[" .. buff.base.name.cn .. ":" .. buff.id .. ":" .. buff.baseid .. "] " end
-	cc.WriteLog(">>>>>>>>>>>> Error: " .. File() .. ":" .. Line() .. " " .. entity_string .. card_string .. buff_string .. (errorstring ~= nil and errorstring or ""))
+os.name = function()
+    return package.config:sub(1,1) == '/' and 'linux' or 'windows'
 end
-
 

@@ -10,7 +10,7 @@ Monster = {
 	
 	constructor = function(self, entity)
 		self.entity = entity
-		self.round_interval = 1
+		self.round_interval = 0
 		self.round_last_time = 0
 	end	
 }
@@ -28,6 +28,7 @@ function Monster:update(delta)
 	if match == nil then return end -- match is over
 	if match.isdone then return end -- match is done
 	if match.round_entityid ~= self.entity.id then return end -- it's not my round
+	if self.entity.death then return end -- monster is die
 	
 	local now = os.time()
 	local interval = now - self.round_last_time

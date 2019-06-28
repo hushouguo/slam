@@ -3,6 +3,8 @@
 --
 
 Event = {
+    copy = nil, -- reference to copy instance
+
 	id = nil, -- event.id
 	baseid = nil, -- event.baseid
 	base = nil, -- {field_name=field_value}, related event.xls
@@ -15,7 +17,8 @@ Event = {
 	accomplish = nil,
 	reward = nil,
 
-	constructor = function(self, eventid, event_baseid, coord)
+	constructor = function(self, copy, eventid, event_baseid, coord)
+	    self.copy = copy
 		self.id = eventid
 		self.baseid = event_baseid
 		self.base = cc.LookupTable("Event", event_baseid)
@@ -27,14 +30,17 @@ Event = {
 	    self.content = nil
 	    self.accomplish = false
 	    self.reward = false
+	end,
+
+	destructor = function(self)
 	end
 }
 
-function Event:new(eventid, event_baseid, coord)
+function Event:new(copy, eventid, event_baseid, coord)
 	local object = {}
 	self.__index = self
 	setmetatable(object, self)
-	object:constructor(eventid, event_baseid, coord)
+	object:constructor(copy, eventid, event_baseid, coord)
 	return object
 end
 

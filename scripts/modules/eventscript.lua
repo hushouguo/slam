@@ -1,11 +1,9 @@
---- 事件 脚本模块
-
-
-
+-- 事件 脚本模块
 
 
 module(...,package.seeall)
 
+-- 事件依赖数据
 local data = {
     card ={
         common   = {10010,10020,10030,10040,10050,10060,10070},
@@ -20,6 +18,10 @@ local data = {
         boss   = {1201,1202,1203}
     },
 
+    -- shop = {7301,7302},
+
+    -- destroy = {7401},
+
     item = {
         all = {2001,2002,2003}
     }
@@ -30,7 +32,7 @@ local LootChoice = {}
 --- 创建一个掉落选项
 -- @param type_key  'items','cards','gold' 三种
 -- @return 返回掉落选项
--- @usage 
+-- @usage
 -- ## 道具掉落
 -- local l = LootChoice:New('items')
 -- l:add(1001,2,3004,4)       -- 一个ID,一个数量配对好,如果是奇数个参数,那么最后一个道具数量为1
@@ -91,15 +93,15 @@ end
 local LootGroup = {}
 
 --- 创建reward结构体
--- @usage 
--- local a = LootGroup:New()  
+-- @usage
+-- local a = LootGroup:New()
 -- 把a:get_data() 返回给程序
 -- @return 一个RewardGroup Lua结构
 function LootGroup:New()
     local t = {}
     t._data = {}
     t._choices = {}
-    
+
     --- 添加一个LootChoice
     function t:addChoice(loot_choice)
         self._choices[#self._choices+1] = loot_choice
@@ -108,9 +110,8 @@ function LootGroup:New()
     function t:get_data()
         self._data = {}
         for _,v in ipairs(self._choices) do
-           self._data[#self._data+1] = v:get_data() or false 
+           self._data[#self._data+1] = v:get_data() or false
         end
-
 
         return self._data
     end
@@ -132,10 +133,11 @@ function MonsterEvent:New()
                 monsters = self.m or {},
                 rewards = self.l:get_data() or {}
             }
-        }        
+        }
     end
+
     -- 添加怪物,
-    -- @usage t:addMonster 
+    -- @usage t:addMonster
     function t:addMonster(monster_baseid)
         t.m[monster_baseid] = (t.m[monster_baseid] or 0) + 1
     end
@@ -158,12 +160,12 @@ test2 = function()
     -- a:addChoice(g)
     a:addChoice(is)
 
---     local me = MonsterEvent:New()
---     me:addMonster(1003)       
---     me:addMonster (1004,2)      
---     me:addReward("Item",{[2004]=3})  
---     me:addReward("Gold",100)  
---     me:addReward("Card",{1,2,3,4})  
+    --     local me = MonsterEvent:New()
+    --     me:addMonster(1003)
+    --     me:addMonster (1004,2)
+    --     me:addReward("Item",{[2004]=3})
+    --     me:addReward("Gold",100)
+    --     me:addReward("Card",{1,2,3,4})
     print(table.serialize(a:get_data()))
 end
 
@@ -174,15 +176,14 @@ local pickRandom = function(tbl,random_func)
 end
 
 --- 随机一个普通怪物事件
---  @param entity_career    职业
+--  @param entity_id        职业ID
 --  @param copy_baseid      副本ID
 --  @param copy_layers      层
---  @param event_baseid     事件的配置ID 
+--  @param event_baseid     事件的配置ID
 --  @param randomseed       随机种子
 --  @return userdata 怪物事件结构
-function pickMonster(entity_career, copy_baseid, copy_layers, event_baseid, randomseed)
+function pickMonster(entity_id, copy_baseid, copy_layers, event_baseid, randomseed)
     local random_func = Random.newRandom(randomseed)
-
 
     local me = MonsterEvent:New()
 
@@ -213,13 +214,13 @@ end
 
 
 --- 随机一个精英事件
---  @param entity_career    职业
+--  @param entity_id    职业
 --  @param copy_baseid      副本ID
 --  @param copy_layers      层
---  @param event_baseid     事件的配置ID 
+--  @param event_baseid     事件的配置ID
 --  @param randomseed       随机种子
 --  @return userdata 怪物事件结构
-function pickElite(entity_career, copy_baseid, copy_layers, event_baseid, randomseed)
+function pickElite(entity_id, copy_baseid, copy_layers, event_baseid, randomseed)
     local random_func = Random.newRandom(randomseed)
     -- local monster = {}
     -- monster[1] = {entity_baseid = ,number = 1} -- 先随个厉害的
@@ -228,7 +229,7 @@ function pickElite(entity_career, copy_baseid, copy_layers, event_baseid, random
     -- 先来个elite
     me:addMonster(pickRandom(data.monster.elite,random_func))
 
-    local group_prop = 0.5      -- Magic number 
+    local group_prop = 0.5      -- Magic number
 
     if random_func() < group_prop then                                                   -- 再看情况随2个小弟
         local common_count = random_func(1,2)
@@ -256,17 +257,17 @@ function pickElite(entity_career, copy_baseid, copy_layers, event_baseid, random
     me:addChoice(gold_choice)
 
     return me:get_data()
-    
+
 end
 
 --- 随机一个精Boss事件
---  @param entity_career    职业
+--  @param entity_id    职业
 --  @param copy_baseid      副本ID
 --  @param copy_layers      层
---  @param event_baseid     事件的配置ID 
+--  @param event_baseid     事件的配置ID
 --  @param randomseed       随机种子
 --  @return userdata 怪物事件结构
-function pickBoss(entity_career, copy_baseid, copy_layers, event_baseid, randomseed)
+function pickBoss(entity_id, copy_baseid, copy_layers, event_baseid, randomseed)
     -- local monster = {}
     -- monster[1] =pickRandom(data.monster.boss,random_func)
     -- return constructMonsterEvent(monsters)
@@ -297,13 +298,13 @@ function pickBoss(entity_career, copy_baseid, copy_layers, event_baseid, randoms
 end
 
 --- 随机一个商店
---  @param entity_career    职业
+--  @param entity_id        职业ID
 --  @param copy_baseid      副本ID
 --  @param copy_layers      层
---  @param event_baseid     事件的配置ID 
+--  @param event_baseid     事件的配置ID
 --  @param randomseed       随机种子
 --  @return userdata 事件结构
-function pickShop(entity_career, copy_baseid, copy_layers, event_baseid, randomseed)
+function pickShop(entity_id, copy_baseid, copy_layers, event_baseid, randomseed)
     local card_count = 6     -- magic number
     local item_count = 6
     local cards = {}
@@ -314,69 +315,69 @@ function pickShop(entity_career, copy_baseid, copy_layers, event_baseid, randoms
     end
 
     for i = 1,item_count do
-        items[i] = { item_baseid = pickRandom(data.item.all,random_func)} 
+        items[i] = { item_baseid = pickRandom(data.item.all,random_func)}
     end
 
-    return {cards = cards,items = items}
+    return  {shop = {cards = cards,items = items}}
 
 end
 
 --- 随机一个删卡事件
---  @param entity_career    职业
+--  @param entity_id        职业ID
 --  @param copy_baseid      副本ID
 --  @param copy_layers      层
---  @param event_baseid     事件的配置ID 
+--  @param event_baseid     事件的配置ID
 --  @param randomseed       随机种子
 --  @return userdata 事件结构
-function pickDelCard(entity_career, copy_baseid, copy_layers, event_baseid, randomseed)
-    return { destroy_card = {}}
+function pickDelCard(entity_id, copy_baseid, copy_layers, event_baseid, randomseed)
+    return { destroy_card = {price_gold = copy_layers*10+55 }}
 end
 
 --- 随机一个剧情事件
---  @param entity_career    职业
+--  @param entity_id    职业
 --  @param copy_baseid      副本ID
 --  @param copy_layers      层
---  @param event_baseid     事件的配置ID 
+--  @param event_baseid     事件的配置ID
 --  @param randomseed       随机种子
 --  @return userdata 事件结构
-function pickStoryEvent(entity_career, copy_baseid, copy_layers, event_baseid, randomseed)
-    return {story = { title = "",text = "", options = {}}}
+function pickStoryEvent(entity_id, copy_baseid, copy_layers, event_baseid, randomseed)
+    return {story = { title = "算数题",text = "1+1=?", options = {A="2",B="1",C="我不知道"}}}
 end
 
 --- 随机一个休息事件
---  @param entity_career    职业
+--  @param entity_id    职业
 --  @param copy_baseid      副本ID
 --  @param copy_layers      层
---  @param event_baseid     事件的配置ID 
+--  @param event_baseid     事件的配置ID
 --  @param randomseed       随机种子
 --  @return userdata 事件结构
-function pickRest(entity_career, copy_baseid, copy_layers, event_baseid, randomseed)
+function pickRest(entity_id, copy_baseid, copy_layers, event_baseid, randomseed)
     return {}
 end
 
 --- 入口事件
---  @param entity_career    职业
+--  @param entity_id    职业
 --  @param copy_baseid      副本ID
 --  @param copy_layers      层
---  @param event_baseid     事件的配置ID 
+--  @param event_baseid     事件的配置ID
 --  @param randomseed       随机种子
 --  @return userdata 事件结构
-function pickEnter(entity_career, copy_baseid, copy_layers, event_baseid, randomseed)
+function pickEnter(entity_id, copy_baseid, copy_layers, event_baseid, randomseed)
     return {}
 end
 --- 出口事件
---  @param entity_career    职业
+--  @param entity_id    职业
 --  @param copy_baseid      副本ID
 --  @param copy_layers      层
---  @param event_baseid     事件的配置ID 
+--  @param event_baseid     事件的配置ID
 --  @param randomseed       随机种子
 --  @return userdata 事件结构
-function pickExit(entity_career, copy_baseid, copy_layers, event_baseid, randomseed)
+function pickExit(entity_id, copy_baseid, copy_layers, event_baseid, randomseed)
     return {}
 end
 
-common = function(entity_career, copy_baseid, copy_layers, event_baseid, randomseed)
-    return pickMonster(entity_career, copy_baseid, copy_layers, event_baseid, randomseed)
+common = function(entity_id, copy_baseid, copy_layers, event_baseid, randomseed)
+    return pickMonster(entity_id, copy_baseid, copy_layers, event_baseid, randomseed)
 end
 
 test = function()
@@ -391,5 +392,16 @@ test = function()
     -- -- assert (pickEnter()~=nil)
     -- assert (pickExit()~=nil)
 end
+
+
+--[[api
+    通过entityid获取entity对象: 
+        local entity = g_copy.members[entityid]
+        assert(entity ~= nil)
+        
+    获取entity的职业:
+        entity.base.career
+
+--]]
 
 -- test()

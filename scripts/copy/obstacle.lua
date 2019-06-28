@@ -4,6 +4,8 @@
 --
 
 Obstacle = {
+    copy = nil, -- reference to copy instance
+    
 	id = nil, -- obstacle.id
 	baseid = nil, -- obstacle.baseid
 	base = nil, -- {field_name=field_value}, related obstacle.xls
@@ -11,7 +13,8 @@ Obstacle = {
 
 	objectCategory = nil, -- GridObjectCategory
 
-	constructor = function(self, obstacleid, obstacle_baseid, coord)
+	constructor = function(self, copy, obstacleid, obstacle_baseid, coord)
+	    self.copy = copy
 		self.id = obstacleid
 		self.baseid = obstacle_baseid
 		self.base = cc.LookupTable("Obstacle", obstacle_baseid)
@@ -21,11 +24,11 @@ Obstacle = {
 	end
 }
 
-function Obstacle:new(obstacleid, obstacle_baseid, coord)
+function Obstacle:new(copy, obstacleid, obstacle_baseid, coord)
 	local object = {}
 	self.__index = self
 	setmetatable(object, self)
-	object:constructor(obstacleid, obstacle_baseid, coord)
+	object:constructor(copy, obstacleid, obstacle_baseid, coord)
 	return object
 end
 

@@ -7,11 +7,22 @@
             member = ?,
             createtime = ?,
             seed = ?,
+            
             copies = {
                 [tostring(copy_baseid)] = {
                     layer = ?,
-                    [tostring(map_baseid)] = {
-                        accomplish_events = {event_baseid = true/false, ...}
+                    
+                    shop_discount = {
+                        card_quality = ?,
+                        card_level = ?,
+                        card_category = ?,
+                        card_baseid = {
+                            [card_baseid] = ?, ...
+                        }
+                    },
+                    
+                    accomplish_events = {
+                        [layer] = {event_baseid, ...}, ...
                     }
                 }
             }
@@ -19,130 +30,163 @@
 ]]
 record = {}
 
---
--- entityid record.member(r)
---
-record.member = function(r)
-	assert(r ~= nil and r.member ~= nil)
-	return r.member
-end
 
 --
--- seed record.seed(r)
--- 
-record.seed = function(r)
-	assert(r ~= nil and r.seed ~= nil)
-	return r.seed
-end
-
+-- table create(entityid)
 --
--- layer record.layer(r, copy_baseid)
---
-record.layer = function(r, copy_baseid)
-	assert(r ~= nil and r.copies ~= nil)
-	local r_copy = r.copies[tostring(copy_baseid)]
-	assert(r_copy ~= nil and r_copy.layer ~= nil)
-	return r_copy.layer
-end
-
---
--- void record.set_layer(r, copy_baseid, layer)
---
-record.set_layer = function(r, copy_baseid, layer)
-	assert(r ~= nil and r.copies ~= nil)
-	local r_copy = r.copies[tostring(copy_baseid)]
-	assert(r_copy ~= nil and r_copy.layer ~= nil)
-	r_copy.layer = layer
-	record.serialize(r)
-end
-
---
--- table record.accomplish_events(r, copy_baseid, map_baseid)
---
-record.accomplish_events = function(r, copy_baseid, map_baseid)
-	assert(r ~= nil and r.copies ~= nil)
-	local r_copy = r.copies[tostring(copy_baseid)]
-	assert(r_copy ~= nil)
-	local r_map = r_copy[tostring(map_baseid)]
-	if r_map == nil then return nil end
-	assert(r_map.accomplish_events ~= nil)
-	return table.dup(r_map.accomplish_events)
-end
-
---
--- void record.set_accomplish_events(r, copy_baseid, map_baseid, event_baseid)
---
-record.set_accomplish_events = function(r, copy_baseid, map_baseid, event_baseid)
-	assert(r ~= nil and r.copies ~= nil)
-	local r_copy = r.copies[tostring(copy_baseid)]
-	assert(r_copy ~= nil)
-	if r_copy[tostring(map_baseid)] == nil then
-		r_copy[tostring(map_baseid)] = {
-			accomplish_events = {}
-		}
-	end
-	local r_map = r_copy[tostring(map_baseid)]
-	assert(r_map ~= nil and r_map.accomplish_events ~= nil)
-	for _, baseid in pairs(r_map.accomplish_events) do
-		if baseid == event_baseid then return end
-	end
-	table.insert(r_map.accomplish_events, event_baseid)
-	record.serialize(r)
-end
-
-
---
--- table create(entityid, copy_baseid)
---
-record.create = function(entityid, copy_baseid)
+record.create = function(entityid)
     local createtime = os.time()
     return {
-        member = entityid, 
+        member = entityid,
         createtime = createtime,
         seed = createtime * 100 + entityid,
-        copies = {
-            [tostring(copy_baseid)] = {
-				layer = 1
---				[tostring(map_baseid)] = {
---					accomplish_events = {}
---				}
-			}
-        }
+        copies = {}
     }
+end
+
+--
+-- table unserialize(entityid)
+--
+record.unserialize = function(entityid)
+    local json = require('tools/json')
+    local jsonstr = cc.EntityUnserialize(entityid)
+	cc.WriteLog('Unserialize: ' .. tostring(jsonstr))
+    if jsonstr ~= nil then
+        local record_table = json.decode(jsonstr)
+        assert(record_table ~= nil, tostring(jsonstr))
+        assert(record_table.member == entityid, tostring(jsonstr))
+        assert(record_table.seed ~= nil, tostring(jsonstr))
+        return record_table
+    end
+    local record_table = record.create(entityid)
+	record.serialize(entityid, record_table)
+    return record_table
 end
 
 --
 -- void serialize(entityid, record_table)
 --
-record.serialize = function(r)
+record.serialize = function(entityid, record_table)
     local json = require('tools/json')
-	local jsonstr = json.encode(r)
-	print('Serialize: ' .. tostring(jsonstr))
-    cc.EntitySerialize(record.member(r), jsonstr)
+	local jsonstr = json.encode(record_table)
+	cc.WriteLog('Serialize: ' .. tostring(jsonstr))
+    cc.EntitySerialize(entityid, jsonstr)
+end
+
+
+-----------------------------------------------------------------------
+
+--
+-- entityid record.member(record_table)
+--
+record.member = function(record_table)
+	assert(record_table ~= nil and record_table.member ~= nil)
+	return record_table.member
 end
 
 --
--- table unserialize(entityid, copy_baseid)
+-- seed record.seed(record_table)
+-- 
+record.seed = function(record_table)
+	assert(record_table ~= nil and record_table.seed ~= nil)
+	return record_table.seed
+end
+
+
 --
-record.unserialize = function(entityid, copy_baseid)
-    local json = require('tools/json')
-    local jsonstr = cc.EntityUnserialize(entityid)
-	print('Unserialize: ' .. tostring(jsonstr))
-    if jsonstr ~= nil then
-        local r = json.decode(jsonstr)
-        assert(r ~= nil, tostring(jsonstr))
-        assert(r.member ~= nil, tostring(jsonstr))
-        assert(r.seed ~= nil, tostring(jsonstr))
-        if r.copies == nil then r.copies = {} end
-        if r.copies[tostring(copy_baseid)] == nil then 
-			r.copies[tostring(copy_baseid)] = {
-				layer = 1
-			}
-		end
-        return r
-    end
-    local r = record.create(entityid, copy_baseid)
-	record.serialize(r)
-    return r
+-- layer record.copy_layer(record_table, copy_baseid)
+--
+record.copy_layer = function(record_table, copy_baseid)
+	assert(record_table ~= nil and record_table.copies ~= nil)
+	local copy_baseid_str = tostring(copy_baseid) 
+	if record_table.copies[copy_baseid_str] == nil then
+	    return nil
+	end
+	return record_table.copies[copy_baseid_str].layer
+end
+
+--
+-- void record.set_copy_layer(record_table, copy_baseid, layer)
+--
+record.set_copy_layer = function(record_table, copy_baseid, layer)
+	assert(record_table ~= nil and record_table.copies ~= nil)
+	local copy_baseid_str = tostring(copy_baseid)
+	if record_table.copies[copy_baseid_str] == nil then
+	    record_table.copies[copy_baseid_str] = {}
+	end
+	record_table.copies[copy_baseid_str].layer = layer
+	record.serialize(record.member(record_table), record_table)
+end
+
+--
+-- table record.copy_accomplish_events(record_table, copy_baseid, layer)
+--
+record.copy_accomplish_events = function(record_table, copy_baseid, layer)
+	assert(record_table ~= nil and record_table.copies ~= nil)
+	local copy_baseid_str = tostring(copy_baseid)
+	if record_table.copies[copy_baseid_str] == nil then
+	    return nil -- no copy_baseid
+	end
+	if record_table.copies[copy_baseid_str].accomplish_events == nil then
+	    return nil -- no accomplish_events
+	end
+	local layer_str = tostring(layer)
+	if record_table.copies[copy_baseid_str].accomplish_events[layer_str] == nil then
+	    return nil -- no accomplish_events[layer]
+	end
+	return table.dup(record_table.copies[copy_baseid_str].accomplish_events[layer_str])
+end
+
+--
+-- void record.set_copy_accomplish_events(record_table, copy_baseid, layer, event_baseid)
+--
+record.set_copy_accomplish_events = function(record_table, copy_baseid, layer, event_baseid)
+	assert(record_table ~= nil and record_table.copies ~= nil)
+	local copy_baseid_str = tostring(copy_baseid)
+	if record_table.copies[copy_baseid_str] == nil then
+	    record_table.copies[copy_baseid_str] = {} -- copy_baseid
+	end
+	if record_table.copies[copy_baseid_str].accomplish_events == nil then
+	    record_table.copies[copy_baseid_str].accomplish_events = {} -- accomplish_events
+	end
+	local layer_str = tostring(layer)
+	if record_table.copies[copy_baseid_str].accomplish_events[layer_str] == nil then
+	    record_table.copies[copy_baseid_str].accomplish_events[layer_str] = {} -- accomplish_events[layer]
+	end
+	local accomplish_events = record_table.copies[copy_baseid_str].accomplish_events[layer_str]
+	for _, baseid in pairs(accomplish_events) do
+		if baseid == event_baseid then return end
+	end
+	table.insert(accomplish_events, event_baseid)
+	record.serialize(record.member(record_table), record_table)
+end
+
+
+--
+-- table record.copy_shop_discount(record_table, copy_baseid)
+--
+record.copy_shop_discount = function(record_table, copy_baseid)
+	assert(record_table ~= nil and record_table.copies ~= nil)
+	local copy_baseid_str = tostring(copy_baseid)
+	if record_table.copies[copy_baseid_str] == nil then
+	    return nil -- no copy_baseid
+	end
+	if record_table.copies[copy_baseid_str].shop_discount == nil then
+	    return nil -- no shop_discount
+	end
+	return table.dup(record_table.copies[copy_baseid_str].shop_discount)
+end
+
+--
+-- void record.set_copy_shop_discount(record_table, copy_baseid, table_discount)
+--
+record.set_copy_shop_discount = function(record_table, copy_baseid, table_discount)
+    assert(record_table ~= nil and record_table.copies ~= nil)
+    local copy_baseid_str = tostring(copy_baseid)
+	if record_table.copies[copy_baseid_str] == nil then
+	    record_table.copies[copy_baseid_str] = {}
+	end
+	record_table.copies[copy_baseid_str].shop_discount = table.dup(table_discount)
+	record.serialize(record.member(record_table), record_table)
 end
 

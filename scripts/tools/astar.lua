@@ -81,6 +81,14 @@ function FindPath(src, dest, step, radius, moveable)
 		return ret
 	end
 
+	if not passable(src, moveable) then
+		return nil, "src coord is unreachable"
+	end
+
+	if not passable(dest, moveable) then
+		return nil, "dest coord is unreachable"
+	end
+
 	local MAX_DISMETER = radius * 2 + 1
 	local MAX_NUMBER = MAX_DISMETER * MAX_DISMETER
 
@@ -93,15 +101,11 @@ function FindPath(src, dest, step, radius, moveable)
 
 --	if xd <= step and yd <= step then
 	if (xd <= step and src.y == dest.y) or (yd <= step and src.x == dest.x) then
-		return {dest}
-	end
-
-	if not passable(src, moveable) then
-		return nil, "src coord cannot be passable"
-	end
-
-	if not passable(dest, moveable) then
-		return nil, "dest coord cannot be passable"
+		if moveable(dest) then return {dest}
+		else 
+		    cc.WriteLog(string.format(">>>>> src:(%d,%d), dest:(%d,%d), step: %d, radius:%d, dest not moveable", src.x, src.y, dest.x, dest.y, step, radius))
+		    return {} 
+		end
 	end
 
 	local adjust = {

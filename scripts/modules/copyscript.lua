@@ -9,6 +9,8 @@ local Random = Random or require('modules.random')
 
 require('modules.extend')
 
+-- local LookupTable = cc.LookupTable  -- require cc
+
 -- EVENT table
 -- TODO: 做成配置文件
 local event_monster  = {7001,7002,7003,7004,7005,7006,7007,7008,7009,7010,7012,7013}
@@ -20,14 +22,14 @@ local event_stroy    = {7501,7502,7503}
 
 local prob_data = {
     --          怪物    精英      商店      删卡   对话事件  休息
-    [0]    =  { M = .6, J = .08, S = .05, D = .1, E = .22, R = .12   }, 
+    [0]    =  { M = .6, J = .08, S = .05, D = .1, E = .22, R = .12   },  -- 不要求和=1
     [4000] =  { M = .6, J = .08, S = .05, D = .1, E = .22, R = .12   },
 }
 
---- 生成房间事件总量
+--- 生成房间事件总量 
 -- @param copy_id       number 副本ID
 -- @param copy_layers   number 副本层数
--- @param random_func   func   随机函数
+-- @param random_func   func   随机函数1
 -- return 返回一个符合标准正太分布的随机数
 local function generateRoomCount(copy_id,copy_layers,random_func)
     local random_func  = random_func or math.random
@@ -42,7 +44,7 @@ local function generateRoomCount(copy_id,copy_layers,random_func)
     room_count = room_count - room_count % 1e-2
     room_count = math.clamp(room_count,min,max)
 
-    print("[MG]step1:roomCount = " .. room_count)   
+    -- print("[MG]step1:roomCount = " .. room_count)   
     return room_count
 end
 
@@ -54,15 +56,14 @@ end
 -- @param room_mean  number  房间节点的期望数量
 -- @param random_func  function  随机数发生函数
 -- @return 一个包含事件类型的列表
-local function generateRoomType(copy_id,level,room_mean,random_func)
-    -- 概率表(并不真实反映概率,权重)
+local function generateRoomType(copy_id,level,room_mean,random_func)    
 
     local copy_id = copy_id or 4000                 -- test copy 4000
     local prob = prob_data[copy_id] or prob_data[0] -- default prob
     print(table.serialize(prob))
     assert(prob ~= nil)
 
-    local room_mean = room_mean or 5                -- default count = 5
+    local room_mean = room_mean or 5                -- 期望
     local type_counts = table.map(prob,function(t) return room_mean * t end)
 
     -- 构建权重表
@@ -82,7 +83,7 @@ local function generateRoomType(copy_id,level,room_mean,random_func)
         local picked = Random.randomWeighted(weight,random_func)
         -- 权重减半
         if picked then
-           weight[picked]  = weight[picked] >= 1 and weight[picked] * 0.5 or 0 
+           weight[picked]  = weight[picked] >= 1 and weight[picked] * 0.5 or 0            
         end
         picked_elements[i] = picked or false
     end
@@ -97,7 +98,7 @@ local pickFuncTable = {
     S = function() return Random.pickRandom(event_shop) end,
     D = function() return Random.pickRandom(event_destroy) end,
     E = function() return Random.pickRandom(event_stroy) end,   
-    R = function() return Random.pickRandom(event_stroy) end,  
+    R = function() return Random.pickRandom(event_stroy) end,  -- TODO pick rest
 }
 
 
