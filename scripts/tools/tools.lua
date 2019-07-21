@@ -39,13 +39,13 @@ table.dump = function(t, prefix)
             if type(t) == "table" then
                 for pos, val in pairs(t) do
                     if type(val) == "table" then
-                        cc.WriteLog(indent .. "[" .. pos .. "] => " .. tostring(t) .. " {")
+                        cc.WriteLog(indent .. "[" .. tostring(pos) .. "] => " .. tostring(t) .. " {")
                         sub_dump(val, indent .. string.rep(" ", string.len(pos) + 8))
                         cc.WriteLog(indent .. string.rep(" ", string.len(pos) + 6) .. "}")
                     elseif type(val) == "string" then
-                        cc.WriteLog(indent .. "[" .. pos .. '] => "' .. val .. '"')
+                        cc.WriteLog(indent .. "[" .. tostring(pos) .. '] => "' .. val .. '"')
                     else
-                        cc.WriteLog(indent .. "[" .. pos .. "] => " .. tostring(val))
+                        cc.WriteLog(indent .. "[" .. tostring(pos) .. "] => " .. tostring(val))
                     end
                 end
             else
@@ -53,12 +53,11 @@ table.dump = function(t, prefix)
             end
         end
     end
+	if prefix ~= nil then
+		cc.WriteLog(tostring(t) .. ", " ..  tostring(prefix))
+	end
     if type(t) == "table" then
-		if prefix ~= nil then
-			cc.WriteLog(tostring(t) .. ", " ..  tostring(prefix) .. " {")
-		else
-			cc.WriteLog(tostring(t) .. " {")
-		end
+		cc.WriteLog(tostring(t) .. " {")
         sub_dump(t, "  ")
         cc.WriteLog("}")
     else
@@ -147,5 +146,18 @@ end
 
 os.name = function()
     return package.config:sub(1,1) == '/' and 'linux' or 'windows'
+end
+
+function Seed(entityid)
+--	return 156231035801
+	return os.time() * 100 + entityid
+end
+
+function SplitString(str, reps)
+    local resultStrList = {}
+    string.gsub(str,'[^'..reps..']+', function ( w )
+        table.insert(resultStrList, w)
+    end)
+    return resultStrList
 end
 

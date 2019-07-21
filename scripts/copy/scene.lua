@@ -21,13 +21,16 @@ Scene = {
     roads = nil, -- all of roads, {{x=?,y=?}, ...}
 
 
-    constructor = function(self, copy, id, baseid, seed, entityid, events_base, accomplish_events)
+    constructor = function(self, copy, baseid, seed, entityid, events_base, accomplish_events)
         self.copy = copy
-        self.id = id
+        self.id = cc.MapNew(baseid)
         self.baseid = baseid
         self.base = cc.LookupTable("Map", self.baseid)
         assert(self.base ~= nil)
         assert(self.base.width > 0 and self.base.height > 0)
+
+	    cc.WriteLog(string.format("++++++++++ scene: %d,%d,%s, constructor", self.id, self.baseid, self.base.name.cn))
+        
         self.seed = seed
         self.random_func = NewRandom(self.seed)
         self.events_base = events_base
@@ -41,29 +44,46 @@ Scene = {
 		self.trigger_event = nil
 
 		-- search for available tile obstacle
-		self.tile_obstacle_baseid = self:random_obstacle_baseid()
-        assert(self.tile_obstacle_baseid ~= nil)
-		cc.WriteLog('tile_obstacle_baseid: ' .. tostring(self.tile_obstacle_baseid))
+		self:tile_obstacle_baseid_init()
+        assert(self.tile_obstacle_baseid ~= nil and table.size(self.tile_obstacle_baseid) > 0)
+        table.dump(self.tile_obstacle_baseid, 'tile_obstacle_baseid')
 
+        -- MapPolicy
+        self.FLAG_chessboard = false
+        local policies = {
+            [MapPolicy.CHESSBOARD] = function(self) 
+                self.FLAG_chessboard = true
+                cc.WriteLog(string.format("    map: %d, policy: chessboard", self.baseid))
+                end
+        }
+        for _, policy in pairs(self.base.policy) do
+            if policies[policy] ~= nil then
+               policies[policy](self) 
+            else
+                cc.WriteLog(string.format("map: %d, unsupport policy: %d", self.baseid, policy))
+            end
+        end
+
+        -- generate scene
 		local rc = self:generator() -- init events & obstacles
 		assert(rc)
-		self:do_accomplish_events(accomplish_events) -- accomplish event in last EnterScene
 
-        -- init all of events to content
-		-- self:init_events_content(entityid)
+		self:do_accomplish_events(accomplish_events) -- accomplish event in last EnterScene
     end,
 
     destructor = function(self)
+	    cc.WriteLog(string.format("---------- scene: %d,%d,%s, destructor", self.id, self.baseid, self.base.name.cn))
+    
         for _, entity in pairs(self.members) do
             self:remove_member(entity)
         end
         
-        for eventid, _ in pairs(self.events) do
-            cc.EventDestroy(eventid)
-        end
-        for obstacleid, _ in pairs(self.obstacles) do
-            cc.ObstacleDestroy(obstacleid)
-        end
+        for _, event in pairs(self.events) do event:destructor() end
+        table.clear(self.events)
+        
+        for _, obstacle in pairs(self.obstacles) do obstacle:destructor() end
+        table.clear(self.obstacles)
+        
         cc.MapDestroy(self.id) -- MapDestroy
     end,
     
@@ -80,17 +100,32 @@ Scene = {
     --
     moveable = function(self, coord)
 		return self:valid_coord(coord)
-	    		and (self.tiles[coord.y][coord.x] == nil 
-	    			or self.tiles[coord.y][coord.x].block == BlockCategory.NONE)    
+	    		and self.tiles[coord.y][coord.x] ~= nil 
+	    		and self.tiles[coord.y][coord.x].block == BlockCategory.NONE
     end,
-
+    
     --
     -- bool passable(coord)
     -- 
     passable = function(self, coord)
+        local function passable_objects(self, coord)
+            local t = self.tiles[coord.y][coord.x]
+            assert(t ~= nil and t.objects ~= nil and t.block ~= nil)
+            if t.block == BlockCategory.STATIC then return false end
+            for _, object in pairs(t.objects) do
+                if object.base.block == BlockCategory.STATIC -- static block
+                        -- dynamic event block & this event will never accomplish
+                        or (object.base.block == BlockCategory.DYNAMIC and object.base.endtype == EventEnd.NONE) 
+                then
+                    return false
+                end
+            end
+            return true
+        end
 		return self:valid_coord(coord)
 				and (self.tiles[coord.y][coord.x] == nil 
-					or self.tiles[coord.y][coord.x].block ~= BlockCategory.STATIC)
+					or self.tiles[coord.y][coord.x].block == BlockCategory.NONE
+					or passable_objects(self, coord))
     end,
 
     --
@@ -103,7 +138,7 @@ Scene = {
         t.block = BlockCategory.NONE
         for _, object in pairs(t.objects) do
             local block = object.base.block
-            if object.accomplish then block = BlockCategory.NONE end
+            if object.accomplish and block == BlockCategory.DYNAMIC then block = BlockCategory.NONE end
             -- STATIC:2, DYNAMIC:1, NONE:0
             if block > t.block then t.block = block end
         end
@@ -122,12 +157,13 @@ Scene = {
         assert(self.members[entity.id] == nil)
     	self.members[entity.id] = entity
         cc.EnterMap(entity.id, self.id, self:tiles_layouts(), entity.coord)
-        cc.WriteLog(string.format("entity: %d enterScene: %d, coord: (%d, %d)", entity.id, self.id, entity.coord.x, entity.coord.y))
+        cc.WriteLog(string.format("entity: %d enterScene: %d, coord: (%d, %d)", 
+			entity.id, self.id, entity.coord.x, entity.coord.y)
+			)
         entity:enter_scene(self)
     end,
     remove_member = function(self, entity)
         assert(entity.copy.id == self.copy.id)
-        -- assert(self.members[entity.id] ~= nil)
         if self.members[entity.id] ~= nil then
             self.members[entity.id] = nil
             entity.coord = nil
@@ -146,83 +182,45 @@ Scene = {
     trigger_event = nil,
 
     --
-    -- void create_match() & void end_match
+    -- current match instance
     --
     match = nil,
-    start_match = function(self)
-        assert(self.match == nil)
-        assert(self.trigger_event ~= nil) -- the event must have been triggered before
-        assert(self.trigger_event.base.category == EventCategory.MONSTER) -- MUST be monster event
-        assert(self.trigger_event.accomplish == false) -- MUST not be accomplish
-
-        self.match = Match:new(self.copy)
-        self.match:prepare()
-        for _, entity in pairs(self.members) do
-            self.match:add_member(entity, Side.ALLIES)
-        end
-        assert(self.trigger_event.content ~= nil)
-        assert(self.trigger_event.content.monster ~= nil)
-        local monsters = self.trigger_event.content.monster.monsters
-        assert(monsters ~= nil)
-        for entity_baseid, number in pairs(monsters) do
-            while number > 0 do
-                number = number - 1
-                self.match:add_monster(entity_baseid, Side.ENEMY)
-            end
-        end
-        return self.match:start()
-    end,
-    end_match = function(self)
-        assert(self.match ~= nil)
-        assert(self.trigger_event ~= nil) -- the event be holded by trigger_event object
-        assert(self.trigger_event.base.category == EventCategory.MONSTER)
-        assert(self.trigger_event.accomplish == false) -- MUST not be accomplish
-        
-        assert(self.match.isdone)
-        assert(self.match.side_victory ~= nil)
-        
-        local side_victory = self.match.side_victory
-        
-		self.match:destructor()
-	    self.match = nil
-        -- self.trigger_event = nil -- NOTE: don't destroy trigger_event, cause the entity get reward not yet!
-        
-        if side_victory == Side.ALLIES then
-            self:accomplish_event(self.trigger_event)
-        end
-        
-        if side_victory == Side.ENEMY then
-            cc.WriteLog(string.format("allies is defeated"))
-            for _, entity in pairs(self.members) do
-                self:remove_member(entity)
-            end
-        end
-    end,
-    abort_match = function(self, entityid)
-        assert(self.match ~= nil)
-        assert(self.trigger_event ~= nil) -- the event be holded by trigger_event object
-        assert(self.trigger_event.base.category == EventCategory.MONSTER)
-        assert(self.trigger_event.accomplish == false) -- MUST not be accomplish
-        self.match:abort(entityid)
-    end,
 
     --
-    -- tile obstacle baseid
+    -- tile obstacle baseid : { obstacle_baseid, ... }
     --
     tile_obstacle_baseid = nil,
-    random_obstacle_baseid = function(self)
-        local obstacles = {}
+    tile_obstacle_baseid_init = function(self)
+		self.tile_obstacle_baseid = {}
         for obstacle_baseid, _ in pairs(self.base.obstacles) do
             local obstacle_base = cc.LookupTable("Obstacle", obstacle_baseid)
             assert(obstacle_base.width > 0 and obstacle_base.height > 0)
             if obstacle_base.category == ObstacleCategory.TILE and obstacle_base.block == BlockCategory.NONE then
-                obstacles[obstacle_baseid] = obstacle_baseid
+                table.insert(self.tile_obstacle_baseid, obstacle_baseid)
             end
         end
-        local t_size = table.size(obstacles)
+    end,
+    tile_obstacle_baseid_random = function(self)
+        local t_size = table.size(self.tile_obstacle_baseid)
         if t_size == 0 then return nil end
-        local obstacle_baseid, _ = table.random(obstacles, t_size, self.random_func)
+        local _, obstacle_baseid = table.random(self.tile_obstacle_baseid, t_size, self.random_func)
         return obstacle_baseid
+    end,
+    tile_obstacle_baseid_chessboard = function(self, coord)
+        local t_size = table.size(self.tile_obstacle_baseid)
+        if t_size == 0 then return nil end
+        local value = coord.x % t_size
+        value = value + (coord.y % 2)
+        value = (value % t_size) + 1
+        assert(self.tile_obstacle_baseid[value] ~= nil, string.format("coord:(%d,%d), t_size:%d, value:%d", coord.x, coord.y, t_size, value))
+        return self.tile_obstacle_baseid[value]
+    end,
+    tile_obstacle_baseid_retrieve = function(self, coord)
+        if self.FLAG_chessboard then
+            return self:tile_obstacle_baseid_chessboard(coord)
+        else
+            return self:tile_obstacle_baseid_random()
+        end
     end,
     
 
@@ -236,7 +234,8 @@ Scene = {
 	FLAG_trigger_event_distance = 1,
 	FLAG_adjust_dest_obstacle = false,
 	FLAG_adjust_dest_event = true,
-    
+
+    FLAG_chessboard = false,
 
     --
     -- unsigned int distance(from, to)
@@ -265,11 +264,11 @@ Scene = {
     end
 }
 
-function Scene:new(copy, id, baseid, seed, entityid, events_base, accomplish_events)
+function Scene:new(copy, baseid, seed, entityid, events_base, accomplish_events)
 	local object = {}
 	self.__index = self
 	setmetatable(object, self)
-	object:constructor(copy, id, baseid, seed, entityid, events_base, accomplish_events)
+	object:constructor(copy, baseid, seed, entityid, events_base, accomplish_events)
 	return object
 end
 
@@ -315,18 +314,21 @@ function Scene:accomplish_event(event)
             self:resetblock({x = xx, y = yy})
         end
     end    
-    cc.WriteLog(string.format("accomplish event: %d, %d", event.id, event.baseid))
-    self.copy:accomplish_event(event) -- notify client & serialize
+    cc.WriteLog(string.format("------------------ accomplish event: %d, %d", event.id, event.baseid))    
+    for _, entity in pairs(self.members) do
+        entity:accomplish_event(event)
+    end
+    self:tiles_dump()
 end
 
 --
 -- void Scene:do_accomplish_events(accomplish_events)
 --
 function Scene:do_accomplish_events(accomplish_events)
-	if accomplish_events == nil then return end
+	if accomplish_events == nil then return end -- no any accomplish events
     local function is_accomplish_event(event)
-        for _, event_baseid in pairs(accomplish_events) do
-            if event.baseid == event_baseid then return true end
+        for event_baseid_str, t in pairs(accomplish_events) do
+            if event.baseid == tonumber(event_baseid_str) then return t.accomplish end
         end
         return false
     end
@@ -338,18 +340,16 @@ function Scene:do_accomplish_events(accomplish_events)
 end
 
 
-
 --
 -- table take_event_content(entityid, event)
 --
 function Scene:take_event_content(entityid, event)
     assert(event.script_func ~= nil and type(event.script_func) == "function")
     assert(not event.accomplish)
-    assert(not event.reward)
     if event.content == nil then
         event.content = event.script_func(
                             entityid, 
-                            self.baseid, 
+                            self.copy.baseid, 
                             self.copy:current_layer(), 
                             event.baseid, 
                             self.copy:current_seed()
@@ -358,47 +358,106 @@ function Scene:take_event_content(entityid, event)
     end
 	table.dump(event.content, 'event.content')
 	local t = {
+		[EventCategory.ENTRY] = function(self, event)
+		    -- TODO: entry event trigger
+		end,
+	
 		[EventCategory.MONSTER] = function(self, event) 
+		    -- trigger: { entity_baseid = number, ... }
 		    assert(event.content.monster ~= nil)
 		    return event.content.monster
 		end,
+
+		[EventCategory.REWARD] = function(self, event)
+		    -- trigger: {
+		    --              {
+		    --                  cards = {card_baseid, ...}, 
+		    --                  items = {item_baseid = number, ...}, 
+		    --                  gold = ?, 
+		    --                  puppets = { entity_baseid, ... }
+		    --              }, ...
+		    -- }
+		    assert(event.content.reward ~= nil)
+		    return event.content.reward
+		end,
 		
 		[EventCategory.SHOP_BUY_CARD] = function(self, event)
-            -- event.content.shop: { cards = {card_baseid, ...}, items = {item_baseid, ...} 
-            -- trigger: { cards = {card_baseid = price_gold, ...}, items = {item_baseid = price_gold, ...} 
+            -- event.content.shop: { cards = { {card_baseid = ?, ...} }, items = { {item_baseid = ?, ...} }
+            -- trigger: { 
+            --      cards = { 
+            --          { card_baseid = price_gold },
+            --          ...
+            --      }, 
+            --      items = { 
+            --          { item_baseid = price_gold },
+            --          ...
+            --      }
+            -- }
             assert(event.content.shop ~= nil)
             local list = {}
             if event.content.shop.cards ~= nil then
                 list.cards = {}
                 for _, t in pairs(event.content.shop.cards) do
                     local card_base = cc.LookupTable("Card", t.card_baseid)
-                    list.cards[t.card_baseid] = card_base.price_gold
-                    -- TODO: discount
+                    local price_gold = card_base.price_gold
+-- TODO: sold out card
+--                    local rc = record.copy_events_sold_cards(self.members[entityid].record, self.copy.baseid, self.copy:current_layer(), event.baseid, t.card_baseid)
+--                    if rc then
+--                        price_gold = -1
+--                        cc.WriteLog(string.format("entityid: %d, event: %d, card: %d, sold out", entityid, event.baseid, t.card_baseid))
+--                    else
+                        -- TODO: discount
+--                    end
+                    table.insert(list.cards, {[t.card_baseid] = price_gold})
                 end
             end
             if event.content.shop.items ~= nil then
                 list.items = {}
                 for _, t in pairs(event.content.shop.items) do
-                    --local card_base = cc.LookupTable("Card", t.card_baseid)
-                    --list.cards[t.card_baseid] = card_base.price_gold
-                    -- TODO: discount
+                    local item_base = cc.LookupTable("Item", t.item_baseid)
+                    local price_gold = item_base.price_gold
+-- TODO: sold out item
+--                    local rc = record.copy_events_sold_items(self.members[entityid].record, self.copy.baseid, self.copy:current_layer(), event.baseid, t.item_baseid)
+--                    if rc then
+--                        price_gold = -1
+--                        cc.WriteLog(string.format("entityid: %d, event: %d, item: %d, sold out", entityid, event.baseid, t.item_baseid))
+--                    else
+                        -- TODO: discount
+--                    end       
+                    table.insert(list.items, {[t.item_baseid] = price_gold})
                 end
             end
             return list
 		end,
 		
+		[EventCategory.SHOP_DESTROY_CARD] = function(self, event)
+            -- trigger: { price_gold = ? }
+            assert(event.content.destroy_card ~= nil)
+		    return event.content.destroy_card
+		end,
+
+		[EventCategory.SHOP_LEVELUP_CARD] = function(self, event)
+            -- trigger: { price_gold = ? }
+            assert(event.content.levelup_card ~= nil)
+		    return event.content.levelup_card
+		end,
+
+		[EventCategory.SHOP_LEVELUP_PUPPET] = function(self, event)
+            -- trigger: { price_gold = ? }
+            assert(event.content.levelup_puppet ~= nil)
+		    return event.content.levelup_puppet
+		end,
+
 		[EventCategory.STORY] = function(self, event)
-    		-- event.content.story: { title = ?, text = ?, options = { [1] = ?, [2] = ?, ... } }
-            -- trigger: { title = ?, text = ?, options = { [1] = ?, [2] = ?, ... } }
+            -- trigger: storyid
             assert(event.content.story ~= nil)
 		    return event.content.story
 		end,
 		
-		[EventCategory.SHOP_DESTROY_CARD] = function(self, event)
-            -- event.content.destroy_card: { gold = ? }
-            -- trigger: { gold = ? }
-            assert(event.content.destroy_card ~= nil)
-		    return event.content.destroy_card
+		[EventCategory.STORY_OPTION] = function(self, event)
+		    -- trigger: storyoptionid
+			assert(event.content.storyoption ~= nil)
+			return event.content.storyoption
 		end,
 
 		[EventCategory.EXIT] = function(self, event)
@@ -409,33 +468,95 @@ function Scene:take_event_content(entityid, event)
 	return t[event.base.category](self, event)
 end
 
---[[
-function Scene:init_events_content(entityid)
-    --
-    -- call all of events script_func, hold by event.content
-    --
-    for _, event in pairs(self.events) do
-        assert(event.content == nil)
-        event.content = event.script_func(
-                            entityid, 
-                            self.copy.baseid, 
-                            self.copy:current_layer(), 
-                            event.baseid, 
-                            self.copy:current_seed()
-                        )
-        assert(event.content ~= nil)
-    end
-end
---]]
-
-
 
 --
 -----------------------------------------------------------------------------------------
 --
 
 --
--- fullPath, event Scene::move_request(entityid, destx, desty)
+-- bool dispatch_event(entityid, event)
+--
+function Scene:dispatch_event(entityid, event)
+    assert(not event.accomplish)
+    cc.WriteLog(string.format("eventTrigger: %d, category: %d, func: %s", event.baseid, event.base.category, Function()))
+    local eventDispatch = {
+    	[EventCategory.ENTRY] = function(entityid, sceneid, event, content)
+            -- assert(content ~= nil)
+            -- table.dump(content, "event.Entry")
+    	    end,
+
+        [EventCategory.MONSTER] = function(entityid, sceneid, event, content)
+            assert(content ~= nil)
+            table.dump(content, "event.Monster")
+            cc.EventMonsterTrigger(entityid, sceneid, event.id, content)
+            end,
+            
+        [EventCategory.REWARD] = function(entityid, sceneid, event, content)
+            assert(content ~= nil)
+            table.dump(content, "event.Reward")
+            cc.EventRewardTrigger(entityid, sceneid, event.id, content)
+            end,
+
+        [EventCategory.SHOP_BUY_CARD] = function(entityid, sceneid, event, content)
+            assert(content ~= nil)
+            table.dump(content, "event.BuyCard")
+            cc.EventShopTrigger(entityid, sceneid, event.id, content)
+            end,
+
+        [EventCategory.SHOP_DESTROY_CARD] = function(entityid, sceneid, event, content)
+            assert(content ~= nil)
+            table.dump(content, "event.DestroyCard")
+            cc.EventDestroyCardTrigger(entityid, sceneid, event.id, content)
+            end,
+
+    	[EventCategory.SHOP_LEVELUP_CARD] = function(entityid, sceneid, event, content)
+            assert(content ~= nil)
+            table.dump(content, "event.LevelupCard")
+            cc.EventLevelupCardTrigger(entityid, sceneid, event.id, content)
+    		end,
+
+        [EventCategory.SHOP_LEVELUP_PUPPET] = function(entityid, sceneid, event, content)
+            assert(content ~= nil)
+            table.dump(content, "event.LevelupPuppet")
+            cc.EventLevelupPuppetTrigger(entityid, sceneid, event.id, content)
+            end,
+        
+        [EventCategory.STORY] = function(entityid, sceneid, event, content)
+            assert(content ~= nil)
+            table.dump(content, "event.Story")
+            cc.EventStoryTrigger(entityid, sceneid, event.id, content)
+            end,
+
+    	[EventCategory.STORY_OPTION] = function(entityid, sceneid, event, content)
+            assert(content ~= nil)
+            table.dump(content, "event.StoryOption")
+            cc.EventOptionTrigger(entityid, sceneid, event.id, content)
+    		end,
+
+        -- trigger event to exit map
+        [EventCategory.EXIT] = function(entityid, sceneid, event, content)
+            self.copy.enter_next_layer = true
+            cc.WriteLog(string.format("entity: %d enter next layer scene", entityid))
+            end,
+    }
+    
+    if eventDispatch[event.base.category] == nil then
+        cc.WriteLog(string.format(">>>>>> entityid: %d, event: %d,%d, category: %d unhandled, func: %s", entityid, event.id, event.baseid, event.base.category, Function()))
+        return false
+    end
+    
+    event.trigger = true -- indicate this event already trigger at least once
+    eventDispatch[event.base.category](entityid, self.id, event, self:take_event_content(entityid, event))
+    
+    if event.base.endtype == EventEnd.TRIGGER then
+        self:accomplish_event(event) -- accomplish event when trigger event
+    end
+    
+    return true
+end
+
+--
+-- bool Scene::move_request(entityid, destx, desty)
 --
 function Scene:move_request(entityid, destx, desty)
     -- return event or nil
@@ -452,99 +573,137 @@ function Scene:move_request(entityid, destx, desty)
                 eventObject = object
             end
         end
-        
-        if eventObject ~= nil
-                -- check Manhattan Distance
-                and math.abs(dest_coord.x - src_coord.x) <= self.FLAG_trigger_event_distance
-                and math.abs(dest_coord.y - src_coord.y) <= self.FLAG_trigger_event_distance
-        then
-            return eventObject
+
+        if eventObject == nil then return nil end -- no event on coordinate
+
+        local coords = {}
+        table.insert(coords, {x = eventObject.coord.x, y = eventObject.coord.y})
+        if eventObject.base.width > 1 then
+            table.insert(coords, {x = eventObject.coord.x + eventObject.base.width - 1, y = eventObject.coord.y})
+        end
+        if eventObject.base.height > 1 then
+            table.insert(coords, {x = eventObject.coord.x, y = eventObject.coord.y + eventObject.base.height - 1})
+        end
+        table.insert(coords, {x = eventObject.coord.x + eventObject.base.width - 1, y = eventObject.coord.y + eventObject.base.height - 1})
+
+        for _, coord in pairs(coords) do
+            -- check Manhattan Distance
+            if math.abs(coord.x - src_coord.x) <= self.FLAG_trigger_event_distance
+                and math.abs(coord.y - src_coord.y) <= self.FLAG_trigger_event_distance
+            then
+                return eventObject
+            end
         end
 
         return nil
     end
 
-	-- check if exist event
-	local function checkExistEvent(self, src_coord, dest_coord)
+    --
+	-- event checkExistEvent(dest_coord)
+	local function checkExistEvent(self, dest_coord)
         local t = self.tiles[dest_coord.y][dest_coord.x]
         assert(t ~= nil and t.objects ~= nil)
 		for _, object in pairs(t.objects) do
-			if object.objectCategory == GridObjectCategory.EVENT then return true end
+			if object.objectCategory == GridObjectCategory.EVENT then return object end
 		end
-		return false
+		return nil
 	end
 
     --
-    -- looking around
+    -- looking around for object
+    -- coord explore_around_object(src_coord, object)
     --
-    local function findNearestRoad(self, src_coord, dest_coord)
-        if self:moveable(dest_coord) then return dest_coord end
+    local function explore_around_object(self, src_coord, object)
+        if self:moveable(object.coord) then return object.coord end
+
+        local function explore_object_coordinate(self, src_coord, dest_coord, coords)
+        	local adjust = {
+        		{  x =  1,  y = 0 },  {  x =  0,  y =  1 },
+        		{  x =  1,  y = 1 },  {  x =  0,  y = -1 },
+        		{  x = -1,  y = 0 },  {  x = -1,  y = -1 },
+        		{  x = -1,  y = 1 },  {  x =  1,  y = -1 }
+        	}
+
+        	for _, adjust_coord in pairs(adjust) do
+        	    local dest = {
+        	        x = dest_coord.x + adjust_coord.x, y = dest_coord.y + adjust_coord.y
+        	    }
+        	    if self:valid_coord(dest) and self:moveable(dest) then
+                    local roads, errorstring = FindPath(
+                        			src_coord,
+                        			dest, 
+                        			1, 
+                        			math.max(self.base.width, self.base.height), 
+                    	            function(coord) return self:moveable(coord) end
+                	            )
+                    if roads ~= nil then table.insert(coords, dest) end
+        	    end
+        	end        	
+        end
         
         local coords = {}
-    	local adjust = {
-    		{  x =  1,  y = 0 },  {  x =  0,  y =  1 },
-    		{  x =  1,  y = 1 },  {  x =  0,  y = -1 },
-    		{  x = -1,  y = 0 },  {  x = -1,  y = -1 },
-    		{  x = -1,  y = 1 },  {  x =  1,  y = -1 }
-    	}
-    	
-    	for _, adjust_coord in pairs(adjust) do
-    	    local dest = {
-    	        x = dest_coord.x + adjust_coord.x, y = dest_coord.y + adjust_coord.y
-    	    }
-    	    if self:valid_coord(dest) and self:moveable(dest) then
-                -- try to FindPath
-                local roads, errorstring = FindPath(
-                    			src_coord,
-                    			dest, 
-                    			1, 
-                    			math.max(self.base.width, self.base.height), 
-                	            function(coord) return self:moveable(coord) end
-            	            )
-                if roads ~= nil then return dest end
-    	    end
-    	end
+        
+        explore_object_coordinate(self, src_coord, object.coord, coords)
+        if object.base.width > 1 then
+            explore_object_coordinate(self, src_coord, {x = object.coord.x + object.base.width - 1, y = object.coord.y}, coords)
+        end
+        if object.base.height > 1 then
+            explore_object_coordinate(self, src_coord, {x = object.coord.x, y = object.coord.y + object.base.height - 1}, coords)
+        end
+        explore_object_coordinate(self, src_coord, {x = object.coord.x + object.base.width - 1, y = object.coord.y + object.base.height - 1}, coords)
 
-    	return nil
+        if table.size(coords) == 0 then return nil end
+
+        local min_coord = nil
+        local min_distance = nil
+        for _, coord in pairs(coords) do
+            local distance = self:distance(src_coord, coord)
+            if min_distance == nil or distance < min_distance then
+                min_coord = coord
+                min_distance = distance
+            end 
+        end 
+
+        return min_coord
     end
-    
+        
     if self.members[entityid] == nil then
         cc.WriteLog(string.format(">>>>>>> not found entity: %s, func: %s", tostring(entityid), Function()))
-        return nil, nil
+        return false
     end
     
     local src_coord = self.members[entityid].coord
-    assert(src_coord ~= nil and self:moveable(src_coord))
+    if not self:valid_coord(src_coord) or not self:moveable(src_coord) then
+        cc.WriteLog(string.format(">>>>>>> illegal src: (%d,%d), func: %s", src_coord.x, src_coord.y, Function()))
+        return false
+    end
 
-    local fullPath = {}
     local dest_coord = {x = destx, y = desty}
-
-    --
-    -- check dest_coord is not illegal
     if not self:valid_coord(dest_coord) then
         cc.WriteLog(string.format(">>>>>>> illegal dest: (%d,%d), func: %s", destx, desty, Function()))
-        return fullPath, nil
+        return false
     end
 
     --
     -- check event trigger
     self.trigger_event = checkEventTrigger(self, src_coord, dest_coord)
     if self.trigger_event ~= nil then
-        cc.WriteLog(string.format("trigger_event: %d,%d, coord:(%d,%d)", self.trigger_event.id, self.trigger_event.baseid, self.trigger_event.coord.x, self.trigger_event.coord.y))
-        return nil, self.trigger_event
+        cc.WriteLog(string.format("------------------ trigger_event: %d,%d,%s, coord:(%d,%d)", self.trigger_event.id, self.trigger_event.baseid, self.trigger_event.base.name.cn, self.trigger_event.coord.x, self.trigger_event.coord.y))
+        return self:dispatch_event(entityid, self.trigger_event)
     end
 
 	--
-	-- check block
+	-- adjust dest_coord
 	local t = self.tiles[dest_coord.y][dest_coord.x]
 	assert(t ~= nil and t.block ~= nil)
 	if t.block ~= BlockCategory.NONE then
-		local existEvent = checkExistEvent(self, src_coord, dest_coord)
-		if (self.FLAG_adjust_dest_event and existEvent)	or self.FLAG_adjust_dest_obstacle then
-    		dest_coord = findNearestRoad(self, src_coord, dest_coord)
+		local existEvent = checkExistEvent(self, dest_coord)		
+--		if (self.FLAG_adjust_dest_event and existEvent ~= nil) or self.FLAG_adjust_dest_obstacle then
+        if self.FLAG_adjust_dest_event and existEvent ~= nil then
+    		dest_coord = explore_around_object(self, src_coord, existEvent)
     		if dest_coord == nil then
     			cc.WriteLog(string.format(">>>>>>> unreachable dest: (%d,%d)", destx, desty))
-    			return fullPath, nil
+    			return false
     		end
         	cc.WriteLog(string.format("adjust old dest: (%d,%d) to new dest: (%d,%d)", destx, desty, dest_coord.x, dest_coord.y))
 		end
@@ -562,20 +721,28 @@ function Scene:move_request(entityid, destx, desty)
 	            )
 
     if roads == nil then
-        cc.WriteLog(string.format(">>>>>>> dest: (%d,%d) FindPath error: %s, func: %s", dest_coord.x, dest_coord.y, errorstring, Function()))
-        return fullPath, nil
+        cc.WriteLog(string.format(">>>>>>> dest: (%d,%d) FindPath error: %s, src: (%d,%d), func: %s", dest_coord.x, dest_coord.y, errorstring, src_coord.x, src_coord.y, Function()))
+        return false
     end
 
-    -- table.dump(roads, "roads")
+    local fullPath = {}
     
-    -- retrieve roads point by desc order
     local road_size = table.size(roads)
     for _, coord in pairs(roads) do
         fullPath[road_size] = coord
         road_size = road_size - 1
     end
 
-    return fullPath, nil
+    -- fullPath: { {x=?, y=?}, ... }
+    if table.size(fullPath) == 0 then 
+        cc.WriteLog(string.format(">>>>>> fullPath is empty, func: %s", Function()))
+        return false 
+    end
+
+--    table.dump(fullPath, 'fullPath')
+    cc.MoveTrigger(entityid, self.id, fullPath)
+    
+    return true
 end
 
 
@@ -617,6 +784,118 @@ function Scene:move(entityid, x, y)
 end
 
 --
+-- {entityid = Side, ...} start_match()
+--
+function Scene:start_match()
+    assert(self.match == nil)
+    
+    if self.trigger_event == nil then -- trigger_event must be hold
+        cc.WriteLog(string.format(">>>>>>> self.trigger_event is nil, func: %s", Function()))
+        return nil
+    end
+    
+    if self.trigger_event.base.category ~= EventCategory.MONSTER then
+        cc.WriteLog(string.format(">>>>>>> event is not MONSTER category, func: %s", Function()))
+        return nil
+    end
+    
+    if self.trigger_event.accomplish then -- already accomplish this event
+        cc.WriteLog(string.format(">>>>>>> self.trigger_event: %s already accomplish, func: %s", tostring(eventid), Function()))
+        return nil
+    end
+
+    self.match = Match:new(self.copy)
+
+    -- add member
+    for _, entity in pairs(self.members) do
+        for placeholder, target in pairs(entity.pack.placeholders) do
+            self.match:add_member(target)
+        end
+    end
+
+    -- add opponent
+    assert(self.trigger_event.content ~= nil)
+    assert(self.trigger_event.content.monster ~= nil)
+    for entity_baseid, number in pairs(self.trigger_event.content.monster) do
+        while number > 0 do
+            number = number - 1
+            self.match:add_monster(entity_baseid, Side.ENEMY)
+        end
+    end
+    return self.match:prepare()
+end
+
+--
+-- void end_match
+--
+function Scene:end_match()
+    assert(self.match ~= nil)
+    
+    if self.trigger_event == nil then -- trigger_event must be hold
+        cc.WriteLog(string.format(">>>>>>> self.trigger_event is nil, func: %s", Function()))
+        return
+    end
+    
+    if self.trigger_event.base.category ~= EventCategory.MONSTER then
+        cc.WriteLog(string.format(">>>>>>> event is not MONSTER category, func: %s", Function()))
+        return
+    end
+    
+    if self.trigger_event.accomplish then -- already accomplish this event
+        cc.WriteLog(string.format(">>>>>>> self.trigger_event: %s already accomplish, func: %s", tostring(eventid), Function()))
+        return
+    end
+    
+    assert(self.match.isdone)
+    assert(self.match.side_victory ~= nil)
+    
+    local side_victory = self.match.side_victory
+    
+	self.match:destructor()
+    self.match = nil
+    
+--    if side_victory == Side.ALLIES and self.trigger_event.base.endtype == EventEnd.REWARD then
+--        self:accomplish_event(self.trigger_event)
+--    end
+
+    self.trigger_event.touch = true
+    
+    if side_victory == Side.ENEMY then
+        cc.WriteLog(string.format("allies is defeated"))
+        for _, entity in pairs(self.members) do
+            cc.WriteLog(string.format("    entity: %d,%d,%s lost match, reset copy data", entity.id, entity.baseid, entity.base.name.cn))
+--TODO: delete entity.record
+            self:remove_member(entity)
+        end
+    end
+end
+
+--
+-- void abort_match(entityid)
+--
+function Scene:abort_match(entityid)
+    assert(self.match ~= nil)    
+    
+    if self.trigger_event == nil then -- trigger_event must be hold
+        cc.WriteLog(string.format(">>>>>>> self.trigger_event is nil, func: %s", Function()))
+        return
+    end
+    
+    if self.trigger_event.base.category ~= EventCategory.MONSTER then
+        cc.WriteLog(string.format(">>>>>>> event is not MONSTER category, func: %s", Function()))
+        return
+    end
+    
+    if self.trigger_event.accomplish then -- already accomplish this event
+        cc.WriteLog(string.format(">>>>>>> self.trigger_event: %s already accomplish, func: %s", tostring(eventid), Function()))
+        return
+    end
+    
+    self.match:abort(entityid)
+end
+
+
+--
 -- bool event_reward(entityid, eventid, reward_index, entry_index)
 --
 function Scene:event_reward(entityid, eventid, reward_index, entry_index)
@@ -636,27 +915,24 @@ function Scene:event_reward(entityid, eventid, reward_index, entry_index)
         return false
     end
     
-    if not self.trigger_event.accomplish then -- already passed this event
-        cc.WriteLog(string.format(">>>>>>> self.trigger_event: %s not accomplish, func: %s", tostring(eventid), Function()))
+    if self.trigger_event.base.category ~= EventCategory.REWARD then
+        cc.WriteLog(string.format(">>>>>>> event is not REWARD category, func: %s", Function()))
         return false
     end
     
-    if self.trigger_event.reward then -- still not reward
-        cc.WriteLog(string.format(">>>>>>> self.trigger_event: %s already reward, func: %s", tostring(eventid), Function()))
+    if self.trigger_event.accomplish then -- already accomplish this event
+        cc.WriteLog(string.format(">>>>>>> self.trigger_event: %s already accomplish, func: %s", tostring(eventid), Function()))
         return false
-    end
-            
-    if self.trigger_event.base.category ~= EventCategory.MONSTER then
-        cc.WriteLog(string.format(">>>>>>> event is not MONSTER category, func: %s", Function()))
-        return false
-    end
+    end    
     
     assert(self.trigger_event.content ~= nil)
-    assert(self.trigger_event.content.monster ~= nil)
+    assert(self.trigger_event.content.reward ~= nil)
 
-    self.trigger_event.reward = true
+    self.trigger_event.touch = true
     
-    return entity:event_reward(self.trigger_event.content.monster, reward_index, entry_index)
+    local rc = entity:event_reward(self.trigger_event.content.reward, reward_index, entry_index)
+
+    return rc
 end
 
 --
@@ -679,26 +955,27 @@ function Scene:purchase_card(entityid, sceneid, eventid, card_baseid)
         return false
     end
     
-    if not self.trigger_event.accomplish then -- already passed this event
-        cc.WriteLog(string.format(">>>>>>> self.trigger_event: %s not accomplish, func: %s", tostring(eventid), Function()))
-        return false
-    end
-    
-    if self.trigger_event.reward then -- still not reward
-        cc.WriteLog(string.format(">>>>>>> self.trigger_event: %s already reward, func: %s", tostring(eventid), Function()))
-        return false
-    end
-            
     if self.trigger_event.base.category ~= EventCategory.SHOP_BUY_CARD then
         cc.WriteLog(string.format(">>>>>>> event is not SHOP_BUY_CARD category, func: %s", Function()))
         return false
     end
 
+    if self.trigger_event.accomplish then -- already accomplish this event
+        cc.WriteLog(string.format(">>>>>>> self.trigger_event: %s already accomplish, func: %s", tostring(eventid), Function()))
+        return false
+    end
+
+-- TODO: record sold out cards
+--    if record.copy_events_sold_cards(entity.record, self.copy.baseid, self.copy:current_layer(), self.trigger_event.baseid, card_baseid) then
+--        cc.WriteLog(string.format(">>>>>>> self.trigger_event: %s, card: %d already sold, func: %s", tostring(eventid), card_baseid, Function()))
+--        return false
+--    end
+              
     assert(self.trigger_event.content ~= nil)
     assert(self.trigger_event.content.shop ~= nil)
 
-    self.trigger_event.reward = true
-
+    self.trigger_event.touch = true
+    
     return entity:purchase_card(card_baseid, self.trigger_event.content.shop)
 end
 
@@ -722,27 +999,28 @@ function Scene:purchase_item(entityid, sceneid, eventid, item_baseid)
         return false
     end
     
-    if not self.trigger_event.accomplish then -- already passed this event
-        cc.WriteLog(string.format(">>>>>>> self.trigger_event: %s not accomplish, func: %s", tostring(eventid), Function()))
-        return false
-    end
-    
-    if self.trigger_event.reward then -- still not reward
-        cc.WriteLog(string.format(">>>>>>> self.trigger_event: %s already reward, func: %s", tostring(eventid), Function()))
-        return false
-    end
-            
     if self.trigger_event.base.category ~= EventCategory.SHOP_BUY_CARD then
         cc.WriteLog(string.format(">>>>>>> event is not SHOP_BUY_CARD category, func: %s", Function()))
         return false
     end
 
+    if self.trigger_event.accomplish then -- already accomplish this event
+        cc.WriteLog(string.format(">>>>>>> self.trigger_event: %s already accomplish, func: %s", tostring(eventid), Function()))
+        return false
+    end
+
+-- TODO: record sold out items
+--    if record.copy_events_sold_items(entity.record, self.copy.baseid, self.copy:current_layer(), self.trigger_event.baseid, item_baseid) then
+--        cc.WriteLog(string.format(">>>>>>> self.trigger_event: %s, item: %d already sold, func: %s", tostring(eventid), item_baseid, Function()))
+--        return false
+--    end
+    
     assert(self.trigger_event.content ~= nil)
     assert(self.trigger_event.content.shop ~= nil)
 
-    self.trigger_event.reward = true
+    self.trigger_event.touch = true
 
-    return entity:purchase_item(item_baseid, self.trigger_event.content.shop)
+    return entity:purchase_item(card_baseid, self.trigger_event.content.shop)
 end
 
 
@@ -766,25 +1044,20 @@ function Scene:destroy_card(entityid, sceneid, eventid, cardid)
         return false
     end
     
-    if not self.trigger_event.accomplish then -- already passed this event
-        cc.WriteLog(string.format(">>>>>>> self.trigger_event: %s not accomplish, func: %s", tostring(eventid), Function()))
-        return false
-    end
-    
-    if self.trigger_event.reward then -- still not reward
-        cc.WriteLog(string.format(">>>>>>> self.trigger_event: %s already reward, func: %s", tostring(eventid), Function()))
-        return false
-    end
-            
     if self.trigger_event.base.category ~= EventCategory.SHOP_DESTROY_CARD then
         cc.WriteLog(string.format(">>>>>>> event is not SHOP_DESTROY_CARD category, func: %s", Function()))
         return false
     end
 
+    if self.trigger_event.accomplish then -- already accomplish this event
+        cc.WriteLog(string.format(">>>>>>> self.trigger_event: %s already accomplish, func: %s", tostring(eventid), Function()))
+        return false
+    end
+    
     assert(self.trigger_event.content ~= nil)
     assert(self.trigger_event.content.destroy_card ~= nil)
 
-    self.trigger_event.reward = true
+    self.trigger_event.touch = true
     
     return entity:destroy_card(cardid, self.trigger_event.content.destroy_card)
 end
@@ -810,26 +1083,232 @@ function Scene:levelup_card(entityid, sceneid, eventid, cardid)
         return false
     end
     
-    if not self.trigger_event.accomplish then -- already passed this event
-        cc.WriteLog(string.format(">>>>>>> self.trigger_event: %s not accomplish, func: %s", tostring(eventid), Function()))
-        return false
-    end
-    
-    if self.trigger_event.reward then -- still not reward
-        cc.WriteLog(string.format(">>>>>>> self.trigger_event: %s already reward, func: %s", tostring(eventid), Function()))
-        return false
-    end
-
     if self.trigger_event.base.category ~= EventCategory.SHOP_LEVELUP_CARD then
         cc.WriteLog(string.format(">>>>>>> event is not SHOP_LEVELUP_CARD category, func: %s", Function()))
         return false
     end
 
+    if self.trigger_event.accomplish then -- already accomplish this event
+        cc.WriteLog(string.format(">>>>>>> self.trigger_event: %s already accomplish, func: %s", tostring(eventid), Function()))
+        return false
+    end
+    
     assert(self.trigger_event.content ~= nil)
     assert(self.trigger_event.content.levelup_card ~= nil)
-    
-    self.trigger_event.reward = true
 
+    self.trigger_event.touch = true
+    
     return entity:levelup_card(cardid, self.trigger_event.content.levelup_card)
+end
+
+
+--
+-- bool levelup_puppet(entityid, sceneid, eventid, target_entityid)
+--
+function Scene:levelup_puppet(entityid, sceneid, eventid, target_entityid)
+    local entity = self.members[entityid]
+    if entity == nil then
+        cc.WriteLog(string.format(">>>>>>> not found entity: %s, func: %s", tostring(entityid), Function()))
+        return false
+    end
+    
+    if self.trigger_event == nil then -- trigger_event must be hold
+        cc.WriteLog(string.format(">>>>>>> self.trigger_event is nil, func: %s", Function()))
+        return false
+    end
+    
+    if self.trigger_event.id ~= eventid then
+        cc.WriteLog(string.format(">>>>>>> self.trigger_event.id: %s, eventid: %s, func: %s", tostring(self.trigger_event.id), tostring(eventid), Function()))
+        return false
+    end
+    
+    if self.trigger_event.base.category ~= EventCategory.SHOP_LEVELUP_PUPPET then
+        cc.WriteLog(string.format(">>>>>>> event is not SHOP_LEVELUP_PUPPET category, func: %s", Function()))
+        return false
+    end
+
+    if self.trigger_event.accomplish then -- already accomplish this event
+        cc.WriteLog(string.format(">>>>>>> self.trigger_event: %s already accomplish, func: %s", tostring(eventid), Function()))
+        return false
+    end
+    
+    assert(self.trigger_event.content ~= nil)
+    assert(self.trigger_event.content.levelup_puppet ~= nil)
+
+    self.trigger_event.touch = true
+    
+    return entity:levelup_puppet(target_entityid, self.trigger_event.content.levelup_puppet)
+end
+
+
+--
+-- bool choose_option(entityid, sceneid, eventid, storyoptionid, option_index)
+--
+function Scene:choose_option(entityid, sceneid, eventid, storyoptionid, option_index)
+    local entity = self.members[entityid]
+    if entity == nil then
+        cc.WriteLog(string.format(">>>>>>> not found entity: %s, func: %s", tostring(entityid), Function()))
+        return false
+    end
+    
+    if self.trigger_event == nil then -- trigger_event must be hold
+        cc.WriteLog(string.format(">>>>>>> self.trigger_event is nil, func: %s", Function()))
+        return false
+    end
+    
+    if self.trigger_event.id ~= eventid then
+        cc.WriteLog(string.format(">>>>>>> self.trigger_event.id: %s, eventid: %s, func: %s", tostring(self.trigger_event.id), tostring(eventid), Function()))
+        return false
+    end
+    
+    if self.trigger_event.accomplish then -- already accomplish this event
+        cc.WriteLog(string.format(">>>>>>> self.trigger_event: %s already accomplish, func: %s", tostring(eventid), Function()))
+        return false
+    end
+    
+    if self.trigger_event.base.category ~= EventCategory.STORY_OPTION then
+        cc.WriteLog(string.format(">>>>>>> event is not STORY_OPTION category, func: %s", Function()))
+        return false
+    end
+
+    assert(self.trigger_event.content ~= nil)
+    assert(self.trigger_event.content.storyoption ~= nil)
+
+    local storyoption_base = cc.LookupTable("StoryOption", storyoptionid)
+    if storyoption_base == nil then
+        cc.WriteLog(string.format(">>>>>>> storyoptionid: %s not found, func: %s", tostring(storyoptionid), Function()))
+        return false
+    end
+
+    if storyoption_base.options == nil then
+        cc.WriteLog(string.format(">>>>>>> storyoptionid: %s not found options, func: %s", tostring(storyoptionid), Function()))
+        return false
+    end
+
+    local option = storyoption_base.options[option_index]
+    
+    if option == nil then
+        cc.WriteLog(string.format(">>>>>>> storyoptionid: %s options not found index: %s, func: %s", tostring(storyoptionid), tostring(option_index), Function()))
+        return false
+    end
+
+    if option.script_func == nil or type(option.script_func) ~= 'function' then
+        cc.WriteLog(string.format(">>>>>>> storyoptionid: %s script_func not exist or not function, func: %s", tostring(storyoptionid), Function()))
+        return false
+    end
+
+    cc.WriteLog(string.format("entityid: %d, event: %d,%d,%s, optionid: %d, option:%d,%s", entityid,
+        self.trigger_event.id, self.trigger_event.baseid, self.trigger_event.base.name.cn,
+        storyoptionid, option_index, option.caption.cn
+    ))
+
+    self.trigger_event.touch = true
+    
+    option.script_func(
+                entityid, 
+                self.copy.baseid, 
+                self.copy:current_layer(),
+                self.trigger_event.baseid,
+                self.copy:current_seed()
+            )
+
+    return true
+end
+
+
+--
+-- bool trigger_linked_event(entityid, sceneid)
+--
+function Scene:trigger_linked_event(entityid, sceneid)
+    local entity = self.members[entityid]
+    if entity == nil then
+        cc.WriteLog(string.format(">>>>>>> not found entity: %s, func: %s", tostring(entityid), Function()))
+        return false
+    end
+    
+    if self.trigger_event == nil then -- trigger_event must be hold
+        cc.WriteLog(string.format(">>>>>>> self.trigger_event is nil, func: %s", Function()))
+        return false
+    end
+
+    if not self.trigger_event.accomplish and self.trigger_event.touch then
+        if self.trigger_event.base.endtype == EventEnd.REWARD then    
+            self:accomplish_event(self.trigger_event)    -- accomplish event when receive reward
+        end
+    end
+        
+    if not self.trigger_event.accomplish then -- not accomplish and not touch event
+        cc.WriteLog(string.format(">>>>>>> self.trigger_event: %d not accomplish, func: %s", self.trigger_event.baseid, Function()))
+        return false
+    end
+    
+    assert(self.trigger_event.content ~= nil)
+    
+    if self.trigger_event.content.trigger_event_baseid == nil then
+--        cc.WriteLog(string.format(">>>>>>> self.trigger_event.content.trigger_event_baseid is nil, func: %s", Function()))
+        return false
+    end
+
+    -- NOTE: put it to self.events but don't put it to scene
+    local linked_event = self:create_event_object(self.trigger_event.content.trigger_event_baseid, self.trigger_event.coord)
+    cc.WriteLog(string.format("entityid: %d, event:%d,%d,%s, trigger_linked_event: %d,%d,%s", entityid,
+        self.trigger_event.id, self.trigger_event.baseid, self.trigger_event.base.name.cn,
+        linked_event.id, linked_event.baseid, linked_event.base.name.cn
+    ))
+    self.trigger_event = linked_event
+    
+    return self:dispatch_event(entityid, self.trigger_event)
+end
+
+--
+-- bool arrange_placeholder(entityid, target_entityid, placeholder)
+--
+function Scene:arrange_placeholder(entityid, target_entityid, placeholder)
+    local entity = self.members[entityid]
+    if entity == nil then
+        cc.WriteLog(string.format(">>>>>>> not found entity: %s, func: %s", tostring(entityid), Function()))
+        return false
+    end
+
+    return entity:arrange_placeholder(target_entityid, placeholder)
+end
+
+--
+-- bool destroy_puppet(entityid, target_entityid)
+--
+function Scene:destroy_puppet(entityid, target_entityid)
+    local entity = self.members[entityid]
+    if entity == nil then
+        cc.WriteLog(string.format(">>>>>>> not found entity: %s, func: %s", tostring(entityid), Function()))
+        return false
+    end
+
+    return entity:destroy_puppet(target_entityid)
+end
+
+--
+-- bool use_item(entityid, itemid)
+--
+function Scene:use_item(entityid, itemid)
+    local entity = self.members[entityid]
+    if entity == nil then
+        cc.WriteLog(string.format(">>>>>>> not found entity: %s, func: %s", tostring(entityid), Function()))
+        return false
+    end
+
+    return entity:use_item(itemid)
+end
+
+--
+-- bool remove_equip(entityid, slot)
+--
+function Scene:remove_equip(entityid, slot)
+    local entity = self.members[entityid]
+    if entity == nil then
+        cc.WriteLog(string.format(">>>>>>> not found entity: %s, func: %s", tostring(entityid), Function()))
+        return false
+    end
+
+    return entity:remove_equip(slot)
 end
 

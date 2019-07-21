@@ -8,24 +8,23 @@ module(...,package.seeall)
 
 --- 从若干个choice中选择一个choice
 -- choices = { a = 3,b = 4,... }或者{1,2,3,4}
--- @param choices    table   权重表
--- @param total       number  总权重
--- @param random_func       function  总权重
--- @return number  选择的id
-randomWeighted = function (choices,total,random_func)
+-- @param choices       权重表
+-- @param random_func   随机函数
+-- @return number       选择的id
+randomWeighted = function (choices,random_func)
 
     local total = table.total(choices)
 
-    local random_func = random_func or math.random
-    local threshold = random_func() * total
+    local random = random_func or math.random
+    local threshold = random() * total
     local last_choice
     for k,choice in pairs(choices) do
         threshold = threshold - choice
         if threshold <= 0 then
             return k
-        end        
+        end
         last_choice = k
-    end    
+    end
     return last_choice
 end
 
@@ -35,15 +34,15 @@ end
 --@param sigma number 标准差
 --@param random_func function 返回一个01之间的随机值
 randomNormal = function (mu,sigma,random_func)
-    local random_func = random_func or math.random
-    v1 = random_func();
-    v2 = random_func();
+    local random = random_func or math.random
+    v1 = random();
+    v2 = random();
     num = math.sqrt(-2 * math.log(v1)) * math.cos(math.pi * 2 * v2);
     return num * sigma + mu;
 end
 
 --- 线性同余器,提供一个种子,返回一个随机函数
--- @usage local random = newRandom(0) 
+-- @usage local random = newRandom(0)
 --local rndValue = random()
 -- @param seed 种子
 -- @return closure 线性同余的fn
@@ -73,19 +72,19 @@ function SRSWOR(tbl,pickcount,random_func)
     local random_func  = random_func or math.random
 
     local total = #tbl
-    local pickcount = pickcount or 1   
+    local pickcount = pickcount or 1
 
     local index_table = {}
     for i = 1, total do index_table[i] = i end
 
     local result = {}
-    local rnd = 0
+    -- local rnd = 0
     -- 不放回抽取
     for i = 1, pickcount do
-        rnd = random_func(total)
+        local rnd = random_func(total)
         result[i] = tbl[index_table[rnd]]
         table.remove(index_table,rnd)
-        total = total - 1        
+        total = total - 1
     end
 
     return result

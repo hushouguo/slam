@@ -1,63 +1,65 @@
 --- Buff 表 脚本
 
 --++++++++++++++++++++++++++++++++++++++
-module(...,package.seeall)
+-- module(...,package.seeall)
+local M  ={}
 
 
---[[
 
-文档
+-- local CardExt   = require "modules.cardext"
 
-BUFFBreakPoint:
-    BreakPoint.ROUND_BEGIN_A    --回合开始A
-    BreakPoint.ROUND_BEGIN_Z    --回合开始Z
-    BreakPoint.CARD_DEAL_A      --抽卡前
-    BreakPoint.CARD_DEAL_Z      --抽卡后
-    BreakPoint.CARD_PLAY_A      --出卡前
-    BreakPoint.CARD_PLAY_Z      --出卡后
-    BreakPoint.ROUND_END_A      --回合结束前
-    BreakPoint.ROUND_END_Z      --回合结束后
-    BreakPoint.CARD_DISCARD_A   --弃卡前
-    BreakPoint.CARD_DISCARD_Z   --弃卡后
---]]
+
+--  BUFF.BUFFBreakPoint:
+local ROUND_BEGIN_A  = BreakPoint.ROUND_BEGIN_A    --回合开始A
+local ROUND_BEGIN_Z  = BreakPoint.ROUND_BEGIN_Z    --回合开始Z
+local CARD_DEAL_A    = BreakPoint.CARD_DEAL_A      --抽卡前
+local CARD_DEAL_Z    = BreakPoint.CARD_DEAL_Z      --抽卡后
+local CARD_PLAY_A    = BreakPoint.CARD_PLAY_A      --出卡前
+local CARD_PLAY_Z    = BreakPoint.CARD_PLAY_Z      --出卡后
+local ROUND_END_A    = BreakPoint.ROUND_END_A      --回合结束前
+local ROUND_END_Z    = BreakPoint.ROUND_END_Z      --回合结束后
+local CARD_DISCARD_A = BreakPoint.CARD_DISCARD_A   --弃卡前
+local CARD_DISCARD_Z = BreakPoint.CARD_DISCARD_Z   --弃卡后
+
+
+-- setfenv(1,M)
 
 --- 无
-common = function(entity, card, buff, pick_entity, bp) end
+function M.none (...) end
+--- 常驻Flag
+function M.commonFlagBuff (...) end
 
+--- 回合结束时减一层
+function M.roundEndReduce (entity, card, buff, pick_entity, bp)
 
--- BUFF层数自减
--- @param buff buff实例
-local _buffSelfReduce = function(buff)
-    -- check
-    if buff == nil then return end
-    if buff.entity == nil then 
-        print("buffSelfReduce 错误,buffentity为空"..table.serialize(buff))
-        return
-    end
-    buff:layers_add(-1)
-    if buff.layers == 0 then        
-        buff.entity:buff_remove(buff.id)        
+    if _check(buff) then return end
+
+    if bp == ROUND_END_Z then
+        -- MatchUtil.buffSelfReduce(buff)
+        BuffExt.reduce(buff)
     end
 end
 
 --- 回合开始时减一层
--- 比如易伤,
-commonTurnBase = function(entity, card, buff, pick_entity, bp)
-    assert(buff ~= nil)
-    if bp == BreakPoint.ROUND_BEGIN_A then
-        _buffSelfReduce(buff)
+function M.roundBeginReduce (entity, card, buff, pick_entity, bp)
+
+    if _check(buff) then return end
+
+    if bp == ROUND_BEGIN_A then
+        -- MatchUtil.buffSelfReduce(buff)
+        BuffExt.reduce(buff)
     end
 end
 
---- 常驻Flag
-commonFlagBuff = function(entity, card, buff, pick_entity, bp) end
-
 -- 护甲
-armor = function(entity, card, buff, pick_entity, bp)
-    assert(buff ~= nil)
-    if bp == BreakPoint.ROUND_BEGIN_Z then
-        print("=============回合开始销毁护甲")
-        local is_keep = MatchUtil.queryFlagEntityKeepARM(who)
+function M.armor(entity, card, buff, pick_entity, bp)
+
+    if _check(buff,entity) then return end
+
+    if bp == ROUND_BEGIN_Z then
+        -- print("=============回合开始销毁护甲")
+        -- local is_keep = MatchUtil.queryFlagEntityKeepARM(entity)
+        local is_keep = EntityExt.isKeepARM(entity)
         if not is_keep then
             entity:buff_remove(buff.id)
         end
@@ -65,122 +67,129 @@ armor = function(entity, card, buff, pick_entity, bp)
 end
 
 -- 多层护甲
-multArmor = function(entity, card, buff, pick_entity, breakpoint)
-    assert(buff ~= nil)
+-- 回合开始获得护甲，受到伤害层数-1
+function M.multArmor(entity, card, buff, pick_entity, bp)
 
-    if breakpoint == BreakPoint.ROUND_END_A then
-        local amount = buff.layers or 0
-        MatchUtil.entityGainArmorBuffNotByCard(entity,amount)
+    if _check(buff,entity) then return end
+
+    if bp == ROUND_BEGIN_A then
+        -- MatchUtil.entityGainArmorBuffNotByCard(entity,buff.layers or 0)
+        EntityExt.addARMBuff(entity,buff.layers or 0)
+    end
+
+    if bp == ENTITY_SUFFER_DAMAGE then
+        -- MathcUtil.buffSelfReduce(buff)
+        BuffExt.reduce(buff)
+    end
+end
+
+-- 金属化
+-- 回合结束获得护甲
+function M.metallicize (entity, card, buff, pick_entity, bp)
+
+    if _check(buff,entity) then return end
+
+    if bp == ROUND_END_Z then
+        -- MatchUtil.entityGainArmorBuffNotByCard(entity,buff.layers or 0)
+        EntityExt.addARMBuff(entity,buff.layers or 0)
     end
 end
 
 -- 再生
-rejuvenation = function(entity, card, buff, pick_entity, breakpoint)
-    assert(buff~=nil)
-    if breakpoint == BreakPoint.ROUND_END_A then
-        MatchUtil.entityTakeHeal(entity,buff.layers)
-        _buffSelfReduce(buff)
+function M.rejuvenation (entity, card, buff, pick_entity, bp)
+
+    if _check(buff,entity) then return end
+
+    if bp == ROUND_END_A then
+        -- MatchUtil.entityTakeHeal(entity,buff.layers)
+        -- MatchUtil.buffSelfReduce(buff)
+        EntityExt.takeHeal(entity,buff.layers or 0)
     end
 end
 
 -- 中毒Debuff
-poison = function(entity, card, buff, pick_entity, breakpoint)
-    assert(buff ~= nil)                                                                                                                                                                                     
-    if breakpoint == BreakPoint.ROUND_BEGIN_A then        
-        local layers = buff.layers
-        if layers > 0 then
-            MatchUtil.entityLoseHp(entity,buff.layers)
-            _buffSelfReduce(buff)
-        end
-    end    
+function M.poison (entity, card, buff, pick_entity, bp)
+
+    if _check(buff,entity) then return end
+
+    if bp == ROUND_BEGIN_A then
+        -- MatchUtil.entityLoseHp(entity,buff.layers)
+        EntityExt.loseHp(entity,buff.layers)
+        -- MatchUtil.buffSelfReduce(buff)
+        BuffExt.reduce(buff)
+    end
 end
 
--- 风怒
--- ctx 使用范例 
--- ctx已经被干掉了
-windfury = function(entity, card, buff, pick_entity, breakpoint)
-    -- assert(buff ~= nil)
+-- 风怒 每使用3张攻击牌获得一张临时的【攻击牌】
+-- 思路，原先使用临时计数器，现在使用BUFF层数
+-- 初始3层，每使用一张攻击牌，层数减一，然后层数为0的时候触发攻击牌，然后buff层数增加到layer_value
+function M.windfury (entity, card, buff, pick_entity, bp)
 
+    if _check(buff,entity) then return end
 
-    if entity == nil then return end
-
-    entity._temp = entity._temp or {use_attack_card_count = 0}
-    
-    -- export = export or {}
-    -- export.ctx = export.ctx or {}
-    -- local ctx = export.ctx
-
-    local temp = 10150           -- 临时普通攻击
-
-    -- 回合开始 时设置计数器
-    if breakpoint == BreakPoint.ROUND_BEGIN_A then
-        entity._temp.use_attack_card_count = 0
-    end
     -- 出牌后 加牌
-    if breakpoint == BreakPoint.CARD_PLAY_Z then        
-        entity._temp.use_attack_card_count = (entity._temp.use_attack_card_count or 0) + 1
-        if entity._temp.use_attack_card_count >= 3 then
-            entity:stack_hold_newone(temp)
-            entity._temp.use_attack_card_count = 0
-            print("触发风怒,获得一张【普通攻击】!!")
+    if bp == CARD_PLAY_Z then
+        if card == nil then return end
+
+        if card.categroy == CardCategory.AGGRESSIVE then
+            buff:layers_add(-1)
+            if buff.layers == 0 then
+                -- MatchUtil.entityHandAddNewCard(entity,{10150})
+                EntityExt.handAddNewCard(entity,{10150})
+                buff:layers_add(buff.base.layer_value)
+            end
         end
     end
 end
 
--- 余震
-aftershock = function(entity, card, buff, pick_entity, bp)
-    assert(buff ~= nil)
-    export.ctx = export.ctx or {}
-    local ctx = export.ctx
-
-    -- 回合开始时,设置计数器
-    if bp == BreakPoint.ROUND_BEGIN_A then
-        ctx.buff20010_counter =  0
-    end
-    -- 回合结束前,对所有目标造成伤害
-    if bp == BreakPoint.ROUND_END_A then
-        local entities = GetAllEnemy();
-        for _,e in ipairs(entities) do
-            MatchUtil.entityTakeDamage(e,ctx.buff20010_counter)
-        end
-    end
-    -- 出牌后 增加计数器
-    if bp == BreakPoint.CARD_PLAY_Z then
-        if card or card.base.category == CardCategory.AGGRESSIVE then
-            ctx.buff20010_counter = ctx.buff20010_counter + 1
-        end
-    end
-end
 
 -- 每回合开始获得一张GM牌
-gm = function(entity, card, buff, pick_entity, bp)
-    assert(buff~=nil)
-    local gm_cardbaseid = 10000
-    if bp == BreakPoint.ROUND_BEGIN_Z then
-        MatchUtil.entityHandAddNewCard(entity,{10000})
-        -- entity:stack_hold_newone(gm_cardbaseid) 
+function M.gm (entity, card, buff, pick_entity, bp)
+
+    if _check(buff,entity) then return end
+
+    if bp == ROUND_BEGIN_Z then
+        -- MatchUtil.entityHandAddNewCard(entity,{10000})
+        EntityExt.handAddNewCard(entity,{10000})
     end
+        -- entity:stack_hold_newone(gm_cardbaseid)
 end
 
 -- -- 双发
 -- doubleUse = function(entity, card, buff, pick_entity, breakpoint)
 --     assert(buff ~= nil)
 --     -- 出牌后
---     if breakpoint = BreakPoint.CARD_PLAY_Z then
+--     if breakpoint = CARD_PLAY_Z then
 --         if card.base.category == CardCategory.AGGRESSIVE then
 
---         end 
+--         end
 --     end
 -- end
 
 
--- 残暴 回合开始损失一点生命值,抽一张牌
+-- 残暴 回合开始后损失[层]点生命值,抽[层]张牌
 brutality = function(entity,card,buff,pick_entity,bp)
-    assert(buff~=nil)
-    if bp == BreakPoint.ROUND_BEGIN_Z then
-        MatchUtil.entityLoseHp(entity,1)
-        MatchUtil.entityDrawCard(entity,1)
+
+    if _check(buff,entity) then return end
+
+    if bp == ROUND_BEGIN_Z then
+        EntityExt.loseHp(entity,buff.layers)
+        -- MatchUtil.entityLoseHp(entity,buff.layers)
+        -- MatchUtil.entityDrawCard(entity,buff.layers)
+        EntityExt.drawCard(entity,buff.layers)
+    end
+end
+
+-- 额外能量,回合开始后额外获得layers能量
+moreMpEachTurn = function(entity,card,buff,pick_entity,bp)
+
+    if _check(buff,entity) then return end
+
+    if bp == ROUND_BEGIN_Z then
+        -- MatchUtil.entityGainMp(entity,buff.layers)
+        EntityExt.addMp(entity,buff.layers)
     end
 end
 
 
+return  M

@@ -1,11 +1,21 @@
 ---
 ---   lua 内置库的一些扩展方法
 ---   string,table,math
---- 
+---
+
+--- 函数参数检查
+-- @param ... 等待检查的参数列表
+-- @return 返回true 表示检查没通过,false 表示通过
+_check = function (...)
+    for i = 1, select('#', ...) do
+        if not select(i, ...) then return true end
+    end
+    return false
+end
 
 
 --+++++++++++++++++++++++++++++++++++++++++++++++++++
---               table 
+--               table
 --+++++++++++++++++++++++++++++++++++++++++++++++++++
 do
     --- 序列化table表
@@ -41,7 +51,7 @@ do
         return lua
     end
 
-    --- 数组映射
+    --- 函数映射
     -- @param tbl table 数组
     -- @param fn  function 映射函数
     -- @return table 映射后的新表
@@ -67,7 +77,7 @@ do
 
     --- 表格求和
     -- @param tbl table 数组
-    -- @return number 
+    -- @return number
     table.itotal = function (tbl)
         local r = 0
         for i,v in ipairs(tbl) do
@@ -78,7 +88,7 @@ do
 
     --- 字典求和
     -- @param tbl table 字典
-    -- @return number 
+    -- @return number
     table.total = function (tbl)
         local r = 0
         for k,v in pairs(tbl) do
@@ -108,7 +118,7 @@ do
     -- @param tbl table 数组
     -- @param check_func function 筛选函数
     -- @return table 对象列表
-    function table.ifilter (tbl,check_func) 
+    function table.ifilter (tbl,check_func)
         local r = {}
         for i,v in ipairs(tbl) do
             if check_func(v) then
@@ -122,7 +132,7 @@ do
     -- @param dict table
     -- @param check_func function 筛选函数
     -- @return table 对象列表
-    function table.filter (dict,check_func) 
+    function table.filter (dict,check_func)
         local r = {}
         for k,v in pairs(dict) do
             if check_func(v) then
@@ -134,9 +144,9 @@ do
 end
 
 --+++++++++++++++++++++++++++++++++++++++++++++++++++
---               math 
+--               math
 --+++++++++++++++++++++++++++++++++++++++++++++++++++
-do 
+do
     --- clamp01
     -- @param v number
     -- @return 截取后的结果
@@ -175,8 +185,8 @@ do
 end
 
 --+++++++++++++++++++++++++++++++++++++++++++++++++++
---               string 
--- API   : string.fun(self,...) 
+--               string
+-- API   : string.fun(self,...)
 --       : self:func(...)
 --+++++++++++++++++++++++++++++++++++++++++++++++++++
 do

@@ -10,29 +10,27 @@ Match = {
 	isdone = nil, -- indicate whether the match has done
 	
 	entities = nil, -- {[entityid = entity, ...}
-	monsters = nil, -- {[entityid = entity, ...}, will be destroy when the match is over
-	stat_entity_size = function(self, side)
+	living_entity_size = function(self, side)
 		local size = 0
 		for _, entity in pairs(self.entities) do
-			if entity.side == side then size = size + 1 end
+			if entity.side == side and not entity.death then size = size + 1 end
 		end
 		return size
 	end,
-	dead_entities = nil, -- {[entityid = entity, ...}
 
     isstart = nil, -- bool
-
     
 	constructor = function(self, copy)
 	    self.copy = copy
+	    cc.WriteLog(string.format("++++++++++ match constructor"))
 	    
         self.entities = {}
-        self.monsters = {}
-        self.dead_entities = {}
         
     	self.round_total = 0
     	self.round_entityid = nil
-    	self.round_side = Side.ALLIES
+		self.round_iterator = nil
+		self.round_list = {}
+		self.round_list_size = nil
         
 		self.side_victory = nil
 		self.isdone = false
@@ -40,76 +38,48 @@ Match = {
 	end,
 
 	destructor = function(self)
+	    cc.WriteLog(string.format("---------- match destructor"))	
     	cc.WriteLog(string.format("比赛结束, 胜利方: %s", (self.side_victory == Side.ALLIES and "allies" or "enemy")))
     	
-    	-- notify all of living entity
     	for _, entity in pairs(self.entities) do
     		if entity.side == Side.ALLIES then -- only member
-    			cc.MatchEnd(entity.id, side_victory == entity.side)
     			entity:exit_match(self)
+    	    else
+    	        cc.WriteLog(string.format("destroy monster: %d from match", entity.id))
+    	        entity:exit_match(self)
+    	        entity:destructor()
     		end
     	end
+    	table.clear(self.entities)
     	
-    	-- notify all of death entity
-    	for _, entity in pairs(self.dead_entities) do
-    		if entity.side == Side.ALLIES then -- only member
-    			cc.MatchEnd(entity.id, side_victory == entity.side)
-    			entity:exit_match(self)
-    		end
-    	end    	
-
-        -- destroy all of monsters	
-	    for entityid, _ in pairs(self.monsters) do
-	        cc.WriteLog(string.format("destroy monster: %d from match", entityid))
-	        cc.EntityDestroy(entityid)
-	    end
-	    
-	    -- TODO: destroy card, item, buff etc ... 
+    	cc.MatchEnd(self.copy.entity_master.id, self.side_victory == self.copy.entity_master.side)
 	end,
 	
 
 	--
 	-- round list
-	round_total = nil, -- 
+	round_total = nil,
 	round_entityid = nil,
-	round_side = nil, -- Side.ALLIES,
-	round_list = nil, -- {[side] = {[entityid] = round_total, ...}, ...}
+	round_iterator = nil,
+	round_list = nil, -- { entityid, ... }
+	round_list_size = nil,
 	init_round_list = function(self)
-		self.round_total = 1
+		self.round_total = 0
 		self.round_entityid = nil
-		self.round_side = Side.ALLIES
-		self.round_list = {[Side.ALLIES] = {}, [Side.ENEMY] = {}}
-		for _, entity in pairs(self.entities) do
-		    self.round_list[entity.side][entity.id] = 0
-		end
-	end,		
+		self.round_iterator = 0
+		self.round_list_size = table.size(self.round_list)
+		assert(self.round_list_size >= 2)
+	end,
 	next_round_entity = function(self)
-	    local function select_round_entity(self)
-    	    local t = self.round_list[self.round_side]
-    	    for entityid, round_total in pairs(t) do
-    	        local entity = self.entities[entityid] -- filter death entity
-                if entity ~= nil and round_total < self.round_total then
-                    return entityid
-                end
-    	    end
-    	    return nil
-	    end
-
-	    local select_entityid = select_round_entity(self)
-	    if select_entityid ~= nil then
-	        self.round_entityid = select_entityid
-	        self.round_list[self.round_side][self.round_entityid] = self.round_total
-	        return self.round_entityid
-	    end
-	    
-		self.round_total = self.round_total + 1
-		self.round_side = (self.round_side == Side.ALLIES and Side.ENEMY or Side.ALLIES)		
-
-		select_entityid = select_round_entity(self)
-		assert(select_entityid ~= nil)
-	    self.round_entityid = select_entityid
-	    self.round_list[self.round_side][self.round_entityid] = self.round_total
-	    return self.round_entityid
+    	self.round_total = self.round_total + 1
+	    while true do
+    		self.round_iterator = self.round_iterator + 1
+    		if self.round_iterator > self.round_list_size then self.round_iterator = 1 end
+    		self.round_entityid = self.round_list[self.round_iterator]
+    		assert(self.round_entityid ~= nil)
+    		if not self.entities[self.round_entityid].death then break end
+		end
+		return self.round_entityid
 	end,
 
 
@@ -122,21 +92,14 @@ Match = {
 	end,	
 
 	--
-	-- void prepare()
+	-- void add_member(entity)
 	--
-	prepare = function(self)
-	    assert(not self.isdone)
-	    cc.WriteLog(string.format("match prepare"))
-	end,
-
-	--
-	-- void add_member(entity, side)
-	--
-	add_member = function(self, entity, side)
+	add_member = function(self, entity)
 	    assert(not self.isdone)
         assert(self.entities[entity.id] == nil)
 		self.entities[entity.id] = entity
-		cc.WriteLog(string.format("add member: %d, %d, side: %d to match", entity.id, entity.baseid, side))
+		cc.WriteLog(string.format("add member: %d, %d, %s, side: %d to match", entity.id, entity.baseid, entity.base.name.cn, entity.side))
+		table.insert(self.round_list, entity.id) -- order by add
 	end,
 
 	--
@@ -144,32 +107,49 @@ Match = {
 	--
 	add_monster = function(self, entity_baseid, side) 
 	    assert(not self.isdone)
-	    local entityid = cc.EntityNew(entity_baseid)
-        assert(self.entities[entityid] == nil and self.monsters[entityid] == nil)
-        local entity = Entity:new(self.copy, entityid, side)
-		self.entities[entityid] = entity
-		self.monsters[entityid] = entity
+        local entity = Entity:new(self.copy, cc.EntityNew(entity_baseid), side, nil, Span.COPY)
+        assert(self.entities[entity.id] == nil)
+		self.entities[entity.id] = entity
 		cc.WriteLog(string.format("add monster: %d, %d, side: %d to match", entity.id, entity.baseid, side))
+		table.insert(self.round_list, entity.id) -- order by add
+	end,
+	
+	--
+	-- {entityid = Side, ...} prepare()
+	--
+	prepare = function(self)
+	    assert(not self.isdone)
+	    assert(not self.isstart)
+	    assert(self:living_entity_size(Side.ALLIES) > 0 and self:living_entity_size(Side.ENEMY) > 0)
+	    self:init_round_list()
+    	local res = {}
+    	for _, entity in pairs(self.entities) do
+    	    res[entity.id] = entity.side
+    	end
+		cc.WriteLog(string.format("match prepare, allies size: %d, enemy size: %d", 
+		    self:living_entity_size(Side.ALLIES), self:living_entity_size(Side.ENEMY))
+		    )
+    	return res
 	end,
 
 	--
-	-- {entityid = Side, ...} start()
+	-- void start()
 	--
 	start = function(self)
 	    assert(not self.isdone)
 	    assert(not self.isstart)
-	    local allies_size = self:stat_entity_size(Side.ALLIES)
-	    local enemy_size = self:stat_entity_size(Side.ENEMY)
-	    assert(allies_size > 0 and enemy_size > 0)
-		self:init_round_list()
-	    --self.isstart = true
-    	local res = {}
+	    assert(self:living_entity_size(Side.ALLIES) > 0 and self:living_entity_size(Side.ENEMY) > 0)
+        self.isstart = true
+
+	    -- call enter_match to switch span
     	for _, entity in pairs(self.entities) do
-    	    res[entity.id] = entity.side
     	    entity:enter_match(self) -- reset information of match
     	end
-		cc.WriteLog(string.format("match start, allies size: %d, enemy size: %d", allies_size, enemy_size))
-    	return res
+    			    
+		self:next_round_entity()
+		assert(self.round_entityid ~= nil)
+		cc.WriteLog(string.format("比赛开始, round entityid: %d", self.round_entityid))
+		self.entities[self.round_entityid]:round_begin()
 	end,
 
 	--
@@ -186,7 +166,7 @@ Match = {
 	--
 	card_play = function(self, entityid, cardid, pick_entityid)
 	    assert(not self.isdone)
-        assert(entityid == self.round_entityid)		
+        assert(entityid == self.round_entityid)	
 		return self.entities[entityid]:card_play(cardid, pick_entityid)
 	end,
 
@@ -240,17 +220,14 @@ Match = {
         assert(self.entities[entityid] ~= nil)
         local entity = self.entities[entityid]
         assert(entity.death)
-        self.entities[entityid] = nil
-        assert(self.dead_entities[entityid] == nil)
-        self.dead_entities[entityid] = entity
 
-        local alliesSize = self:stat_entity_size(Side.ALLIES)
-        local enemySize = self:stat_entity_size(Side.ENEMY)
+        local allies_living_size = self:living_entity_size(Side.ALLIES)
+        local enemy_living_size = self:living_entity_size(Side.ENEMY)
 
-        if alliesSize == 0 or enemySize == 0 then
-    		self:done(alliesSize == 0 and Side.ENEMY or Side.ALLIES)
+        if allies_living_size == 0 or enemy_living_size == 0 then
+    		self:done(allies_living_size == 0 and Side.ENEMY or Side.ALLIES)
         else
-            if self.round_entityid == entityid then
+            if self.round_entityid == entityid then -- entity:enter_match, perhaps call here, self.round_entityid is nil
                 self:round_end(entityid)
             end
         end
@@ -292,11 +269,7 @@ end
 function Match:update(delta)
     assert(not self.isdone)
     if not self.isstart then
-        self.isstart = true
-		self:next_round_entity()
-		assert(self.round_entityid ~= nil)
-		cc.WriteLog(string.format("比赛开始, round entityid: %d", self.round_entityid))
-		self.entities[self.round_entityid]:round_begin()        
+        self:start()
     end
     for _, entity in pairs(self.entities) do entity:update(delta) end
 end

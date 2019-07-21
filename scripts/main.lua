@@ -9,7 +9,8 @@ require('tools/bit')
 require('tools/noise')
 require('tools/record')
 
-require('match/bag')
+require('match/item')
+require('match/pack')
 require('match/buff')
 require('match/card')
 require('match/entity')
@@ -21,6 +22,7 @@ require('copy/obstacle')
 require('copy/scene')
 require('copy/scene_creator')
 require('copy/copy')
+require('god')
 
 require("modules/module")
 
@@ -123,6 +125,98 @@ function lua_entry_copy_levelup_card(entityid, mapid, eventid, cardid)
     return g_copy:levelup_card(entityid, mapid, eventid, cardid)
 end
 
+--
+-- bool lua_entry_copy_levelup_card(entityid, mapid, eventid, cardid)
+function lua_entry_copy_levelup_card(entityid, mapid, eventid, cardid)
+    if g_copy == nil then 
+        cc.WriteLog(string.format(">>>>>> g_copy is nil, entityid: %d, func: %s", entityid, Function()))
+        return false
+    end
+
+    return g_copy:levelup_card(entityid, mapid, eventid, cardid)
+end
+
+--
+-- bool lua_entry_copy_levelup_puppet(entityid, mapid, eventid, target_entityid)
+function lua_entry_copy_levelup_puppet(entityid, mapid, eventid, target_entityid)
+    if g_copy == nil then 
+        cc.WriteLog(string.format(">>>>>> g_copy is nil, entityid: %d, func: %s", entityid, Function()))
+        return false
+    end
+
+    return g_copy:levelup_puppet(entityid, mapid, eventid, target_entityid)
+end
+
+--
+-- bool lua_entry_copy_choose_option(entityid, mapid, eventid, storyoptionid, option_index)
+function lua_entry_copy_choose_option(entityid, mapid, eventid, storyoptionid, option_index)
+    if g_copy == nil then 
+        cc.WriteLog(string.format(">>>>>> g_copy is nil, entityid: %d, func: %s", entityid, Function()))
+        return false
+    end
+
+    return g_copy:choose_option(entityid, mapid, eventid, storyoptionid, option_index)
+end
+
+--
+-- bool lua_entry_copy_trigger_linked_event(entityid, mapid)
+function lua_entry_copy_trigger_linked_event(entityid, mapid)
+    if g_copy == nil then 
+        cc.WriteLog(string.format(">>>>>> g_copy is nil, entityid: %d, func: %s", entityid, Function()))
+        return false
+    end
+
+    return g_copy:trigger_linked_event(entityid, mapid)
+end
+
+--
+-- bool lua_entry_use_item(entityid, itemid)
+function lua_entry_use_item(entityid, itemid)
+    if g_copy == nil then 
+        cc.WriteLog(string.format(">>>>>> g_copy is nil, entityid: %d, func: %s", entityid, Function()))
+        return false
+    end
+
+    return g_copy:use_item(entityid, itemid)
+end
+
+--
+-- bool lua_entry_remove_equip(entityid, slot)
+function lua_entry_remove_equip(entityid, slot)
+    if g_copy == nil then 
+        cc.WriteLog(string.format(">>>>>> g_copy is nil, entityid: %d, func: %s", entityid, Function()))
+        return false
+    end
+
+    return g_copy:remove_equip(entityid, slot)
+end
+
+--
+------------------- puppet -------------------
+--
+
+--
+-- bool lua_entry_arrange_placeholder(entityid, target_entityid, placeholder)
+function lua_entry_arrange_placeholder(entityid, target_entityid, placeholder)
+    if g_copy == nil then 
+        cc.WriteLog(string.format(">>>>>> g_copy is nil, entityid: %d, func: %s", entityid, Function()))
+        return false
+    end
+
+    return g_copy:arrange_placeholder(entityid, target_entityid, placeholder)
+end
+
+
+--
+-- bool lua_entry_destroy_puppet(entityid, target_entityid)
+function lua_entry_destroy_puppet(entityid, target_entityid)
+    if g_copy == nil then 
+        cc.WriteLog(string.format(">>>>>> g_copy is nil, entityid: %d, func: %s", entityid, Function()))
+        return false
+    end
+
+    return g_copy:destroy_puppet(entityid, target_entityid)
+end
 
 --
 ------------------- match -------------------
@@ -288,5 +382,11 @@ function lua_entry_match_abort(entityid)
     end
 
     g_copy.scene:abort_match(entityid)
+end
+
+--
+-- God Command
+function lua_entry_god_command(args)
+    return God.dispatch(args)
 end
 

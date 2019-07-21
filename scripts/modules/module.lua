@@ -1,23 +1,29 @@
 --- 策划脚本入口
--- @author bw 
-
+-- @author bw
 
 require 'modules.extend'
 
-Random = require 'modules.random'
+Random       = require 'modules.random'
 
-MatchUtil = require 'modules.matchutil'
+-- data
+SPLBUFF      = require "modules.splecialbuff"
+
+-- ext
+EntityExt    = require "modules.entityext" -- TODO 整理require
+BuffExt      = require "modules.buffext"
+
+-- match
+MatchUtil    = require 'modules.matchutil'
+
+BuffScript   = require 'modules.buffscript'
+CardScript   = require 'modules.cardscript'
+
+-- copy
+CopyUtil     = require	'modules.copyutil'
+
+CopyScript   = require 'modules.copyscript'
+EventScript  = require 'modules.eventscript'
 
 
--- table script collection
-
-BuffScript = require 'modules.buffscript'
-CardScript = require 'modules.cardscript'
--- EntityScript
--- ItemScript
-CopyScript = require 'modules.copyscript'
-EventScript = require 'modules.eventscript'
-
--- MapScript
--- ObstacleScript
-
+ItemScript   = require 'modules.itemscript'
+OptionScript = require 'modules.optionscript'

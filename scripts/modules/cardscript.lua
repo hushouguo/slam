@@ -3,92 +3,109 @@
 
 --++++++++++++++++++++++++++++++++++++++
 
-module(...,package.seeall)
+-- module(...,package.seeall)
+local M = {}
 
 
---[[
 
-文档
-
-卡牌有如下BreakPoint
-
-    BreakPoint.CARD_PLAY_A      --出卡前 end
-    BreakPoint.CARD_PLAY_Z      --出卡后 end
-    BreakPoint.CARD_DISCARD_A   --弃卡前 end
-    BreakPoint.CARD_DISCARD_Z   --弃卡后 end
-
-
---]]
-
-
+-- 卡牌生效的BP
+local CARD_PLAY_A    =  BreakPoint.CARD_PLAY_A      --出卡前 end
+local CARD_PLAY_Z    =  BreakPoint.CARD_PLAY_Z      --出卡后 end
+local CARD_DISCARD_A =  BreakPoint.CARD_DISCARD_A   --弃卡前 end
+local CARD_DISCARD_Z =  BreakPoint.CARD_DISCARD_Z   --弃卡后 end
+-- setfenv(1,M)
 
 --- 卡牌通用脚本,基础的卡牌执行逻辑
--- @param entity 当前打出卡牌或拥有BUFF的实体对象, entity肯定不是nil
+-- @param player 当前打出卡牌或拥有BUFF的实体对象, entity肯定不是nil
 -- @param card   当前打出的卡牌对象, 如果不是打牌的BreakPoint, card 是 nil
 -- @param buff   当前处理的buff对象，如果不是处理buff的BreakPoint, buff 是 nil
 -- @param pick_entity   打牌时玩家自主选择的目标对象， pick_entity也可能是nil
--- @param breakpoint 是BreakPoint的枚举
-common = function (entity, card, buff, pick_entity, breakpoint)
-    if breakpoint == BreakPoint.CARD_PLAY_Z then
-        MatchUtil.useCard(entity, card, pick_entity)
+-- @param bp 是BreakPoint的枚举
+M.common = function (player, card, buff, pick_entity, bp)
+    if _check(player,card,bp) then return end
+        -- cc.EntityCardPlay(player.id, card.id, target_ids) -- notify client to show
+    if bp == CARD_PLAY_Z then
+        MatchUtil.useCard(player, card, pick_entity)
     end
 end
 
 
 -- 多重打击
-multiStrike = function (entity, card, buff, pick_entity, breakpoint)
-
+M.multiStrike = function (player, card, buff, pick_entity, bp)
+    if _check(player,card,bp) then return end
     local DrawEnemy = function(enemies)
         return enemies[table.random(enemies,#enemies)]
     end
 
-    if breakpoint == BreakPoint.CARD_PLAY_Z then
-
+    if bp == CARD_PLAY_Z then
         local enemies = MatchUtil.getAllEnemy()
-        local attack = MatchUtil.calcCardAttack(entity,card.base.damage_value)
-        -- local damage = (card.base.damage_value + entity.strength) * entity.weakness -- (攻击+力量)*虚弱
+        local attack  = MatchUtil.calcCardAttack(player,card.base.damage_value)
 
-        for i = 1,3 do -- 抽三次
+        local enemies_id = MatchUtil.getEntitiesId(enemies)
+        cc.EntityCardPlay(player.id, card.id, enemies_id)
+
+        for _ = 1,3 do -- 抽三次
             local target = DrawEnemy(enemies)
             if target then
-                MatchUtil.entityTakeDamage(target,attack)
+                EntityExt.takeDamage(target,attack)
             end
         end
     end
 end
 
 -- 巩固
-entrench = function (entity,card,buff,pick_entity,breakpoint)
-    if breakpoint == BreakPoint.CARD_PLAY_A then
-        local arm_buff =  MatchUtil.queryEntityBuff(entity,3004)
-        if arm_buff then
-            arm_buff:layers_add(arm_buff.layers)
-            -- MatchUtil.addARM(entity,ac)
-        end
+M.entrench = function (player,card,buff,pick_entity,bp)
+
+    if _check(player,card,bp) then return end
+
+    if bp == CARD_PLAY_Z then
+        cc.EntityCardPlay(player.id, card.id, {player.id})
+        EntityExt.scaleARMBuff(player,2)
     end
 end
 
 
 -- 全身撞击
-bodyslam = function(entity,card,buff,pick_entity,breakpoint)
-    if breakpoint == BreakPoint.CARD_PLAY_A then
-        if pick_entity == nil then return end
-        local arm_amount = MatchUtil.queryEntityBuffLayers(entity,3004)
+M.bodyslam = function(player,card,buff,pick_entity,bp)
 
-        local attack = MatchUtil.calcCardAttack(entity,arm_amount)
+    if _check(player,card,bp) then return end
+
+    if bp == CARD_PLAY_Z then
+        if pick_entity == nil then return end
+        cc.EntityCardPlay(player.id, card.id, pick_entity.id)
+        local arm_amount = MatchUtil.queryEntityArmor(player)
+        -- print("===========================================全身撞击")
+        local attack = MatchUtil.calcCardAttack(player,arm_amount)
         if attack > 0 then
-            MatchUtil.entityTakeDamage(pick_entity,attack,CardDamageType.PHYSICAL)
+            EntityExt.takeDamage(pick_entity,attack,CardDamageType.PHYSICAL)
         end
     end
 end
 
 -- 诅咒(TODO:有疑问,卡牌没有回合结束的回调,所以暂时无法处理)
-curse = function(entity,card,buff,pick_entity,breakpoint)
-    if breakpoint == BreakPoint.ROUND_END_A then
-        -- local n = entity.stack_hold_size
-        -- entity:hp_add(-n)
+M.curse = function(player,card,buff,pick_entity,bp)
+    -- if bp == BreakPoint.ROUND_END_A then
+    --     -- local n = entity.stack_hold_size
+    --     -- entity:hp_add(-n)
+    -- end
+end
+
+-- 流血,弃牌造成伤害
+M.blood = function (player,card,buff,pick_entity,bp)
+
+    if _check(player,card,bp) then return end
+
+    local card_base = card.base
+    -- cc.WriteLog("bbbbgl" .. card.id)
+    -- print(table.serialize(card))
+    -- assert(card_base~=nil)
+    if bp == CARD_DISCARD_A then
+        EntityExt.takeDamage(player,card_base.damage_value,card_base.damage_type) -- 扣血按表里填的弄
     end
 end
+
+
+--
 
 -- -- 冲锋
 -- rush = function(entity,card,buff,pick_entity,breakpoint)
@@ -108,3 +125,4 @@ end
 --     end
 -- end
 
+return  M

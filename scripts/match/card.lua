@@ -11,29 +11,32 @@ Card = {
 	base = nil, -- {field_name = field_value, ..., __base = {}}, related card.xls
 	script_func = nil,
 
-	constructor = function(self, entity, cardid, card_baseid)
+	constructor = function(self, entity, card_baseid)
 	    self.entity = entity
-		self.id = cardid
+		self.id = cc.CardNew(self.entity.id, card_baseid)
 		self.baseid = card_baseid
-		-- self.base = cc.LookupTable("Card", card_baseid)
-		-- assert(self.base ~= nil)
 		self:init_field()
 
 		self.script_func = self.base.script_func -- loadstring(self.base.script_func)
 		assert(self.script_func ~= nil and type(self.script_func) == "function")
+		
+		cc.WriteLog(string.format("entity: %d,%s, create card: %d, %d, %s", 
+		    self.entity.id, self.entity.base.name.cn, self.id, self.baseid, self.base.name.cn))
 	end,
 	
 	destructor = function(self)
-		cc.WriteLog(string.format("entity: %d,%s, destroy card: %d, %s", 
-		    self.entity.id, self.entity.base.name.cn, self.baseid, self.base.name.cn))
+		cc.WriteLog(string.format("entity: %d,%s, destroy card: %d, %d, %s", 
+		    self.entity.id, self.entity.base.name.cn, self.id, self.baseid, self.base.name.cn))
+		    
+        cc.CardDestroy(self.entity.id, self.id)
 	end
 }
 
-function Card:new(entity, cardid, card_baseid)
+function Card:new(entity, card_baseid)
 	local object = {}
 	self.__index = self
 	setmetatable(object, self)
-	object:constructor(entity, cardid, card_baseid)
+	object:constructor(entity, card_baseid)
 	return object
 end
 
@@ -57,7 +60,7 @@ function Card:check_field(name)
     }
     for _, reserve_field in pairs(reserve_fields) do
         if reserve_field == name then
-            cc.WriteLog(string.format(">>>>>>> Card.baseid: %d set_field, name: %s is a reserve field", self.baseid, tostring(name)))
+            cc.WriteLog(string.format(">>>>>>> Card.baseid: %d set_field, name: %s is a reserved field", self.baseid, tostring(name)))
             return false
         end
     end
@@ -77,7 +80,7 @@ function Card:set_field(name, value)
     if not self:check_field(name) then return end
     self.base[name] = table.dup(value)
     cc.WriteLog(string.format("Card: %d, set_field: %s to value: %s, old: %s", self.baseid, tostring(name), tostring(value), tostring(self.base.__base[name])))
-    cc.CardSetField(self.entity.id, self.id, name, self.base[name])
+    cc.CardSetField(self.entity.id, self.id, name, tostring(self.base[name]))
 end
 
 --
@@ -89,7 +92,7 @@ function Card:reset_field(name)
     if not self:check_field(name) then return end
     self.base[name] = table.dup(self.base.__base[name])
     cc.WriteLog(string.format("Card: %d, reset_field: %s to value: %s", self.baseid, tostring(name), tostring(self.base[name])))
-    cc.CardSetField(self.entity.id, self.id, name, self.base[name])
+    cc.CardSetField(self.entity.id, self.id, name, tostring(self.base[name]))
 end
 
 --
