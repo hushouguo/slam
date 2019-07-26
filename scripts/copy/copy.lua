@@ -10,8 +10,9 @@ Copy = {
 
     entity_master = nil,
 
-    current_layer = function(self) return record.copy_layer(self.entity_master.record, self.baseid) end,
-    current_seed = function(self) return record.seed(self.entity_master.record) end,
+	current_layer = function(self) return self.entity_master.copy_layer end,
+	current_seed = function(self) return self.entity_master.copy_seed end,
+	set_current_layer = function(self, layer) self.entity_master.copy_layer = layer end,
     
     seeds = nil, -- {[layer] = seed, ...}, dynamic generate seed for per layer    
     scene = nil, -- current scene
@@ -27,15 +28,11 @@ Copy = {
 		assert(self.script_func ~= nil and type(self.script_func) == "function")
 		self.enter_next_layer = false
 
-        self.entity_master = Entity:new(self, entityid, Side.ALLIES)        
-		
+        -- create entity master
+        self.entity_master = Entity:new(self, entityid, Side.ALLIES, nil, Span.COPY)
+        
 		self.seeds = {}
-		local copy_layer = record.copy_layer(self.entity_master.record, self.baseid)
-		if copy_layer == nil then 
-		    copy_layer = 1
-		    record.set_copy_layer(self.entity_master.record, self.baseid, copy_layer)
-		end
-		self.scene = self:create_scene(entityid, copy_layer)
+		self.scene = self:create_scene(entityid, self:current_layer())
 		assert(self.scene ~= nil)
 		self.members = {}
 		self:add_member(self.entity_master)
@@ -56,21 +53,33 @@ Copy = {
         assert(self.members[entity.id] == nil)
         self.members[entity.id] = entity
         assert(self.scene ~= nil)
+        
+        entity:enter_copy(self)
+        
         self.scene:add_member(entity)
     end,
     remove_member = function(self, entityid)
         local entity = self.members[entityid]
-        -- assert(entity ~= nil)
         if entity == nil then return end
-        
-        -- assert(self.scene ~= nil)
+
+        -- serialize 
+        if self.entity_master ~= nil and entity.id == self.entity_master.id then 
+            record.serialize(self.entity_master)
+        end
+                
 		if self.scene ~= nil then
 			self.scene:remove_member(entity)
 		end
-        entity:destructor()
-        self.members[entityid] = nil
+		        
         cc.ExitCopy(entityid)
-        if self.entity_master ~= nil and entityid == self.entity_master.id then self.entity_master = nil end
+        entity:exit_copy(self)
+        
+        self.members[entity.id] = nil
+        if self.entity_master ~= nil and entity.id == self.entity_master.id then 
+            self.entity_master = nil 
+        end
+        
+        entity:destructor()
     end
 }
 
@@ -97,7 +106,7 @@ function Copy:update(delta)
     if self.scene ~= nil then
         if self.enter_next_layer then
             self.enter_next_layer = false
-            local rc = self:enter_next_layer_scene(self.entity_master.id) -- try to enter map of next layer
+            local rc = self:enter_scene(self.entity_master.id, 1) -- try to enter map of next layer
 			if not rc then
 				self:remove_member(self.entity_master.id)
 			end
@@ -121,7 +130,8 @@ end
 function Copy:create_scene(entityid, layer)
     -- init seed of layer
     if self.seeds[layer] == nil then
-        _, self.seeds[layer] = NewRandom(record.seed(self.entity_master.record))(1, layer)
+--        _, self.seeds[layer] = NewRandom(record.seed(self.entity_master.record))(1, layer)
+        _, self.seeds[layer] = NewRandom(self:current_seed())(1, layer)
     end
     assert(self.seeds[layer] ~= nil)
     cc.WriteLog(string.format("CreateScene, copy: %d, layer: %d, seed: %d", self.baseid, layer, self.seeds[layer]))
@@ -135,30 +145,29 @@ function Copy:create_scene(entityid, layer)
     end
     assert(events.map_baseid ~= nil and events.map_events ~= nil)
 
-    -- retrieve accomplish_events & init new scene
-    local accomplish_events = record.copy_accomplish_events(self.entity_master.record, self.baseid, layer)
-    local sceneid = cc.MapNew(events.map_baseid) -- MapNew
-    return Scene:new(self, sceneid, events.map_baseid, self.seeds[layer], entityid, events.map_events, accomplish_events)
+    -- init new scene
+--TODO:    local accomplish_events = record.copy_events_accomplish(self.entity_master.record, self.baseid, layer)	
+    return Scene:new(self, events.map_baseid, self.seeds[layer], entityid, events.map_events, {})
 end
 
 
 --
--- bool enter_next_layer_scene(entityid)
+-- bool enter_scene(entityid, layer_add)
 --
-function Copy:enter_next_layer_scene(entityid)
+function Copy:enter_scene(entityid, layer_add)
     local entity = self.members[entityid]
     assert(entity ~= nil)
     
-    local layer = record.copy_layer(self.entity_master.record, self.baseid)
-    layer = layer + 1
+--    local layer = record.copy_layer(self.entity_master.record, self.baseid)
+	local layer = self:current_layer()
+    layer = layer + layer_add
     local scene = self:create_scene(entityid, layer)
     if scene == nil then
         cc.WriteLog(string.format(">>>>>>> enter next layer: %d scene failure, copy: %d", layer, self.baseid))
         return false
     end
 
-    -- save progress of current copy
-    record.set_copy_layer(self.entity_master.record, self.baseid, layer)
+    self:set_current_layer(layer)
 
     -- remove all of members from self.scene
     for _, entity in pairs(self.members) do
@@ -182,15 +191,6 @@ end
 
 
 --
--- void accomplish_event(event)
---
-function Copy:accomplish_event(event)
-    assert(self.scene ~= nil and self.entity_master.record ~= nil)
-    record.set_copy_accomplish_events(self.entity_master.record, self.baseid, self:current_layer(), event.baseid)
-    cc.AccomplishEvent(self.entity_master.id, self.scene.id, event.id)
-end
-
---
 -- bool move_request(entityid, sceneid, destx, desty)
 --
 function Copy:move_request(entityid, sceneid, destx, desty)
@@ -208,69 +208,9 @@ function Copy:move_request(entityid, sceneid, destx, desty)
 	    cc.WriteLog(string.format(">>>>>> self.scene.match is exist, entityid: %s, func: %s", tostring(entityid), Function()))
 	    return false
 	end
-    
-    local fullPath, event = self.scene:move_request(entityid, destx, desty)    
-    if fullPath ~= nil then
-        -- fullPath: { {x=?, y=?}, ... }
-        if table.size(fullPath) == 0 then 
-            cc.WriteLog(string.format(">>>>>> fullPath is empty, func: %s", Function()))
-            return false 
-        end -- unreachable destination
-        cc.MoveTrigger(entityid, sceneid, fullPath)
-    else
-        if event == nil then 
-            cc.WriteLog(string.format(">>>>>> event is nil, func: %s", Function()))
-            return false 
-        end -- scene:move_request failure
-        
-        assert(not event.accomplish and not event.reward)
-        cc.WriteLog(string.format("eventTrigger: %d, category: %d", event.baseid, event.base.category))
-        local eventDispatch = {
-            [EventCategory.MONSTER] = function(entityid, sceneid, event, content)
-                assert(content ~= nil)
-                table.dump(content, "event.Monster")
-                cc.EventMonsterTrigger(entityid, sceneid, event.id, content)
-                end,
 
-            [EventCategory.SHOP_BUY_CARD] = function(entityid, sceneid, event, content)
-                assert(content ~= nil)
-                table.dump(content, "event.BuyCard")
-                -- accomplish event when trigger event
-                self.scene:accomplish_event(event)
-                cc.EventShopTrigger(entityid, sceneid, event.id, content)
-                end,
-
-            [EventCategory.STORY] = function(entityid, sceneid, event, content)
-                assert(content ~= nil)
-                table.dump(content, "event.Story")
-                -- accomplish event when trigger event
-                self.scene:accomplish_event(event)
-                cc.EventOptionTrigger(entityid, sceneid, event.id, content)
-                end,
-
-            [EventCategory.SHOP_DESTROY_CARD] = function(entityid, sceneid, event, content)
-                assert(content ~= nil)
-                table.dump(content, "event.DestroyCard")
-                -- accomplish event when trigger event
-                self.scene:accomplish_event(event)
-                cc.EventDestroyCardTrigger(entityid, sceneid, event.id, content)
-                end,
-
-            -- trigger event to exit map
-            [EventCategory.EXIT] = function(entityid, sceneid, event, content)
-                self.enter_next_layer = true
-                cc.WriteLog(string.format("entity: %d enter next layer scene", entityid))
-                end,
-        }
-		if eventDispatch[event.base.category] ~= nil then
-        	eventDispatch[event.base.category](entityid, sceneid, event, self.scene:take_event_content(entityid, event))
-        else
-            cc.WriteLog(string.format(">>>>>> entityid: %d, event: %d,%d, category: %d unhandled", entityid, event.id, event.baseid, event.base.category))
-		end
-    end
-    return true
+    return self.scene:move_request(entityid, destx, desty)
 end
-
 
 --
 -- bool move(entityid, sceneid, x, y)
@@ -404,5 +344,131 @@ function Copy:levelup_card(entityid, sceneid, eventid, cardid)
 	end
 
 	return self.scene:levelup_card(entityid, sceneid, eventid, cardid)
+end
+
+--
+-- bool levelup_puppet(entityid, sceneid, eventid, target_entityid)
+--
+function Copy:levelup_puppet(entityid, sceneid, eventid, target_entityid)
+    if self.scene == nil then
+	    cc.WriteLog(string.format(">>>>>> self.scene is nil, entityid: %s, func: %s", tostring(entityid), Function()))
+        return false 
+    end
+
+    if self.scene.id ~= sceneid then
+	    cc.WriteLog(string.format(">>>>>> self.scene.id: %d, sceneid: %d, entityid: %s, func: %s", self.scene.id, sceneid, tostring(entityid), Function()))
+        return false 
+    end    
+    
+	if self.scene.match ~= nil then
+	    cc.WriteLog(string.format(">>>>>> self.scene.match is exist, entityid: %s, func: %s", tostring(entityid), Function()))
+	    return false
+	end
+
+	return self.scene:levelup_puppet(entityid, sceneid, eventid, target_entityid)
+end
+
+--
+-- bool choose_option(entityid, sceneid, eventid, storyoptionid, option_index)
+--
+function Copy:choose_option(entityid, sceneid, eventid, storyoptionid, option_index)
+    if self.scene == nil then
+	    cc.WriteLog(string.format(">>>>>> self.scene is nil, entityid: %s, func: %s", tostring(entityid), Function()))
+        return false 
+    end
+
+    if self.scene.id ~= sceneid then
+	    cc.WriteLog(string.format(">>>>>> self.scene.id: %d, sceneid: %d, entityid: %s, func: %s", self.scene.id, sceneid, tostring(entityid), Function()))
+        return false 
+    end    
+    
+	if self.scene.match ~= nil then
+	    cc.WriteLog(string.format(">>>>>> self.scene.match is exist, entityid: %s, func: %s", tostring(entityid), Function()))
+	    return false
+	end
+
+	return self.scene:choose_option(entityid, sceneid, eventid, storyoptionid, option_index)
+end
+
+
+--
+-- bool trigger_linked_event(entityid, sceneid)
+--
+function Copy:trigger_linked_event(entityid, sceneid)
+    if self.scene == nil then
+	    cc.WriteLog(string.format(">>>>>> self.scene is nil, entityid: %s, func: %s", tostring(entityid), Function()))
+        return false 
+    end
+
+    if self.scene.id ~= sceneid then
+	    cc.WriteLog(string.format(">>>>>> self.scene.id: %d, sceneid: %d, entityid: %s, func: %s", self.scene.id, sceneid, tostring(entityid), Function()))
+        return false 
+    end    
+    
+	if self.scene.match ~= nil then
+	    cc.WriteLog(string.format(">>>>>> self.scene.match is exist, entityid: %s, func: %s", tostring(entityid), Function()))
+	    return false
+	end
+
+	return self.scene:trigger_linked_event(entityid, sceneid)
+end
+
+--
+-- bool arrange_placeholder(entityid, target_entityid, placeholder)
+--
+function Copy:arrange_placeholder(entityid, target_entityid, placeholder)
+    if self.scene == nil then
+	    cc.WriteLog(string.format(">>>>>> self.scene is nil, entityid: %s, func: %s", tostring(entityid), Function()))
+        return false 
+    end
+    
+	if self.scene.match ~= nil then
+	    cc.WriteLog(string.format(">>>>>> self.scene.match is exist, entityid: %s, func: %s", tostring(entityid), Function()))
+	    return false
+	end
+
+	return self.scene:arrange_placeholder(entityid, target_entityid, placeholder)
+end
+
+
+--
+-- bool destroy_puppet(entityid, target_entityid)
+--
+function Copy:destroy_puppet(entityid, target_entityid)
+    if self.scene == nil then
+	    cc.WriteLog(string.format(">>>>>> self.scene is nil, entityid: %s, func: %s", tostring(entityid), Function()))
+        return false 
+    end
+    
+	if self.scene.match ~= nil then
+	    cc.WriteLog(string.format(">>>>>> self.scene.match is exist, entityid: %s, func: %s", tostring(entityid), Function()))
+	    return false
+	end
+
+	return self.scene:destroy_puppet(entityid, target_entityid)
+end
+
+--
+-- bool use_item(entityid, itemid)
+--
+function Copy:use_item(entityid, itemid)
+    if self.scene == nil then
+	    cc.WriteLog(string.format(">>>>>> self.scene is nil, entityid: %s, func: %s", tostring(entityid), Function()))
+        return false 
+    end
+
+    return self.scene:use_item(entityid, itemid)
+end
+
+--
+-- bool remove_equip(entityid, slot)
+--
+function Copy:remove_equip(entityid, slot)
+    if self.scene == nil then
+	    cc.WriteLog(string.format(">>>>>> self.scene is nil, entityid: %s, func: %s", tostring(entityid), Function()))
+        return false 
+    end
+
+    return self.scene:remove_equip(entityid, slot)
 end
 

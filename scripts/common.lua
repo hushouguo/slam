@@ -7,11 +7,19 @@ cc = _G
 --
 
 g_enable_debug = true
+g_enable_god = true
 
 g_runonclient = true    -- single
 g_runonserver = false   -- single or multiple
 
 g_copy = nil
+
+
+--
+------------------- setting -------------------
+--
+
+FLAG_monster_round_interval = 0 -- 1 second
 
 --
 ------------------- enum declare -------------------
@@ -121,6 +129,9 @@ EventCategory = {
 	SHOP_DESTROY_CARD	=	5,	--销卡商店
 	STORY 				=	6,	--剧情事件
 	SHOP_LEVELUP_CARD   =   7,  --升级卡商店
+	STORY_OPTION		=	8,	--选项事件
+	REWARD				=	9,	--奖励事件
+    SHOP_LEVELUP_PUPPET	=	10,	--升级宠物	
 }
 
 
@@ -162,6 +173,73 @@ BreakPoint = {
     ENTITY_SUFFER_DAMAGE=   15, -- 受到伤害
 }
 
+
+--
+-- EventEnd
+--
+EventEnd = {
+	NONE				=	0,	-- 永远不结束
+	TRIGGER				=	1,	-- 触发时结束
+	REWARD				=	2,	-- 操作时结束, 操作指：商店购买、销卡、升级卡牌、进入战斗等
+}
+
+
+--
+-- MapPolicy
+--
+MapPolicy = {
+	NONE				=	0,	-- 无策略
+	CHESSBOARD			=	1,	-- 棋盘地表, 棋盘地表要求map.obstacles里至少包含两块以上地砖
+}
+
+
+--
+-- placeholder
+--
+Placeholder = {
+    NONE                =   0,  -- 无排位
+    FRONT               =   1,  -- 前排
+    MIDDLE              =   2,  -- 中间
+    BACK                =   3,  -- 后排
+}
+
+--
+-- ItemQuality
+--
+ItemQuality = {
+	NONE				=	0,	-- 无品阶
+	WHITE				=	1,	-- 白
+	GREEN				=	2,	-- 绿
+	BLUE				=	3,	-- 蓝
+	PURPLE				=	4,	-- 紫
+	ORANGE				=	5,	-- 橙
+}
+
+--
+-- ItemCategory
+--
+ItemCategory = {
+	NONE				=	0,	-- 无种类
+	USABLE				=	1,	-- 可使用
+	EQUIPABLE			=	2,	-- 可装备
+	MATERIAL			=	3,	-- 材料类
+}
+
+--
+-- Span
+--
+Span = {
+    NONE                =   0,  -- 无持续范围
+    GLOBAL              =   9,  -- 全局
+    COPY                =   5,  -- 副本内 
+    MATCH               =   1,  -- 战斗内
+}
+
+--
+--
+--
+
+
 --
 ------------------- Card Settle -------------------
 --
@@ -182,7 +260,7 @@ function CardGetTargets(entity, card, pick_entityid)
                 return {}
             end
             
-            local target = g_copy.scene.match.entities[pick_entityid]
+            local target = entity.copy.scene.match.entities[pick_entityid]
             if target == nil then
 				cc.WriteLog(string.format(">>>>>>> entity: %d, card: %d,%d, pick_entityid is not exist", entity.id, card.id, card.baseid))
                 return {}
@@ -202,7 +280,7 @@ function CardGetTargets(entity, card, pick_entityid)
                 return {}
             end
             
-            local target = g_copy.scene.match.entities[pick_entityid]
+            local target = entity.copy.scene.match.entities[pick_entityid]
             if target == nil then
 				cc.WriteLog(string.format(">>>>>>> entity: %d, card: %d,%d, pick_entityid is not exist", entity.id, card.id, card.baseid))
                 return {}
@@ -225,39 +303,66 @@ function CardGetTargets(entity, card, pick_entityid)
         end,
         
         [CardTargetType.SELF_PUPPET] = function(entity, card, pick_entityid)
-            -- TODO: return puppet of mine
-            return {}
+            local targets = {}
+            for _, target in pairs(entity.pack.placeholders) do
+                if target.id ~= entity.id then
+                    targets[target.id] = target.id
+                end
+            end
+            if table.size(targets) > 0 then
+                local entityid = table.random(targets, table.size(targets), entity.random_func)
+                return {[entityid] = entityid}
+            end
+            return {} -- no puppet
         end,
         
         [CardTargetType.ALLIES_ALL] = function(entity, card, pick_entityid)
             local targets = {}
-            for targetid, target in pairs(g_copy.scene.match.entities) do
+            for targetid, target in pairs(entity.copy.scene.match.entities) do
                 if entity.side == target.side then targets[targetid] = targetid end
             end
             return targets
         end,
         
         [CardTargetType.ALLIES_PUPPET_ALL] = function(entity, card, pick_entityid)
-            -- TODO: return all puppets of allies
-            return {}
+            local targets = {}
+            for targetid, target in pairs(entity.copy.scene.match.entities) do
+                if entity.side == target.side then 
+                    for _, puppet in pairs(target.pack.placeholders) do
+                        if puppet.id ~= target.id then
+                            targets[puppet.id] = puppet.id
+                        end
+                    end
+                end
+            end
+            return targets
         end,
         
         [CardTargetType.ENEMY_ALL] = function(entity, card, pick_entityid)
             local targets = {}
-            for targetid, target in pairs(g_copy.scene.match.entities) do
+            for targetid, target in pairs(entity.copy.scene.match.entities) do
                 if entity.side ~= target.side then targets[targetid] = targetid end
             end
             return targets
         end,
         
         [CardTargetType.ENEMY_PUPPET_ALL] = function(entity, card, pick_entityid)
-            -- TODO: return all puppets of enemy
-            return {}
+            local targets = {}
+            for targetid, target in pairs(entity.copy.scene.match.entities) do
+                if entity.side ~= target.side then 
+                    for _, puppet in pairs(target.pack.placeholders) do
+                        if puppet.id ~= target.id then
+                            targets[puppet.id] = puppet.id
+                        end
+                    end
+                end
+            end
+            return targets
         end,
         
         [CardTargetType.ENEMY_RANDOM] = function(entity, card, pick_entityid)
             if pick_entityid ~= nil then
-                local target = g_copy.scene.match.entities[pick_entityid]
+                local target = entity.copy.scene.match.entities[pick_entityid]
                 if target == nil then
                     return {}
                 end
@@ -269,7 +374,7 @@ function CardGetTargets(entity, card, pick_entityid)
                 return {[pick_entityid] = pick_entityid}
             else
                 local targets = {}
-                for targetid, target in pairs(g_copy.scene.match.entities) do
+                for targetid, target in pairs(entity.copy.scene.match.entities) do
                     if entity.side ~= target.side then targets[targetid] = targetid end
                 end
                 local entityid = table.random(targets, table.size(targets), entity.random_func)
@@ -279,7 +384,7 @@ function CardGetTargets(entity, card, pick_entityid)
         
         [CardTargetType.ALLIES_RANDOM] = function(entity, card, pick_entityid)
             if pick_entityid ~= nil then
-                local target = g_copy.scene.match.entities[pick_entityid]
+                local target = entity.copy.scene.match.entities[pick_entityid]
                 if target == nil then
                     return {}
                 end
@@ -291,7 +396,7 @@ function CardGetTargets(entity, card, pick_entityid)
                 return {[pick_entityid] = pick_entityid}
             else
                 local targets = {}
-                for targetid, target in pairs(g_copy.scene.match.entities) do
+                for targetid, target in pairs(entity.copy.scene.match.entities) do
                     if entity.side == target.side then targets[targetid] = targetid end
                 end
                 local entityid = table.random(targets, table.size(targets), entity.random_func)
@@ -301,7 +406,7 @@ function CardGetTargets(entity, card, pick_entityid)
         
         [CardTargetType.ALL] = function(entity, card, pick_entityid)
             local targets = {}
-            for targetid, target in pairs(g_copy.scene.match.entities) do targets[targetid] = targetid end
+            for targetid, target in pairs(entity.copy.scene.match.entities) do targets[targetid] = targetid end
             return targets
         end,
     }
@@ -333,25 +438,25 @@ function CardSettleDamage(entity, card, target)
             -- no damage
         end,
         [CardDamageType.PHYSICAL] = function(entity, card, target)
-            local damage = (card.base.damage_value + entity.strength) * entity.weakness
+            local damage = (card.base.damage_value + entity.pack.strength) * entity.pack.weakness
             damage = math.floor(damage + 0.5)
             if damage < target.armor then
                 target:armor_add(-damage)
             else
-                damage = damage - target.armor
-                target:armor_add(-target.armor)
+                damage = damage - target.pack.armor
+                target:armor_add(-target.pack.armor)
                 target:hp_add(-damage)
                 cc.Damage(target.id, damage)
             end
         end,
         [CardDamageType.SPELL] = function(entity, card, target)
-            local damage = (card.base.damage_value + entity.strength) * entity.weakness
+            local damage = (card.base.damage_value + entity.pack.strength) * entity.pack.weakness
             damage = math.floor(damage + 0.5)
-            if damage < target.shield then
+            if damage < target.pack.shield then
                 target:shield_add(-damage)
             else
-                damage = damage - target.shield
-                target:shield_add(-target.shield)
+                damage = damage - target.pack.shield
+                target:shield_add(-target.pack.shield)
                 target:hp_add(-damage)
                 cc.Damage(target.id, damage)
             end
@@ -470,11 +575,11 @@ function BuffSettleDamage(target, buff)
         [CardDamageType.PHYSICAL] = function(target, buff)
             local damage = buff.layers * buff.base.damage_value * buff.base.layer_value
             if damage > 0 then
-                if damage < target.armor then
+                if damage < target.pack.armor then
                     target:armor_add(-damage)
                 else
-                    damage = damage - target.armor
-                    target:armor_add(-target.armor)
+                    damage = damage - target.pack.armor
+                    target:armor_add(-target.pack.armor)
                     target:hp_add(-damage)
                     cc.Damage(target.id, damage)
                 end
@@ -483,11 +588,11 @@ function BuffSettleDamage(target, buff)
         [CardDamageType.SPELL] = function(target, buff)
             local damage = buff.layers * buff.base.damage_value * buff.base.layer_value
             if damage > 0 then
-                if damage < target.shield then
+                if damage < target.pack.shield then
                     target:shield_add(-damage)
                 else
-                    damage = damage - target.shield
-                    target:shield_add(-target.shield)
+                    damage = damage - target.pack.shield
+                    target:shield_add(-target.pack.shield)
                     target:hp_add(-damage)
                     cc.Damage(target.id, damage)
                 end

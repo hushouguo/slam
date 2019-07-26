@@ -13,22 +13,26 @@ Obstacle = {
 
 	objectCategory = nil, -- GridObjectCategory
 
-	constructor = function(self, copy, obstacleid, obstacle_baseid, coord)
+	constructor = function(self, copy, obstacle_baseid, coord)
 	    self.copy = copy
-		self.id = obstacleid
+		self.id = cc.ObstacleNew(obstacle_baseid)
 		self.baseid = obstacle_baseid
 		self.base = cc.LookupTable("Obstacle", obstacle_baseid)
 		assert(self.base ~= nil)
 		self.coord = coord
 	    self.objectCategory = GridObjectCategory.OBSTACLE
+	end,
+
+	destructor = function(self)
+	    cc.ObstacleDestroy(self.id)
 	end
 }
 
-function Obstacle:new(copy, obstacleid, obstacle_baseid, coord)
+function Obstacle:new(copy, obstacle_baseid, coord)
 	local object = {}
 	self.__index = self
 	setmetatable(object, self)
-	object:constructor(copy, obstacleid, obstacle_baseid, coord)
+	object:constructor(copy, obstacle_baseid, coord)
 	return object
 end
 

@@ -14,33 +14,35 @@ Event = {
 	objectCategory = nil, -- GridObjectCategory
     
 	content = nil, -- event.script_func() ->
+	trigger = nil,
+	touch = nil,
 	accomplish = nil,
-	reward = nil,
 
-	constructor = function(self, copy, eventid, event_baseid, coord)
+	constructor = function(self, copy, event_baseid, coord)
 	    self.copy = copy
-		self.id = eventid
+		self.id = cc.EventNew(event_baseid)
 		self.baseid = event_baseid
 		self.base = cc.LookupTable("Event", event_baseid)
 		assert(self.base ~= nil)
 		self.script_func = self.base.script_func -- loadstring(self.base.script_func)
-		assert(self.script_func ~= nil and type(self.script_func) == "function")
+		assert(self.script_func ~= nil and type(self.script_func) == "function", 'event_baseid: ' .. tostring(event_baseid))
 		self.coord = coord
 	    self.objectCategory = GridObjectCategory.EVENT
 	    self.content = nil
+	    self.trigger = false
+	    self.touch = false
 	    self.accomplish = false
-	    self.reward = false
 	end,
 
 	destructor = function(self)
 	end
 }
 
-function Event:new(copy, eventid, event_baseid, coord)
+function Event:new(copy, event_baseid, coord)
 	local object = {}
 	self.__index = self
 	setmetatable(object, self)
-	object:constructor(copy, eventid, event_baseid, coord)
+	object:constructor(copy, event_baseid, coord)
 	return object
 end
 

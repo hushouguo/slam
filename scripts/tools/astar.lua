@@ -103,7 +103,7 @@ function FindPath(src, dest, step, radius, moveable)
 	if (xd <= step and src.y == dest.y) or (yd <= step and src.x == dest.x) then
 		if moveable(dest) then return {dest}
 		else 
-		    cc.WriteLog(string.format(">>>>> src:(%d,%d), dest:(%d,%d), step: %d, radius:%d, dest not moveable", src.x, src.y, dest.x, dest.y, step, radius))
+--		    cc.WriteLog(string.format(">>>>> src:(%d,%d), dest:(%d,%d), step: %d, radius:%d, dest not moveable", src.x, src.y, dest.x, dest.y, step, radius))
 		    return {} 
 		end
 	end

@@ -15,24 +15,22 @@ function Scene:tiles_init()
 end
 
 --
--- object create_event_object()
+-- object create_event_object(event_baseid, coord)
 --
 function Scene:create_event_object(event_baseid, coord)
-    local eventid = cc.EventNew(event_baseid)
-    assert(self.events[eventid] == nil)
-    local object = Event:new(self, eventid, event_baseid, coord)
-    self.events[eventid] = object
+    local object = Event:new(self, event_baseid, coord)
+    assert(self.events[object.id] == nil)
+    self.events[object.id] = object
     return object
 end
 
 --
--- object create_obstacle_object()
+-- object create_obstacle_object(obstacle_baseid, coord)
 --
 function Scene:create_obstacle_object(obstacle_baseid, coord)
-    local obstacleid = cc.ObstacleNew(obstacle_baseid)
-    assert(self.obstacles[obstacleid] == nil)
-    local object = Obstacle:new(self, obstacleid, obstacle_baseid, coord)
-    self.obstacles[obstacleid] = object
+    local object = Obstacle:new(self, obstacle_baseid, coord)
+    assert(self.obstacles[object.id] == nil)
+    self.obstacles[object.id] = object
     return object
 end
 
@@ -67,7 +65,7 @@ function Scene:tiles_fill(object)
 			    local objects = {}
 			    if object.base.require_tile then 
 			        -- auto fill tile & add tile object to self.obstacles
-			        table.insert(objects, self:create_obstacle_object(self.tile_obstacle_baseid, coord))
+			        table.insert(objects, self:create_obstacle_object(self:tile_obstacle_baseid_retrieve(coord), coord))
 			    end
 			    table.insert(objects, object)
 			    
@@ -85,7 +83,7 @@ function Scene:tiles_fill(object)
         end
     end
 
-	-- cc.WriteLog(string.format("tiles_fill object: %d,%s on coord: (%d,%d)", object.baseid, object.base.name.cn, object.coord.x, object.coord.y))
+--	cc.WriteLog(string.format("tiles_fill object: %d,%s on coord: (%d,%d)", object.baseid, object.base.name.cn, object.coord.x, object.coord.y))
 end
 
 
@@ -93,10 +91,17 @@ end
 -- void tiles_dump()
 --
 function Scene:tiles_dump()
+	local function exist_entity(self, coord)
+		for _, entity in pairs(self.members) do
+			if entity.coord.x == coord.x and entity.coord.y == coord.y then return true end
+		end
+		return false
+	end
     for y = 0, self.base.height - 1 do
         local s = ''
         for x = 0, self.base.width - 1 do
             local t = self.tiles[y][x]
+			local rc = exist_entity(self, {x=x, y=y})
             if t ~= nil then
             	local objects = self.tiles[y][x].objects
             	assert(objects ~= nil)
@@ -105,20 +110,23 @@ function Scene:tiles_dump()
             	for _, object in pairs(objects) do
 	                assert(object.objectCategory ~= GridObjectCategory.NONE)
 					if object.objectCategory == GridObjectCategory.OBSTACLE then
-						tilechar = tilechar .. object.base.tilechar
+						tilechar = object.base.tilechar .. tilechar
 					else
 						if object.base.category == EventCategory.ENTRY then
-							tilechar = tilechar .. '>'
+							tilechar = '>' .. tilechar
 						elseif object.base.category == EventCategory.EXIT then
-							tilechar = tilechar .. '<'
+							tilechar = '<' .. tilechar
+						elseif object.accomplish then
+						    tilechar = '_' .. tilechar
 						else
-							tilechar = tilechar .. '*'
+							tilechar = '*' .. tilechar
 						end
 					end
 				end
+				if rc then tilechar = '+' .. tilechar end
 				s = s .. ' ' .. string.format("%4s", tilechar)
             else
-                s = s .. ' ' .. ' ' 
+                s = s .. ' ' .. (rc and '   +' or '    ')
             end 
         end 
         cc.WriteLog(s)
@@ -159,9 +167,11 @@ function Scene:tiles_event_generator()
 
     -- level A: self.base.STICK_events = {{event_baseid = ?, coord = {x = ?, y = ?}}, ...} }
     event_generator(self, self.base.STICK_events)
+	cc.WriteLog(string.format("STICK_events: %d", table.size(self.events)))
     
     -- level B: self.events_base = {{event_baseid = ?, coord = {x = ?, y = ?}}, ...} }
     event_generator(self, self.events_base)    
+	cc.WriteLog(string.format("events_base: %d", table.size(self.events)))
 
     for _, event in pairs(self.events) do
         if event.coord ~= nil then
@@ -192,6 +202,10 @@ function Scene:tiles_event_generator()
 			end
         end
     end
+
+	for _, event in pairs(self.events) do
+		cc.WriteLog(string.format("    event: %d,%d,%s on coord: (%d,%d)", event.id, event.baseid, event.base.name.cn, event.coord.x, event.coord.y))
+	end
 end
 
 --
@@ -221,6 +235,7 @@ function Scene:tiles_obstacle_STICK_generator()
             cc.WriteLog(string.format("not enough space to generate STICK obstacle: %d", obstacle_baseid))
         end
     end
+	cc.WriteLog(string.format("STICK_obstacles: %d", table.size(self.obstacles)))
 end
 
 
@@ -245,6 +260,7 @@ function Scene:tiles_obstacle_BLOCK_generator(blocksize)
        		end
         end
     end
+	cc.WriteLog(string.format("BLOCK_obstacles: %d", table.size(self.obstacles)))
 end
 
 --
@@ -267,13 +283,15 @@ function Scene:tiles_obstacle_NOISE_generator()
             if self.tiles[y][x] == nil then
                 local noise_value = SimplexNoise2DInteger(x, y)					
                 if t[noise_value] ~= nil then
+--					cc.WriteLog(string.format("    NOISE_obstacle, coord:(%d,%d), obstacle_baseid:%d", x, y, t[noise_value]))
                     self:tiles_fill(self:create_obstacle_object(t[noise_value], {x = x, y = y}))
 				else
-					--cc.WriteLog('noise_value: ' .. tostring(noise_value))
+--					cc.WriteLog(string.format("    coord:(%d,%d), noise_value: %s", x, y, tostring(noise_value)))
                 end
             end
         end
     end
+	cc.WriteLog(string.format("NOISE_obstacles: %d", table.size(self.obstacles)))
 end
 
 
@@ -301,7 +319,10 @@ function Scene:tiles_obstacle_padding_hole()
 
     local obstacles = tiles_obstacle_picksize(self, 1)
     local t_size = table.size(obstacles)
-    if t_size == 0 then return end
+    if t_size == 0 then 
+		cc.WriteLog(string.format(">>>>>>>> tiles_obstacle_padding_hole not found any size:1 obstacle"))
+		return 
+	end
 
     for y = 0, self.base.height - 1 do
         for x = 0, self.base.width - 1 do                
@@ -317,11 +338,14 @@ end
 -- void tiles_obstacle_padding_tile()
 --
 function Scene:tiles_obstacle_padding_tile()
-    assert(self.tile_obstacle_baseid ~= nil)
+    assert(self.tile_obstacle_baseid ~= nil and table.size(self.tile_obstacle_baseid) > 0)
     for y = 0, self.base.height - 1 do
         for x = 0, self.base.width - 1 do                
     		if self.tiles[y][x] == nil then
-    		    self:tiles_fill(self:create_obstacle_object(self.tile_obstacle_baseid, {x = x, y = y}))
+    		    local coord = {
+    		        x = x, y = y
+    		    }
+    		    self:tiles_fill(self:create_obstacle_object(self:tile_obstacle_baseid_retrieve(coord), coord))
             end
         end
     end
@@ -388,11 +412,16 @@ function Scene:tiles_link_events()
 	end
 
 	local function shortest_distance(self, src_coord, rc, dest_coord)
-	    local min_coord = src_coord
-	    local min_distance = self:distance(src_coord, dest_coord)
+	    local min_coord = nil
+	    local min_distance = nil
+	    if self:passable(src_coord) then 
+	        min_coord = src_coord 
+    	    min_distance = self:distance(src_coord, dest_coord)
+        end
 	    for _, coord in pairs(rc) do
+	        assert(self:passable(coord))
 	        local distance = self:distance(coord, dest_coord)
-	        if distance < min_distance then
+	        if min_coord == nil or distance < min_distance then
 	            min_coord = coord
 	            min_distance = distance
 	        end
@@ -411,19 +440,19 @@ function Scene:tiles_link_events()
             	)
 
         if road ~= nil then
-			-- table.dump(road, 'link_event')
+--			table.dump(road, string.format("link_event from (%d,%d) to (%d,%d)", src_coord.x, src_coord.y, dest_coord.x, dest_coord.y))
             for _, coord in pairs(road) do
                 assert(self:valid_coord(coord))
                 if self.tiles[coord.y][coord.x] == nil then
-					self:tiles_fill(self:create_obstacle_object(self.tile_obstacle_baseid, coord))
+					self:tiles_fill(self:create_obstacle_object(self:tile_obstacle_baseid_retrieve(coord), coord))
 				else
 					local o = self.tiles[coord.y][coord.x]
 					if o.block == BlockCategory.STATIC then
 						cc.WriteLog(string.format(">>>> link_event found coord: (%d,%d) exist object, block: %d", coord.x, coord.y, o.block))
-						cc.WriteLog(string.format("src_coord: (%d,%d), dest_coord: (%d,%d)", src_coord.x, src_coord.y, dest_coord.x, dest_coord.y))
-						cc.WriteLog(string.format("moveable:%s, passable:%s", tostring(self:moveable(coord)), tostring(self:passable(coord))))
+						cc.WriteLog(string.format("         src_coord: (%d,%d), dest_coord: (%d,%d)", src_coord.x, src_coord.y, dest_coord.x, dest_coord.y))
+						cc.WriteLog(string.format("          coord: (%d,%d), moveable:%s, passable:%s", coord.x, coord.y, tostring(self:moveable(coord)), tostring(self:passable(coord))))
 						for _, object in pairs(o.objects) do
-							cc.WriteLog(string.format("  object: %d,%s", object.baseid, object.base.name.cn))
+							cc.WriteLog(string.format("         object: %d,%s", object.baseid, object.base.name.cn))
 						end
 					end
                 end
@@ -437,6 +466,8 @@ function Scene:tiles_link_events()
 
 	local entry_event = self:tiles_event_find(EventCategory.ENTRY)
 	assert(entry_event ~= nil and entry_event.coord ~= nil)
+	assert(self:valid_coord(entry_event.coord)) -- is valid coord for entry
+	assert(self:moveable(entry_event.coord)) -- is moveable coord for entry
 
 	local exit_event = self:tiles_event_find(EventCategory.EXIT)
 	assert(exit_event ~= nil and exit_event.coord ~= nil)
@@ -451,10 +482,15 @@ function Scene:tiles_link_events()
     -- link events start from ENTRY
     local to_size = table.size(to)
     while to_size > 0 do
-        for i, event in pairs(to) do
-            from_coord = shortest_distance(self, from_coord, self.roads, event.coord)
-            local road = link_event(self, from_coord, event.coord)
-            if road == nil then return false end
+        for i, event in pairs(to) do            
+            local dest_coord = event.coord
+            from_coord = shortest_distance(self, from_coord, self.roads, dest_coord)
+            cc.WriteLog(string.format("link event from (%d,%d) to (%d,%d)", from_coord.x, from_coord.y, dest_coord.x, dest_coord.y))
+            local road = link_event(self, from_coord, dest_coord)
+            if road == nil then 
+				cc.WriteLog(string.format(">>>>> event: %d,%d,%s unreachable", event.id, event.baseid, event.base.name.cn))
+				return false 
+			end
             
             to[i] = nil
             from_coord = event.coord
@@ -468,6 +504,10 @@ function Scene:tiles_link_events()
         end
         to_size = table.size(to)
     end
+
+	local dest_coord = exit_event.coord
+	from_coord = shortest_distance(self, from_coord, self.roads, dest_coord)
+    cc.WriteLog(string.format("link exit event from (%d,%d) to (%d,%d)", from_coord.x, from_coord.y, dest_coord.x, dest_coord.y))
 
     --
     -- link last event to EXIT
@@ -486,8 +526,8 @@ function Scene:generator()
         self:tiles_obstacle_STICK_generator()
         self:tiles_obstacle_BLOCK_generator(size)
         if self:tiles_link_events() then
-            --self:tiles_obstacle_NOISE_generator()
-            --self:tiles_obstacle_padding()
+--            self:tiles_obstacle_NOISE_generator()
+--            self:tiles_obstacle_padding_hole()
             self:tiles_obstacle_padding_tile()
 			self:tiles_dump()
             return true
@@ -507,14 +547,14 @@ end
 -- string export()
 --
 function Scene:export()
-    -- TODO:
+    -- TODO: export layout setting
 end
 
 --
 -- bool import(string)
 --
 function Scene:import()
-    -- TODO:
+    -- TODO: import layout setting
 end
 
 --

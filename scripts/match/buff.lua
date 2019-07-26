@@ -11,14 +11,13 @@ Buff = {
 	base = nil, -- {field_name = field_value, ..., __base = {}}, related buff.xls
 	script_func = nil,
 
+	layers = nil, -- buff layers
 	
 	constructor = function(self, entity, buffid, buff_baseid, layers)
 		self.entity = entity
 		
 		self.id = buffid
 		self.baseid = buff_baseid
-		-- self.base = cc.LookupTable("Buff", buff_baseid)
-		-- assert(self.base ~= nil)
 		self:init_field()
 		
 		self.script_func = self.base.script_func -- loadstring(self.base.script_func)
@@ -34,10 +33,11 @@ Buff = {
 	destructor = function(self)
 		cc.WriteLog(string.format("entity: %d,%s, remove buff: %d,%s layer: %d", 
 		    self.entity.id, self.entity.base.name.cn, self.baseid, self.base.name.cn, self.layers))
+
+        cc.BuffRemove(self.entity.id, self.id)		    
 	end,
 
 	
-	layers = nil, -- buff layers
 	layers_add = function(self, value)
 	    self.layers = self.layers + value
 	    if not self.base.enable_negative_layer and self.layers < 0 then
@@ -100,7 +100,7 @@ function Buff:set_field(name, value)
     if not self:check_field(name) then return end
     self.base[name] = table.dup(value)
     cc.WriteLog(string.format("Buff: %d, set_field: %s to value: %s, old: %s", self.baseid, tostring(name), tostring(value), tostring(self.base.__base[name])))
-    cc.BuffSetField(self.entity.id, self.id, name, self.base[name])
+    cc.BuffSetField(self.entity.id, self.id, name, tostring(self.base[name]))
 end
 
 --
@@ -112,7 +112,7 @@ function Buff:reset_field(name)
     if not self:check_field(name) then return end
     self.base[name] = table.dup(self.base.__base[name])
     cc.WriteLog(string.format("Buff: %d, reset_field: %s to value: %s", self.baseid, tostring(name), tostring(self.base[name])))
-    cc.BuffSetField(self.entity.id, self.id, name, self.base[name])
+    cc.BuffSetField(self.entity.id, self.id, name, tostring(self.base[name]))
 end
 
 --
