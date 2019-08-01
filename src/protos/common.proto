@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+package slam;
+
+enum MSGID {
+	MSGID_BASE						=	0;
+	MSGID_ECHO_REQ					=	1;
+	MSGID_ECHO_REP					=	2;
+}
+
+message EchoRequest {
+	uint64 milliseconds				=	1;
+}
+
+message EchoResponse {
+	uint64 milliseconds				=	1;
+}
+

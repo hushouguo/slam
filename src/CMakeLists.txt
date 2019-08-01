@@ -5,8 +5,11 @@ project (${target})
 
 set(CMAKE_CXX_COMPILER "gcc")
 set(CMAKE_BUILD_TYPE "Debug")#Release
+
 set(DEPS_DIR ${PROJECT_SOURCE_DIR}/../deps)
 set(LUA_DIR ${DEPS_DIR}/luajit-2.0.5)
+set(PROTOBUF_DIR ${DEPS_DIR}/protobuf-3.6.1)
+set(TCMALLOC_DIR ${DEPS_DIR}/gperftools-2.7)
 
 set(PROJECT_DIR .)
 set(EXECUTABLE_OUTPUT_PATH .)
@@ -17,10 +20,11 @@ include_directories(${LUA_DIR}/include)
 
 aux_source_directory(. src)
 
-#link_directories(/usr/lib64)
+link_directories(${PROJECT_SOURCE_DIR})
+
 add_executable(${target} ${src})
 
-target_link_libraries(${target} rt dl m)
+target_link_libraries(${target} rt dl m protobuf)
 #target_link_libraries(${target} ${LIBEVENT_DIR}/lib/libevent.a)
 target_link_libraries(${target} ${LUA_DIR}/lib/libluajit-5.1.a)
 #target_link_libraries(${target} ${PROTOBUF_DIR}/lib/libprotobuf.a)

@@ -13,6 +13,7 @@
 #endif
 
 #define INVALID_SOCKET				-1
+#define SOCKET_CONNECT_TIMEOUT		5 /* seconds */
 
 enum {
 	SOCKET_NONE = 0, SOCKET_SERVER, SOCKET_CLIENT, SOCKET_CONNECTION

@@ -6,7 +6,6 @@
 #ifndef __SLAM_BYTE_BUFFER_H__
 #define __SLAM_BYTE_BUFFER_H__
 
-typedef unsigned char byte_t;
 typedef struct slam_byte_buffer_s slam_byte_buffer_t;
 
 extern slam_byte_buffer_t * slam_byte_buffer_new(size_t initsize);

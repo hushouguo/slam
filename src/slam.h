@@ -17,12 +17,16 @@
 #include <signal.h>
 #include <pthread.h>
 #include <sys/types.h>
+#include <sys/stat.h>
 #include <sys/socket.h>
 #include <sys/epoll.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <netinet/tcp.h>
-
+#include <dlfcn.h>
+#include <sys/resource.h>
+#include <linux/limits.h>
+#include <sys/time.h>
 
 #include "lua.h"
 #include "lauxlib.h"
@@ -39,6 +43,9 @@ typedef int 	bool;
 #define true	1	/* rc == rc is 1 */
 #define false	0	/* rc != rc is 0 */
 #endif
+
+typedef unsigned char byte_t;
+typedef int msgid_t;
 
 #define slam_free(var)	do { if (var) { free((void*) (var)); (var) = nullptr; } } while(0)
 #define slam_close(fd)	do { if (fd >= 0) { close(fd); fd = -1; } } while(0)
@@ -89,12 +96,12 @@ typedef int 	bool;
 
 #define ENABLE_DEBUG					1
 #if ENABLE_DEBUG
-#define Debug(MESSAGE, ...)	fprintf(stdout, "Debug:" MESSAGE "\n", ##__VA_ARGS__)
+#define Debug(MESSAGE, ...)	fprintf(stdout, "" MESSAGE "\n", ##__VA_ARGS__)
 #else
 #define Debug(MESSAGE, ...)
 #endif
 
-#define Trace(MESSAGE, ...)	fprintf(stderr, "Trace:" MESSAGE "\n", ##__VA_ARGS__)
+#define Trace(MESSAGE, ...)	fprintf(stderr, "" MESSAGE "\n", ##__VA_ARGS__)
 #define Alarm(MESSAGE, ...)	fprintf(stderr, "Alarm:" MESSAGE "\n", ##__VA_ARGS__)
 #define Error(MESSAGE, ...)	fprintf(stderr, "Error:" MESSAGE "\n", ##__VA_ARGS__)
 
@@ -110,11 +117,14 @@ typedef int 	bool;
 #include "slam_utils.h"
 #include "slam_socket.h"
 #include "slam_poll.h"
-#include "slam_runnable.h"
 #include "slam_lua_value.h"
 #include "slam_lua.h"
-#include "slam_lua_event.h"
+#include "slam_lua_func.h"
+#include "slam_timer_list.h"
 #include "slam_protocol.h"
+#include "slam_runnable.h"
+#include "slam_lua_event.h"
+#include "slam_main.h"
 
 #endif
 

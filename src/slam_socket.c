@@ -147,8 +147,10 @@ bool slam_socket_connect(slam_socket_t* socket, const char* address, int port, i
 	alarm(0);
 	sigaction(SIGALRM, &oldact, nullptr);
 
-	assert(socket->type == SOCKET_NONE);
-	socket->type = SOCKET_CLIENT;
+	if (result) {
+		assert(socket->type == SOCKET_NONE);
+		socket->type = SOCKET_CLIENT;
+	}
 	
 	return result;
 }
