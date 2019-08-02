@@ -5,25 +5,17 @@
 
 #include "slam.h"
 
-#define MAX_SOCKET_NUMBER		65536
 #define VALID_SOCKET(fd)		((fd) >= 0 && (fd) < MAX_SOCKET_NUMBER)
 #define ASSERT_SOCKET(fd)		assert(VALID_SOCKET(fd))
 
-struct slam_runnable_s {
-	slam_poll_t* poll;
-	slam_socket_t* sockets[MAX_SOCKET_NUMBER];
-	slam_protocol_t* protocol;
-	slam_lua_t* lua;
-	slam_timer_list_t* timer_list;
-};
-
 slam_runnable_t* slam_runnable_new() {
-	slam_runnable_t* runnable = (slam_runnable_t *) malloc(sizeof(slam_runnable_t));
+	slam_runnable_t* runnable = (slam_runnable_t *) slam_malloc(sizeof(slam_runnable_t));
 	runnable->poll = slam_poll_new();
 	memset(runnable->sockets, 0, sizeof(runnable->sockets));
 	runnable->protocol = nullptr;
 	runnable->lua = nullptr;
 	runnable->timer_list = slam_timer_list_new();
+	runnable->message = slam_message_new();
 	return runnable;
 }
 
@@ -40,11 +32,14 @@ void slam_runnable_delete(slam_runnable_t* runnable) {
 		}
 	}
 	slam_timer_list_delete(runnable->timer_list);
+	slam_message_delete(runnable->message);
 	if (runnable->protocol) {
 		slam_protocol_delete(runnable->protocol);
 	}
 	slam_free(runnable);
 }
+
+// load & reload entryfile and protocol lib
 
 bool slam_runnable_load_entryfile(slam_runnable_t* runnable, const char* entryfile) {
 	if (runnable->lua) {
@@ -69,14 +64,6 @@ bool slam_runnable_load_protocol(slam_runnable_t* runnable, const char* dynamic_
 		return false;
 	}
 	return true;
-}
-
-bool slam_runnable_reload_entryfile(slam_runnable_t* runnable, const char* entryfile) {
-	return runnable->lua ? slam_lua_reload_entryfile(runnable->lua, entryfile) : slam_runnable_load_protocol(runnable, entryfile);
-}
-
-bool slam_runnable_reload_protocol(slam_runnable_t* runnable, const char* dynamic_lib_name) {
-	return runnable->protocol ? slam_protocol_reload_dynamic_lib(runnable->protocol, dynamic_lib_name) : slam_runnable_load_protocol(runnable, dynamic_lib_name);
 }
 
 bool slam_runnable_add_socket(slam_runnable_t* runnable, slam_socket_t* newsocket) {
@@ -204,29 +191,34 @@ slam_socket_t* slam_runnable_newclient(slam_runnable_t* runnable, const char* ad
 	return socket;
 }
 
-slam_lua_t* slam_runnable_lua(slam_runnable_t* runnable) {
-	return runnable->lua;
-}
-
-slam_protocol_t* slam_runnable_protocol(slam_runnable_t* runnable) {
-	return runnable->protocol;
-}
-
 slam_socket_t* slam_runnable_socket(slam_runnable_t* runnable, SOCKET fd) {
 	return fd >= 0 && fd < MAX_SOCKET_NUMBER ? runnable->sockets[fd] : nullptr;
-}
-
-slam_timer_list_t* slam_runnable_timer_list(slam_runnable_t* runnable) {
-	return runnable->timer_list;
 }
 
 slam_timer_t* slam_runnable_add_timer(slam_runnable_t* runnable, uint64_t interval, bool forever, int ref, slam_lua_value_t* ctx) {
 	slam_timer_t* timer_newnode = slam_timer_new(interval, forever, ref, ctx);
 	slam_timer_list_add(runnable->timer_list, timer_newnode);
+	//slam_lua_dump_registry_table(runnable->lua);
 	return timer_newnode;
 }
 
-void slam_runnable_remove_timer(slam_runnable_t* runnable, uint32_t timerid) {
-	slam_timer_list_remove_by_id(runnable->timer_list, timerid, true);
+void slam_runnable_remove_timer(slam_runnable_t* runnable, int ref) {
+    slam_timer_t* timer_node = slam_timer_list_find(runnable->timer_list, ref);
+    CHECK_RETURN(timer_node != nullptr, (void) 0, "not found timer: %d", ref);
+    slam_lua_unref(runnable->lua, timer_node->ref);
+    slam_timer_list_remove_by_node(runnable->timer_list, timer_node, true);
+	//slam_lua_dump_registry_table(runnable->lua);
+}
+
+const char* slam_runnable_reg_message(slam_runnable_t* runnable, msgid_t msgid, const char* typename) {
+    bool rc = slam_protocol_reg_message(runnable, msgid, typename);
+    CHECK_RETURN(rc, nullptr, "reg message: %d, %s error", msgid, typename);
+    
+    const char* ref_name = slam_message_reg(runnable->message, msgid, typename);
+    CHECK_RETURN(ref_name != nullptr, nullptr, "reg message: %d,%s error", msgid, typename);
+
+	//slam_lua_dump_registry_table(runnable->lua);
+
+    return ref_name;
 }
 

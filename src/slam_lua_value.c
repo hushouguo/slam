@@ -28,7 +28,7 @@ struct slam_lua_value_s {
 };	
 
 slam_lua_value_t* slam_lua_value_new() {
-	slam_lua_value_t* lvalue = (slam_lua_value_t *) malloc(sizeof(slam_lua_value_t));
+	slam_lua_value_t* lvalue = (slam_lua_value_t *) slam_malloc(sizeof(slam_lua_value_t));
 	lvalue->string = nullptr;
 	lvalue->type = LUA_TNIL;
 	return lvalue;

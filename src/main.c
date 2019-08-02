@@ -21,7 +21,7 @@ void slam_signal_handler(int sig) {
         case SIGUSR1:
        	case SIGUSR2:
             //dump system runtime information
-            //tc_malloc_stats();
+            tc_malloc_stats();
             break;
             
         default: Debug("unhandled signal: %d", sig); break;
@@ -44,6 +44,7 @@ void slam_install_signal_handler() {
 
 int main(int argc, char** argv) {
 	CHECK_RETURN(argc > 1, -1, "Usage: ./slam entryfile");
+	slam_mallinfo();
 	slam_install_signal_handler();
 	if (!slam_runnable_load_protocol(slam_main()->runnable, "./protocol/libprotocol.so")) {
 		return -1;
@@ -54,7 +55,8 @@ int main(int argc, char** argv) {
 	while (!slam_main()->halt) {
 		slam_runnable_run(slam_main()->runnable);
 		if (slam_main()->reload_dynamic_lib) {
-			slam_runnable_reload_protocol(slam_main()->runnable, "./protocol/libprotocol.so");
+			Trace("reload dynamic lib");
+			slam_runnable_load_protocol(slam_main()->runnable, "./protocol/libprotocol.so");
 		}
 	}
 	return 0;

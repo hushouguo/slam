@@ -40,7 +40,7 @@ void slam_byte_buffer_shrink(slam_byte_buffer_t * byte_buffer) {
 }
 
 slam_byte_buffer_t * slam_byte_buffer_new(size_t initsize) {
-	slam_byte_buffer_t * byte_buffer = (slam_byte_buffer_t *) malloc(sizeof(slam_byte_buffer_t));
+	slam_byte_buffer_t * byte_buffer = (slam_byte_buffer_t *) slam_malloc(sizeof(slam_byte_buffer_t));
 	byte_buffer->bytes = NULL;
 	byte_buffer->size = byte_buffer->capacity = 0;
 	byte_buffer->rlength = byte_buffer->wlength = 0;

@@ -50,7 +50,7 @@ bool slam_socket_nodelay(SOCKET s, bool enable_nodelay) {
 
 
 slam_socket_t* slam_socket_newfd(SOCKET connfd) {
-	slam_socket_t * socket = (slam_socket_t *) malloc(sizeof(slam_socket_t));
+	slam_socket_t * socket = (slam_socket_t *) slam_malloc(sizeof(slam_socket_t));
 	socket->fd = connfd;
 	socket->type = SOCKET_NONE;
 	socket->rbuffer = slam_byte_buffer_new(SLAM_SOCKET_RECV_BUFFER_SIZE);

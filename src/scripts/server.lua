@@ -22,7 +22,14 @@ function slam_lua_event_message(fd, msgid, t)
 end
 
 cc.loadmsg("protos")
-cc.regmsg(1, "slam.EchoRequest")
-cc.regmsg(2, "slam.EchoResponse")
+cc.bindmsg(1, "slam.EchoRequest", function(fd, msgid, t)
+	print(string.format("bind message from fd: %d, msgid: %d", fd, msgid))
+	table.dump(t)
+	cc.response(fd, 2, {milliseconds = t.milliseconds + 1})
+end)
+cc.bindmsg(2, "slam.EchoResponse", function(fd, msgid, t)
+	print(string.format("bind message from fd: %d, msgid: %d", fd, msgid))
+	table.dump(t)
+end)
 cc.newserver("127.0.0.1", 12306)
 

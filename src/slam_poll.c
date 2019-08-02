@@ -10,7 +10,7 @@ struct slam_poll_s {
 };
 
 slam_poll_t* slam_poll_new() {
-	slam_poll_t* poll = (slam_poll_t *) malloc(sizeof(slam_poll_t));
+	slam_poll_t* poll = (slam_poll_t *) slam_malloc(sizeof(slam_poll_t));
 	poll->epfd = epoll_create(128);
 	return poll;
 }

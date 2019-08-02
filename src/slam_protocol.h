@@ -12,14 +12,14 @@ typedef struct slam_runnable_s slam_runnable_t;
 extern slam_protocol_t* slam_protocol_new();
 extern void slam_protocol_delete(slam_protocol_t* protocol);
 
+/* load & reload dynamic lib */
 extern bool slam_protocol_load_dynamic_lib(slam_protocol_t* protocol, const char* dynamic_lib);
-extern bool slam_protocol_reload_dynamic_lib(slam_protocol_t* protocol, const char* dynamic_lib);
 
 /* load proto descriptor */
 extern bool slam_protocol_load_descriptor(slam_runnable_t* runnable, const char* filename);
 
 /* registe message */
-extern bool slam_protocol_reg_message(slam_runnable_t* runnable, msgid_t msgid, const char* name);
+extern bool slam_protocol_reg_message(slam_runnable_t* runnable, msgid_t msgid, const char* typename);
 
 /* decode socket->rbuffer to lua's table */
 extern bool slam_protocol_decode(slam_runnable_t* runnable, const slam_socket_t* socket);

@@ -10,6 +10,7 @@
 #include <string.h>
 #include <assert.h>
 #include <stdint.h>
+#include <stddef.h> 
 #include <errno.h>
 #include <unistd.h>
 #include <fcntl.h>
@@ -26,12 +27,16 @@
 #include <dlfcn.h>
 #include <sys/resource.h>
 #include <linux/limits.h>
+#include <time.h>
 #include <sys/time.h>
 
 #include "lua.h"
 #include "lauxlib.h"
 #include "lualib.h"
 #include "luajit.h"
+
+// tcmalloc-2.6.1
+#include <gperftools/tcmalloc.h>
 
 
 #if !defined(__plusplus)
@@ -47,7 +52,13 @@ typedef int 	bool;
 typedef unsigned char byte_t;
 typedef int msgid_t;
 
+#ifdef TC_VERSION_STRING
+#define slam_malloc(size) tc_malloc(size)
+#define slam_free(var)	do { if (var) { tc_free((void*) (var)); (var) = nullptr; } } while(0)
+#else
+#define slam_malloc(size) malloc(size)
 #define slam_free(var)	do { if (var) { free((void*) (var)); (var) = nullptr; } } while(0)
+#endif
 #define slam_close(fd)	do { if (fd >= 0) { close(fd); fd = -1; } } while(0)
 
 #if !defined(PATH_MAX)
@@ -102,8 +113,8 @@ typedef int msgid_t;
 #endif
 
 #define Trace(MESSAGE, ...)	fprintf(stderr, "" MESSAGE "\n", ##__VA_ARGS__)
-#define Alarm(MESSAGE, ...)	fprintf(stderr, "Alarm:" MESSAGE "\n", ##__VA_ARGS__)
-#define Error(MESSAGE, ...)	fprintf(stderr, "Error:" MESSAGE "\n", ##__VA_ARGS__)
+#define Alarm(MESSAGE, ...)	fprintf(stderr, "slam.alarm: " MESSAGE "\n", ##__VA_ARGS__)
+#define Error(MESSAGE, ...)	fprintf(stderr, "slam.error: " MESSAGE "\n", ##__VA_ARGS__)
 
 #define CHECK_RETURN(RC, RESULT, MESSAGE, ...) do { if (!(RC)) { Error(MESSAGE, ##__VA_ARGS__); return RESULT; } } while (false)
 #define CHECK_GOTO(RC, SYMBOL, MESSAGE, ...) do { if (!(RC)) { Error(MESSAGE, ##__VA_ARGS__); goto SYMBOL; } } while (false)
@@ -121,6 +132,7 @@ typedef int msgid_t;
 #include "slam_lua.h"
 #include "slam_lua_func.h"
 #include "slam_timer_list.h"
+#include "slam_message.h"
 #include "slam_protocol.h"
 #include "slam_runnable.h"
 #include "slam_lua_event.h"

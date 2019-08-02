@@ -20,20 +20,20 @@ typedef ssize_t (*PROTOCOL_ENCODE)(lua_State* L, int msgid, void* buf, size_t bu
 struct slam_protocol_s {
 	const char* dynamic_lib_name;
 	void* dynamic_lib_handle;
-	PROTOCOL_LOAD_DESCRIPTOR dl_protocol_load_descriptor;
-	PROTOCOL_REG_MESSAGE dl_protocol_reg_message;
-	PROTOCOL_DECODE dl_protocol_decode;
-	PROTOCOL_ENCODE dl_protocol_encode;
+	PROTOCOL_LOAD_DESCRIPTOR so_protocol_load_descriptor;
+	PROTOCOL_REG_MESSAGE so_protocol_reg_message;
+	PROTOCOL_DECODE so_protocol_decode;
+	PROTOCOL_ENCODE so_protocol_encode;
 };
 
 slam_protocol_t* slam_protocol_new() {
-	slam_protocol_t* protocol = (slam_protocol_t *) malloc(sizeof(slam_protocol_t));
+	slam_protocol_t* protocol = (slam_protocol_t *) slam_malloc(sizeof(slam_protocol_t));
 	protocol->dynamic_lib_name = nullptr;
 	protocol->dynamic_lib_handle = nullptr;
-	protocol->dl_protocol_load_descriptor = nullptr;
-	protocol->dl_protocol_reg_message = nullptr;
-	protocol->dl_protocol_decode = nullptr;
-	protocol->dl_protocol_encode = nullptr;
+	protocol->so_protocol_load_descriptor = nullptr;
+	protocol->so_protocol_reg_message = nullptr;
+	protocol->so_protocol_decode = nullptr;
+	protocol->so_protocol_encode = nullptr;
 	return protocol;
 }
 
@@ -45,54 +45,48 @@ void slam_protocol_delete(slam_protocol_t* protocol) {
 	slam_free(protocol);
 }
 
+/* load & reload dynamic lib */
 bool slam_protocol_load_dynamic_lib(slam_protocol_t* protocol, const char* dynamic_lib) {
 	if (protocol->dynamic_lib_handle != nullptr) {
 		dlclose(protocol->dynamic_lib_handle);
 	}
 	protocol->dynamic_lib_handle = dlopen(dynamic_lib, RTLD_LAZY);
 	CHECK_RETURN(protocol->dynamic_lib_handle, false, "dlopen: %s, error: %s", dynamic_lib, dlerror());
-	protocol->dl_protocol_load_descriptor = dlsym(protocol->dynamic_lib_handle, SYMBOL_PROTOCOL_LOAD_DESCRIPTOR);
-	CHECK_RETURN(protocol->dl_protocol_load_descriptor, false, "dlsym: %s, error: %s", SYMBOL_PROTOCOL_LOAD_DESCRIPTOR, dlerror());
-	protocol->dl_protocol_reg_message = dlsym(protocol->dynamic_lib_handle, SYMBOL_PROTOCOL_REG_MESSAGE);
-	CHECK_RETURN(protocol->dl_protocol_reg_message, false, "dlsym: %s, error: %s", SYMBOL_PROTOCOL_REG_MESSAGE, dlerror());
-	protocol->dl_protocol_decode = dlsym(protocol->dynamic_lib_handle, SYMBOL_PROTOCOL_DECODE);
-	CHECK_RETURN(protocol->dl_protocol_decode, false, "dlsym: %s, error: %s", SYMBOL_PROTOCOL_DECODE, dlerror());
-	protocol->dl_protocol_encode = dlsym(protocol->dynamic_lib_handle, SYMBOL_PROTOCOL_ENCODE);
-	CHECK_RETURN(protocol->dl_protocol_encode, false, "dlsym: %s, error: %s", SYMBOL_PROTOCOL_ENCODE, dlerror());
+	protocol->so_protocol_load_descriptor = dlsym(protocol->dynamic_lib_handle, SYMBOL_PROTOCOL_LOAD_DESCRIPTOR);
+	CHECK_RETURN(protocol->so_protocol_load_descriptor, false, "dlsym: %s, error: %s", SYMBOL_PROTOCOL_LOAD_DESCRIPTOR, dlerror());
+	protocol->so_protocol_reg_message = dlsym(protocol->dynamic_lib_handle, SYMBOL_PROTOCOL_REG_MESSAGE);
+	CHECK_RETURN(protocol->so_protocol_reg_message, false, "dlsym: %s, error: %s", SYMBOL_PROTOCOL_REG_MESSAGE, dlerror());
+	protocol->so_protocol_decode = dlsym(protocol->dynamic_lib_handle, SYMBOL_PROTOCOL_DECODE);
+	CHECK_RETURN(protocol->so_protocol_decode, false, "dlsym: %s, error: %s", SYMBOL_PROTOCOL_DECODE, dlerror());
+	protocol->so_protocol_encode = dlsym(protocol->dynamic_lib_handle, SYMBOL_PROTOCOL_ENCODE);
+	CHECK_RETURN(protocol->so_protocol_encode, false, "dlsym: %s, error: %s", SYMBOL_PROTOCOL_ENCODE, dlerror());
 	slam_free(protocol->dynamic_lib_name);
 	protocol->dynamic_lib_name = strdup(dynamic_lib);
 	return true;
 }
 
-bool slam_protocol_reload_dynamic_lib(slam_protocol_t* protocol, const char* dynamic_lib) {
-	return slam_protocol_load_dynamic_lib(protocol, dynamic_lib);
-}
-
-/* load proto descriptor */
+/* load proto descriptor, filename also can be a folder */
 bool slam_protocol_load_descriptor(slam_runnable_t* runnable, const char* filename) {
-	slam_protocol_t* protocol = slam_runnable_protocol(runnable);
-	CHECK_RETURN(protocol, false, "runnable not protocol instance for load descriptor");
-	CHECK_RETURN(protocol->dl_protocol_load_descriptor, false, "not export symbol: %s", SYMBOL_PROTOCOL_LOAD_DESCRIPTOR);
-	return protocol->dl_protocol_load_descriptor(filename) == 0;
+	CHECK_RETURN(runnable->protocol, false, "runnable not protocol instance for load descriptor");
+	CHECK_RETURN(runnable->protocol->so_protocol_load_descriptor, false, "not export symbol: %s", SYMBOL_PROTOCOL_LOAD_DESCRIPTOR);
+	return runnable->protocol->so_protocol_load_descriptor(filename) == 0;
 }
 
 /* registe message */
-bool slam_protocol_reg_message(slam_runnable_t* runnable, msgid_t msgid, const char* name) {
-	slam_protocol_t* protocol = slam_runnable_protocol(runnable);
-	CHECK_RETURN(protocol, false, "runnable not protocol instance for registe message");
-	CHECK_RETURN(protocol->dl_protocol_reg_message, false, "not export symbol: %s", SYMBOL_PROTOCOL_REG_MESSAGE);
-	return protocol->dl_protocol_reg_message(msgid, name) == 0;
+bool slam_protocol_reg_message(slam_runnable_t* runnable, msgid_t msgid, const char* typename) {
+	CHECK_RETURN(runnable->protocol, false, "runnable not protocol instance for registe message");
+	CHECK_RETURN(runnable->protocol->so_protocol_reg_message, false, "not export symbol: %s", SYMBOL_PROTOCOL_REG_MESSAGE);
+	return runnable->protocol->so_protocol_reg_message(msgid, typename) == 0;
 }
 
 /* decode socket->rbuffer to lua's table */
 bool slam_protocol_decode(slam_runnable_t* runnable, const slam_socket_t* socket) {
-	slam_protocol_t* protocol = slam_runnable_protocol(runnable);
-	CHECK_RETURN(protocol, false, "runnable not protocol instance for decode");
-	CHECK_RETURN(protocol->dl_protocol_decode, false, "not export symbol: %s", SYMBOL_PROTOCOL_DECODE);
+	CHECK_RETURN(runnable->protocol, false, "runnable not protocol instance for decode");
+	CHECK_RETURN(runnable->protocol->so_protocol_decode, false, "not export symbol: %s", SYMBOL_PROTOCOL_DECODE);
 	while (true) {
 		msgid_t msgid = 0;
-		ssize_t ssize = protocol->dl_protocol_decode(
-							slam_luastate(slam_runnable_lua(runnable)),
+		ssize_t ssize = runnable->protocol->so_protocol_decode(
+							runnable->lua->L,
 							&msgid,
 							slam_byte_buffer_readbuffer(socket->rbuffer),
 							slam_byte_buffer_size(socket->rbuffer)
@@ -114,13 +108,12 @@ bool slam_protocol_decode(slam_runnable_t* runnable, const slam_socket_t* socket
 
 /* encode lua's table to socket->wbuffer */
 bool slam_protocol_encode(slam_runnable_t* runnable, msgid_t msgid, slam_socket_t* socket) {
-	slam_protocol_t* protocol = slam_runnable_protocol(runnable);
-	CHECK_RETURN(protocol, false, "runnable not protocol instance for encode");
-	CHECK_RETURN(protocol->dl_protocol_encode, false, "not export symbol: %s", SYMBOL_PROTOCOL_ENCODE);
+	CHECK_RETURN(runnable->protocol, false, "runnable not protocol instance for encode");
+	CHECK_RETURN(runnable->protocol->so_protocol_encode, false, "not export symbol: %s", SYMBOL_PROTOCOL_ENCODE);
 	while (true) {
 		ssize_t message_size = INIT_PROTOCOL_ENCODE_MESSAGE_SIZE;
-		ssize_t ssize = protocol->dl_protocol_encode(
-							slam_luastate(slam_runnable_lua(runnable)), 
+		ssize_t ssize = runnable->protocol->so_protocol_encode(
+							runnable->lua->L,
 							msgid,
 							slam_byte_buffer_writebuffer(socket->wbuffer, message_size),
 							message_size

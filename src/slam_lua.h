@@ -16,15 +16,19 @@
 	lua_pushcfunction(L, ROUTINE);\
 	lua_rawset(L, -3);
 
+
+struct slam_lua_s {
+    lua_State* L;
+    const char* entryfile;
+    size_t stack_size;
+};    
+
 typedef struct slam_lua_s slam_lua_t;
 
 extern slam_lua_t* slam_lua_new(size_t stack_size);
 extern void slam_lua_delete(slam_lua_t* lua);
 
-extern lua_State* slam_luastate(slam_lua_t* lua);
-extern const char* slam_lua_entryfile(slam_lua_t* lua);
 extern bool slam_lua_load_entryfile(slam_lua_t* lua, const char* entryfile);
-extern bool slam_lua_reload_entryfile(slam_lua_t* lua, const char* entryfile);
 	
 extern void slam_lua_showversion(slam_lua_t* lua);
 extern const char* slam_lua_tostring(slam_lua_t* lua, int idx);
@@ -38,7 +42,6 @@ extern void slam_lua_tracestack(slam_lua_t* lua);
 
 extern void slam_lua_dump_table(slam_lua_t* lua, int idx, const char* prefix);
 extern void slam_lua_dump_root_table(slam_lua_t* lua);
-extern void slam_lua_dump_registry_table(slam_lua_t* lua);
 
 extern void slam_lua_reg_namespace(slam_lua_t* lua, const char* ns);
 extern void slam_lua_begin_namespace(slam_lua_t* lua, const char* ns);
@@ -53,5 +56,10 @@ extern void slam_lua_reg_string(slam_lua_t* lua, const char* key, const char* va
 extern void slam_lua_reg_object(slam_lua_t* lua, const char* key, const void* value);
 
 extern void slam_lua_pushvalue(slam_lua_t* lua, slam_lua_value_t* lvalue);
+
+extern int slam_lua_ref(slam_lua_t* lua); // value at the top of stack, return key
+extern void slam_lua_unref(slam_lua_t* lua, int ref); // unref from registry
+extern void slam_lua_get_value_by_ref(slam_lua_t* lua, int ref); // return value to the top of stack
+extern void slam_lua_dump_registry_table(slam_lua_t* lua);
 
 #endif

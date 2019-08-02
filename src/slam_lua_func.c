@@ -81,21 +81,29 @@ static int cc_loadmsg(lua_State* L) {
 }
 
 //
-// bool regmsg(msgid, name)
-static int cc_regmsg(lua_State* L) {
+// bool bindmsg(msgid, typename, function(fd, msgid, t) end)
+static int cc_bindmsg(lua_State* L) {
 	int args = lua_gettop(L);
-	CHECK_RETURN(args == 2, 0, "`%s` lack args:%d", __FUNCTION__, args);
+	CHECK_RETURN(args == 3, 0, "`%s` lack args:%d", __FUNCTION__, args);
 	CHECK_RETURN(lua_isnumber(L, -args), 0, "[%s]", lua_typename(L, lua_type(L, -args)));
 	CHECK_RETURN(lua_isstring(L, -(args - 1)), 0, "[%s]", lua_typename(L, lua_type(L, -(args - 1))));
+	CHECK_RETURN(lua_isfunction(L, -(args - 2)), 0, "[%s]", lua_typename(L, lua_type(L, -(args - 2))));
+	
 	msgid_t msgid = lua_tointeger(L, -args);
-	const char* name = lua_tostring(L, -(args - 1));
-	bool rc = slam_protocol_reg_message(slam_main()->runnable, msgid, name);
-	lua_pushboolean(L, rc);
+	const char* typename = lua_tostring(L, -(args - 1));
+	const char* ref_name = slam_runnable_reg_message(slam_main()->runnable, msgid, typename);
+	if (ref_name != nullptr) {
+	    lua_pushstring(L, ref_name);    // key: ref_name
+	    lua_pushvalue(L, -(args - 1));  // value: lua function
+	    lua_settable(L, LUA_REGISTRYINDEX);
+	}
+		
+	lua_pushboolean(L, ref_name != nullptr);
 	return 1;
 }
 
 //
-// u32 newtimer(milliseconds, forever, ctx, function(id, ctx) end)
+// int newtimer(milliseconds, forever, ctx, function(id, ctx) end)
 static int cc_newtimer(lua_State* L) {
 	int args = lua_gettop(L);
 	CHECK_RETURN(args == 4, 0, "`%s` lack args:%d", __FUNCTION__, args);
@@ -131,22 +139,21 @@ static int cc_newtimer(lua_State* L) {
 	CHECK_RETURN(lua_isfunction(L, -(args - 3)), 0, "[%s]", lua_typename(L, lua_type(L, -(args - 3))));
 	
 	lua_pushvalue(L, -(args - 3));
-	int ref = luaL_ref(L, LUA_REGISTRYINDEX); // set ref to registry table
-
+	int ref = slam_lua_ref(slam_main()->runnable->lua);
 	slam_timer_t* timer_node = slam_runnable_add_timer(slam_main()->runnable, milliseconds, forever, ref, ctx);
 	
-	lua_pushinteger(L, timer_node ? slam_timer_id(timer_node) : 0);
+	lua_pushinteger(L, timer_node ? timer_node->ref : 0);
 	return 1;
 }
 
 //
-// void remove_timer(u32 timerid)
+// void remove_timer(int ref)
 static int cc_remove_timer(lua_State* L) {
 	int args = lua_gettop(L);
 	CHECK_RETURN(args == 1, 0, "`%s` lack args:%d", __FUNCTION__, args);
 	CHECK_RETURN(lua_isnumber(L, -args), 0, "[%s]", lua_typename(L, lua_type(L, -args)));
-	lua_Integer timerid = lua_tointeger(L, -args);
-	slam_runnable_remove_timer(slam_main()->runnable, timerid);
+	lua_Integer ref = lua_tointeger(L, -args);
+	slam_runnable_remove_timer(slam_main()->runnable, ref);
 	return 0;
 }
 
@@ -154,7 +161,7 @@ void slam_lua_reg_func(lua_State* L) {
 
 	/* proto */
 	LUA_REGISTER(L, "loadmsg", cc_loadmsg); /* bool loadmsg(filename) */
-	LUA_REGISTER(L, "regmsg", cc_regmsg); /* bool regmsg(msgid, name) */
+	LUA_REGISTER(L, "bindmsg", cc_bindmsg); /* bool bindmsg(msgid, typename, function(fd, msgid, t) end) */
 	
 	/* network */
 	LUA_REGISTER(L, "newserver", cc_newserver); /* fd newserver(address, port) */
@@ -163,8 +170,8 @@ void slam_lua_reg_func(lua_State* L) {
 	LUA_REGISTER(L, "closesocket", cc_closesocket);	/* void closesocket(fd) */
 
 	/* timer */
-	LUA_REGISTER(L, "newtimer", cc_newtimer);/* u32 newtimer(milliseconds, forever, ctx, function(id, ctx) end) */
-	LUA_REGISTER(L, "removetimer", cc_remove_timer); /* void remove_timer(u32) */
+	LUA_REGISTER(L, "newtimer", cc_newtimer);/* int newtimer(milliseconds, forever, ctx, function(id, ctx) end) */
+	LUA_REGISTER(L, "removetimer", cc_remove_timer); /* void remove_timer(int) */
 	
 }
 

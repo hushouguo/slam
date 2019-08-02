@@ -15,7 +15,7 @@ static slam_main_t* __slam_main = nullptr;
 
 __attribute__((constructor)) static void __slam_main_init() {
 	if (!__slam_main) {
-		__slam_main = (slam_main_t *) malloc(sizeof(slam_main_t));
+		__slam_main = (slam_main_t *) slam_malloc(sizeof(slam_main_t));
 		
 		__slam_main->halt = false;
 		__slam_main->standalone = true;

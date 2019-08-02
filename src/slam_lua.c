@@ -5,12 +5,6 @@
 
 #include "slam.h"
 
-struct slam_lua_s {
-	lua_State* L;
-	const char* entryfile;
-	size_t stack_size;
-};
-
 lua_State* slam_lua_newstate(size_t stack_size) {
 	lua_State* L = luaL_newstate(); 	
 	luaL_openlibs(L);
@@ -24,7 +18,7 @@ void slam_lua_closestate(lua_State* L) {
 }
 
 slam_lua_t* slam_lua_new(size_t stack_size) {
-	slam_lua_t* lua = (slam_lua_t *) malloc(sizeof(slam_lua_t));
+	slam_lua_t* lua = (slam_lua_t *) slam_malloc(sizeof(slam_lua_t));
 	lua->L = slam_lua_newstate(stack_size);
 	lua->entryfile = nullptr;
 	lua->stack_size = stack_size;
@@ -42,10 +36,6 @@ void slam_lua_delete(slam_lua_t* lua) {
 }
 
 
-lua_State* slam_luastate(slam_lua_t* lua) {
-	return lua->L;
-}
-
 bool slam_lua_load_entryfile(slam_lua_t* lua, const char* entryfile) {
 	bool rc = slam_lua_dofile(lua, entryfile);
 	if (rc) {
@@ -53,16 +43,6 @@ bool slam_lua_load_entryfile(slam_lua_t* lua, const char* entryfile) {
 		lua->entryfile = strdup(entryfile);
 	}
 	return rc;
-}
-
-bool slam_lua_reload_entryfile(slam_lua_t* lua, const char* entryfile) {
-	slam_lua_closestate(lua->L);
-	lua->L = slam_lua_newstate(lua->stack_size);
-	return slam_lua_load_entryfile(lua, entryfile);
-}
-
-const char* slam_lua_entryfile(slam_lua_t* lua) {
-	return lua->entryfile;
 }
 
 void slam_lua_showversion(slam_lua_t* lua) {
@@ -223,15 +203,6 @@ void slam_lua_dump_root_table(slam_lua_t* lua) {
 	lua_pop(lua->L, 1);/* remove `table` */
 }
 
-void slam_lua_dump_registry_table(slam_lua_t* lua) {
-	lua_getregistry(lua->L);
-	Debug("dump registry table");
-	Debug("{");
-	slam_lua_dump_table(lua, lua_gettop(lua->L), "\t");
-	Debug("}");
-	lua_pop(lua->L, 1);/* remove `table` */
-}
-
 void slam_lua_reg_namespace(slam_lua_t* lua, const char* ns) {
 	lua_getglobal(lua->L, "_G");
 	lua_pushstring(lua->L, ns);
@@ -316,4 +287,29 @@ void slam_lua_pushvalue(slam_lua_t* lua, slam_lua_value_t* lvalue) {
 		lua_pushnil(lua->L);
 	}
 }
+
+void slam_lua_dump_registry_table(slam_lua_t* lua) {
+	lua_getregistry(lua->L);
+	Debug("dump registry table");
+	Debug("{");
+	slam_lua_dump_table(lua, lua_gettop(lua->L), "\t");
+	Debug("}");
+	lua_pop(lua->L, 1);/* remove `table` */
+}
+
+// value at the top of stack, return key
+int slam_lua_ref(slam_lua_t* lua) {
+    return luaL_ref(lua->L, LUA_REGISTRYINDEX); // set value to registry table and return ref-key
+}
+
+// unref from registry
+void slam_lua_unref(slam_lua_t* lua, int ref) {
+    luaL_unref(lua->L, LUA_REGISTRYINDEX, ref); // clear this ref from registry
+}
+
+// return value to the top of stack
+void slam_lua_get_value_by_ref(slam_lua_t* lua, int ref) {
+    lua_rawgeti(lua->L, LUA_REGISTRYINDEX, ref);// get value from registry and put it the top of stack
+}
+
 
