@@ -140,6 +140,7 @@ uint64_t slam_file_size(const char* filename) {
     return buf.st_size;
 }
 
+#if 0
 //
 // get the execution of the program, like: foo
 const char* slam_program_name() {
@@ -419,7 +420,7 @@ void DumpLibraryVersion() {
 		return true;
 	}
 
-
+#endif
 
 //
 // limits: stack_size, max_files

@@ -61,6 +61,9 @@ typedef int msgid_t;
 #endif
 #define slam_close(fd)	do { if (fd >= 0) { close(fd); fd = -1; } } while(0)
 
+#define  SLAM_OK          0
+#define  SLAM_ERROR      -1
+
 #if !defined(PATH_MAX)
 #define PATH_MAX						MAX_PATH
 #endif
