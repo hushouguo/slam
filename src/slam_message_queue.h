@@ -6,19 +6,6 @@
 #ifndef __SLAM_MESSAGE_QUEUE_H__
 #define __SLAM_MESSAGE_QUEUE_H__
 
-#define MESSAGE_FLAG_ESTABLISH_CONNECTION       1
-#define MESSAGE_FLAG_LOST_CONNECTION            2
-#define MESSAGE_FLAG_PROTOBUF_PACKAGE           4
-
-struct slam_message_s {
-    SOCKET fd;
-    int flags;
-    msgid_t msgid;
-    void* buf;
-    size_t bufsize;
-};
-
-typedef struct slam_message_s slam_message_t;
 typedef struct slam_message_queue_s slam_message_queue_t;
 
 extern slam_message_queue_t* slam_message_queue_new();

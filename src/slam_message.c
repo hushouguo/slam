@@ -5,6 +5,21 @@
 
 #include "slam.h"
 
+slam_message_t* slam_message_new(SOCKET fd, int flags, msgid_t msgid, size_t bufsize) {
+    slam_message_t* message = (slam_message_t *) slam_malloc(sizeof(slam_message_t) + bufsize);
+    message->fd = fd;
+    message->flags = flags;
+    message->msgid = msgid;
+    message->bufsize = bufsize;
+    message->bytesize = 0;
+    return message;
+}
+
+void slam_message_delete(slam_message_t* message) {
+    slam_free(message);
+}
+
+#if 0
 #define MAX_MESSAGE_ID	65536
 
 #define MESSAGE_REF_NAME(msgid, typename)	\
@@ -41,5 +56,5 @@ const char* slam_message_find(slam_message_t* message, msgid_t msgid) {
 	CHECK_RETURN(message->regtable[msgid] != nullptr, nullptr, "msgid: %d not reg", msgid);
 	return message->regtable[msgid];
 }
-
+#endif
 

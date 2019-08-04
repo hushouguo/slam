@@ -6,7 +6,6 @@
 #ifndef __SLAM_RUNNABLE_H__
 #define __SLAM_RUNNABLE_H__
 
-#define MAX_SOCKET_NUMBER		65536
 
 struct slam_runnable_s {
 	slam_poll_t* poll;
