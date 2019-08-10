@@ -216,6 +216,7 @@ function Scene:dump()
 			end
 		end
 	end
+	cc.ScriptDebugLog("Scene dump")
 	dump_map(self.entrymap)
 end
 
@@ -223,12 +224,18 @@ end
 --  bool generator()
 --
 function Scene:generator(entityid)
+	local function seed_layer(layer)
+		local _, seed = NewRandom(self.seed)(1, layer)
+		return seed
+	end
+
 	local layer = 1
+	local seed = seed_layer(layer)
 	local maps = {}
 
 	-- copy.script_func(entityid, copy_baseid, copy_layers, randomseed)
 	-- events: { map_baseid: 10, map_events: {{event_baseid = ?, coord = {x = ?, y = ?}}, ...} }
-	local events = self.copy.script_func(entityid, self.copy.baseid, layer, self.copy.seeds[layer])
+	local events = self.copy.script_func(entityid, self.copy.baseid, layer, seed)
 	if events == nil then
 	    cc.ScriptErrorLog(string.format(">>>>>>>>>> copy: %d, layer: %d not exist", self.copy.baseid, layer))
 	    return false
@@ -238,13 +245,18 @@ function Scene:generator(entityid)
 	table.insert(maps, self.entrymap)
 
 	while table.size(maps) > 0 do
-		local map = table.pop_front(maps)
+		local _, map = table.pop_front(maps)
 		assert(map ~= nil)
 
 		layer = map.layer + 1
-		local seed = self.copy.seeds[layer]		
+		local seed = seed_layer(layer)
 	    local events = self.copy.script_func(entityid, self.copy.baseid, layer, seed)
-	    if events == nil then return true end -- no more map info
+	    if events == nil then 
+			cc.ScriptErrorLog(string.format("copy: %d, layer: %d, no more map", self.copy.baseid, layer))
+			return true 
+		end
+
+		cc.ScriptDebugLog(string.format("maps: %d, front map: %d,%d, layer: %d, pattern: %d", table.size(maps), map.id, map.baseid, layer, map.pattern))
 
 	    local t = {
 	    	--
@@ -390,6 +402,7 @@ function Scene:generator(entityid)
 	    }
 	    assert(t[map.pattern] ~= nil)
 	    t[map.pattern](self, map, events, seed, entityid, layer, maps)
+		--cc.ScriptDebugLog(string.format("maps: %d", table.size(maps)))
 	end
 
 	return true

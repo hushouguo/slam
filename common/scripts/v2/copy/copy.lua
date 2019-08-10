@@ -34,6 +34,7 @@ Copy = {
 		self.seeds = {}
 		self.scene = self:create_scene(entityid, self:current_layer())
 		assert(self.scene ~= nil)
+		self.scene:dump()
 		self.members = {}
 		self:add_member(self.entity_master)
 
@@ -144,7 +145,7 @@ function Copy:create_scene(entityid, layer)
 
     -- init new scene
     --return Scene:new(self, events.map_baseid, self.seeds[layer], entityid, events.map_events, {x=0,y=0})
-    return Scene:new(self, self.seeds[layer], entityid)
+    return Scene:new(self, self:current_seed(), entityid)
 end
 
 

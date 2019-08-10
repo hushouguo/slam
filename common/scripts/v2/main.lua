@@ -27,6 +27,7 @@ require('scene/map')
 require('scene/map_pattern')
 require('scene/map_generator')
 require('scene/scene')
+require('scene/scene_generator')
 
 require('copy/copy')
 

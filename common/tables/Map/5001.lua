@@ -7,7 +7,7 @@ return {
     desc = {cn="测试地图",en=""},
     width = 20,
     height = 20,
-    obstacles = {[6007]=1,},
+    obstacles = {[6007]=1,[6011]=1},
     STICK_events = {{event_baseid=7401,coord={x=14,y=14}},
 {event_baseid=7002,coord={x=2,y=10}},
 {event_baseid=7003,coord={x=10,y=9}},

@@ -92,9 +92,9 @@ end
 --
 function Map:tiles_dump()
 	local function exist_entity(self, coord)
-		for _, entity in pairs(self.members) do
-			if entity.coord.x == coord.x and entity.coord.y == coord.y then return true end
-		end
+		--for _, entity in pairs(self.members) do
+		--	if entity.coord.x == coord.x and entity.coord.y == coord.y then return true end
+		--end
 		return false
 	end
     for y = 0, self.base.height - 1 do

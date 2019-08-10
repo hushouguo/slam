@@ -32,8 +32,6 @@ Map = {
         assert(self.base ~= nil)
         assert(self.base.width > 0 and self.base.height > 0)
 
-	    cc.ScriptDebugLog(string.format("++++++++++ map: %d,%d,%s, constructor", self.id, self.baseid, self.base.name.cn))
-        
         self.seed = seed
         self.random_func = NewRandom(self.seed)
         self.events_base = events_base
@@ -49,12 +47,12 @@ Map = {
 		-- search for available tile obstacle
 		self:tile_obstacle_baseid_init()
         assert(self.tile_obstacle_baseid ~= nil and table.size(self.tile_obstacle_baseid) > 0)
-        table.dump(self.tile_obstacle_baseid, 'tile_obstacle_baseid')
+        --table.dump(self.tile_obstacle_baseid, 'tile_obstacle_baseid')
 
 		-- search for available wall obstacle
 		self:wall_obstacle_baseid_init()
 		assert(self.wall_obstacle_baseid ~= nil and table.size(self.wall_obstacle_baseid) > 0)
-		table.dump(self.wall_obstacle_baseid, 'wall_obstacle_baseid')
+		--table.dump(self.wall_obstacle_baseid, 'wall_obstacle_baseid')
 
         -- MapPolicy
         self.FLAG_chessboard = false
@@ -87,13 +85,15 @@ Map = {
         assert(self.pattern ~= nil)
         cc.ScriptDebugLog(string.format("    map: %d, pattern: %d", self.baseid, self.pattern))
 
+	    cc.ScriptDebugLog(string.format("++++++++ map: %d,%d,%s, layer: %d, constructor", self.id, self.baseid, self.base.name.cn, self.layer))
+
         -- generate map
 		local rc = self:generator(link_direction) -- init events & obstacles
 		assert(rc)
     end,
 
     destructor = function(self)
-	    cc.ScriptDebugLog(string.format("---------- map: %d,%d,%s, destructor", self.id, self.baseid, self.base.name.cn))
+	    --cc.ScriptDebugLog(string.format("---------- map: %d,%d,%s, destructor", self.id, self.baseid, self.base.name.cn))
             
         for _, event in pairs(self.events) do event:destructor() end
         table.clear(self.events)

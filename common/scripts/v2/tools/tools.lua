@@ -139,7 +139,10 @@ end
 --
 table.pop_front = function(t)
 	if type(t) ~= 'table' then return nil end
-	for key, value in pairs(t) return key, value end
+	for key, value in pairs(t) do 
+		t[key] = nil
+		return key, value 
+	end
 	return nil
 end
 
