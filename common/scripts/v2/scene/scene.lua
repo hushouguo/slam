@@ -15,6 +15,7 @@ Scene = {
     
     events_base = nil, -- copy.script_func() -> {{event_baseid = ?, coord = {x = ?, y = ?}}, ...} }
     coord_base = nil, -- {x = ?, y = ?}
+    direction = nil,
     
     tiles = nil, -- {[y][x] = {objects = {[1]=?, ...}, block = ?} , ... }
     events = nil, -- all of events, {[eventid] = event instance, ...}
@@ -24,7 +25,7 @@ Scene = {
     -- MapPattern
     pattern = nil,    
 
-    constructor = function(self, copy, baseid, seed, entityid, events_base, coord_base)
+    constructor = function(self, copy, baseid, seed, entityid, events_base, direction)
         self.copy = copy
         self.id = cc.ScriptMapNew(baseid)
         self.baseid = baseid
@@ -38,7 +39,8 @@ Scene = {
         self.random_func = NewRandom(self.seed)
         self.events_base = events_base
         assert(self.events_base ~= nil)
-        self.coord_base = coord_base
+        -- self.coord_base = coord_base
+        self.direction = direction
         assert(self.coord_base ~= nil)
         self.tiles = {}
         self.events = {}
