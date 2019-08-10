@@ -1,91 +1,7 @@
 
 --
-------------------- Scene creator -------------------
+------------------- Scene generator -------------------
 --
-
---
--- reset self.tiles
---
-function Scene:tiles_init()
-    table.clear(self.tiles)
-	for y = 0, self.base.height - 1 do self.tiles[y] = {} end
-	table.clear(self.events)
-	table.clear(self.obstacles)
-	table.clear(self.roads)
-end
-
---
--- object create_event_object(event_baseid, coord)
---
-function Scene:create_event_object(event_baseid, coord)
-    local object = Event:new(self, event_baseid, coord)
-    assert(self.events[object.id] == nil)
-    self.events[object.id] = object
-    return object
-end
-
---
--- object create_obstacle_object(obstacle_baseid, coord)
---
-function Scene:create_obstacle_object(obstacle_baseid, coord)
-    local object = Obstacle:new(self, obstacle_baseid, coord)
-    assert(self.obstacles[object.id] == nil)
-    self.obstacles[object.id] = object
-    return object
-end
-
---
--- void tiles_fill(object)
---
-function Scene:tiles_fill(object)
-    assert(object.coord ~= nil)
-    assert(object.base.width > 0 and object.base.height > 0)
-
-    --
-    -- try to setup self.events or self.obstacles
-    assert(object.objectCategory ~= GridObjectCategory.NONE)
-    if object.objectCategory == GridObjectCategory.EVENT then
-        if self.events[object.id] == nil then self.events[object.id] = object end
-        assert(self.events[object.id].id == object.id)
-    else
-        if self.obstacles[object.id] == nil then self.obstacles[object.id] = object end
-        assert(self.obstacles[object.id].id == object.id)
-    end
-
-    --
-    -- fill tile
-    for y = 0, object.base.height - 1 do
-        local yy = y + object.coord.y
-        for x = 0, object.base.width - 1 do
-            local xx = x + object.coord.x
-            local coord = {x = xx, y = yy}
-            assert(self:valid_coord(coord), string.format("baseid: %d, coord:(%d,%d)", object.baseid, coord.x, coord.y))
-            
-			if self.tiles[yy][xx] == nil then
-			    local objects = {}
-			    if object.base.require_tile then 
-			        -- auto fill tile & add tile object to self.obstacles
-			        table.insert(objects, self:create_obstacle_object(self:tile_obstacle_baseid_retrieve(coord), coord))
-			    end
-			    table.insert(objects, object)
-			    
-	            self.tiles[yy][xx] = {
-	            	objects = objects,
-	            	block = BlockCategory.NONE
-	            }
-            else
-            	local t = self.tiles[yy][xx]
-            	assert(t.objects ~= nil and t.block ~= nil)
-            	table.insert(t.objects, object) -- add extra object
-            end
-            
-           	self:resetblock(coord)
-        end
-    end
-
---	cc.ScriptDebugLog(string.format("tiles_fill object: %d,%s on coord: (%d,%d)", object.baseid, object.base.name.cn, object.coord.x, object.coord.y))
-end
-
 
 --
 -- void tiles_dump()
@@ -163,175 +79,6 @@ function Scene:tiles_pattern_generator()
     	end
     end
 end
-
---
--- void tiles_event_generator()
---
-function Scene:tiles_event_generator()
-    local function event_generator(self, events)
-        assert(events ~= nil)
-        for _, t in pairs(events) do
-            local event_base = cc.ScriptLookupTable("Event", t.event_baseid)
-            assert(event_base.width > 0 and event_base.height > 0)
-            if t.coord ~= nil then assert(self:valid_coord(t.coord)) end
-            self:create_event_object(t.event_baseid, t.coord)
-        end
-    end
-
-    local function event_distance(self, coord, FLAG_event_distance)
-        for _, event in pairs(self.events) do
-            if event.coord ~= nil then
-                if (math.abs(event.coord.x - coord.x) - 1) < FLAG_event_distance
-                    or (math.abs(event.coord.y - coord.y) - 1) < FLAG_event_distance
-                then
-                    return false
-                end
-            end
-        end
-        return true
-    end
-
-    -- level A: self.base.STICK_events = {{event_baseid = ?, coord = {x = ?, y = ?}}, ...} }
-    event_generator(self, self.base.STICK_events)
-	cc.ScriptDebugLog(string.format("STICK_events: %d", table.size(self.events)))
-    
-    -- level B: self.events_base = {{event_baseid = ?, coord = {x = ?, y = ?}}, ...} }
-    event_generator(self, self.events_base)    
-	cc.ScriptDebugLog(string.format("events_base: %d", table.size(self.events)))
-
-    for _, event in pairs(self.events) do
-        if event.coord ~= nil then
-            self:tiles_fill(event)
-        end
-    end
-    
-    -- random coord for no speciafy coord event
-    for eventid, event in pairs(self.events) do
-        local FLAG_event_distance = self.FLAG_event_distance
-        if FLAG_event_distance < 0 then FLAG_event_distance = 0 end        
-        while event.coord == nil do
-		    local t = self:tiles_available_grid({width = event.base.width, height = event.base.height})
-		    local t_size = table.size(t)
-		    while t_size > 0 do
-           		local i, coord = table.random(t, t_size, self.random_func)
-           		if event_distance(self, coord, FLAG_event_distance) then 
-               		event.coord = coord
-               		self:tiles_fill(event)
-           		    break 
-           		end
-                t[i] = nil
-                t_size = table.size(t)
-		    end
-			if event.coord == nil then
-				FLAG_event_distance = FLAG_event_distance - 1
-				assert(FLAG_event_distance >= 0)
-			end
-        end
-    end
-
-	for _, event in pairs(self.events) do
-		cc.ScriptDebugLog(string.format("    event: %d,%d,%s on coord: (%d,%d)", event.id, event.baseid, event.base.name.cn, event.coord.x, event.coord.y))
-	end
-end
-
---
--- void tiles_obstacle_STICK_generator()
---
-function Scene:tiles_obstacle_STICK_generator()
-    -- self.base.STICK_obstacles
-    for _, t in pairs(self.base.STICK_obstacles) do
-        local obstacle_baseid = t.obstacle_baseid
-        assert(obstacle_baseid ~= nil)
-        local obstacle_base = cc.ScriptLookupTable("Obstacle", obstacle_baseid)
-        assert(obstacle_base.width > 0 and obstacle_base.height > 0)
-        
-        local coord = t.coord
-        if coord == nil then
-    		local t = self:tiles_available_grid({width = obstacle_base.width, height = obstacle_base.height})
-    		local t_size = table.size(t)
-    		if t_size > 0 then
-            	local _, coord_random = table.random(t, t_size, self.random_func)
-				coord = coord_random
-            end
-        end
-
-        if coord ~= nil then            
-            self:tiles_fill(self:create_obstacle_object(obstacle_baseid, coord))
-        else
-            cc.ScriptDebugLog(string.format("not enough space to generate STICK obstacle: %d", obstacle_baseid))
-        end
-    end
-	cc.ScriptDebugLog(string.format("STICK_obstacles: %d", table.size(self.obstacles)))
-end
-
-
---
--- void tiles_obstacle_BLOCK_generator(blocksize)
---
-function Scene:tiles_obstacle_BLOCK_generator(blocksize)
-    -- self.base.obstacles = { obstacle_baseid = number, ... }
-    assert(blocksize > 0)
-    for obstacle_baseid, number in pairs(self.base.obstacles) do
-        local obstacle_base = cc.ScriptLookupTable("Obstacle", obstacle_baseid)
-        assert(obstacle_base.width > 0 and obstacle_base.height > 0)
-        if obstacle_base.width >= blocksize or obstacle_base.height >= blocksize then
-            while number > 0 do
-			    local t = self:tiles_available_grid({width = obstacle_base.width, height = obstacle_base.height})
-			    local t_size = table.size(t)
-			    if t_size > 0 then
-               		local _, coord = table.random(t, t_size, self.random_func)
-               		self:tiles_fill(self:create_obstacle_object(obstacle_baseid, coord))
-           		end
-           		number = number - 1
-       		end
-        end
-    end
-	cc.ScriptDebugLog(string.format("BLOCK_obstacles: %d", table.size(self.obstacles)))
-end
-
---
--- {coord, ...} tiles_available_grid(rect)
--- 
-function Scene:tiles_available_grid(rect)
-	local function tiles_check_grid(self, coord, rect)
-		assert(rect.width > 0 and rect.height > 0)
-		for y = 0, rect.height - 1 do
-		    local yy = y + coord.y
-		    if yy >= self.base.height then return false end -- overflow
-
-			for x = 0, rect.width -1 do
-			    local xx = x + coord.x
-			    if xx >= self.base.width then return false end -- overflow
-			    
-			    if self.tiles[yy][xx] ~= nil then return false end
-			end
-		end
-		return true
-	end
-
-	local t = {} -- {coord, ...}
-	for y = 0, self.base.height - 1 do
-		for x = 0, self.base.width - 1 do
-		    local coord = {x = x, y = y}
-			if tiles_check_grid(self, coord, rect) then
-			    table.insert(t, coord)
-			end
-		end
-	end
-	return t
-end
-
-
---
--- event tiles_event_find(eventCategory)
---
-function Scene:tiles_event_find(eventCategory)
-    for _, event in pairs(self.events) do
-        if event.base.category == eventCategory then return event end
-    end
-    return nil
-end
-
 
 --
 -- bool tiles_link_events()
@@ -453,45 +200,199 @@ function Scene:tiles_link_events()
 end
 
 --
+-- void dump()
+--
+function Scene:dump()
+	local function dump_map(map)
+		cc.ScriptDebugLog(string.format("map: %d, layer: %d", map.baseid, map.layer))
+		map:tiles_dump()
+		local t = {
+			Direction.LEFT, Direction.RIGHT, Direction.UP, Direction.DOWN
+		}
+		for _, direction in pairs(t) do
+			if map.neighbor[direction] ~= nil then
+				cc.ScriptDebugLog(string.format("----- direction: %d", direction))
+				dump_map(map.neighbor[direction])
+			end
+		end
+	end
+	dump_map(self.entrymap)
+end
+
+--
 --  bool generator()
 --
-function Scene:generator()    
-    local size = self.FLAG_prior_obstacle_size
-    local try_times = self.FLAG_generate_try_times
-    while try_times > 0 do
-        self:tiles_init()
-        self:tiles_pattern_generator()
-        --self:tiles_event_generator()
-        --self:tiles_obstacle_STICK_generator()
-        --self:tiles_obstacle_BLOCK_generator(size)
-        --if self:tiles_link_events() then
-            --self:tiles_obstacle_padding_tile()
-			self:tiles_dump()
-            return true
-        --end
-        --size = size + 1
-        --try_times = try_times - 1
-		--cc.ScriptDebugLog('try times: ' .. tostring(try_times) .. ', size: ' .. tostring(size))
-    end
-    return false
-end
+function Scene:generator(entityid)
+	local layer = 1
+	local maps = {}
 
---
---------------------- export & import ---------------------
---
+	-- copy.script_func(entityid, copy_baseid, copy_layers, randomseed)
+	-- events: { map_baseid: 10, map_events: {{event_baseid = ?, coord = {x = ?, y = ?}}, ...} }
+	local events = self.copy.script_func(entityid, self.copy.baseid, layer, self.copy.seeds[layer])
+	if events == nil then
+	    cc.ScriptErrorLog(string.format(">>>>>>>>>> copy: %d, layer: %d not exist", self.copy.baseid, layer))
+	    return false
+	end
+	self.entrymap = Map:new(self, events.map_baseid, seed, entityid, events.map_events, layer, Direction.NONE)
+	assert(self.entrymap ~= nil)
+	table.insert(maps, self.entrymap)
 
---
--- string export()
---
-function Scene:export()
-    -- TODO: export layout setting
-end
+	while table.size(maps) > 0 do
+		local map = table.pop_front(maps)
+		assert(map ~= nil)
 
---
--- bool import(string)
---
-function Scene:import()
-    -- TODO: import layout setting
+		layer = map.layer + 1
+		local seed = self.copy.seeds[layer]		
+	    local events = self.copy.script_func(entityid, self.copy.baseid, layer, seed)
+	    if events == nil then return true end -- no more map info
+
+	    local t = {
+	    	--
+	    	--  |
+	    	--  |
+	    	--  |
+	    	--
+			[MapPattern.I] 	= function(self, parent_map, events, seed, entityid, layer, maps)
+				if true then -- UP
+					local newmap = Map:new(self, events.map_baseid, seed, entityid, events.map_events, layer, Direction.DOWN)
+					parent_map.neighbor[Direction.UP] = newmap
+					table.insert(maps, newmap)
+				end
+			end,
+	    	--
+	    	--  ----
+	    	--     |
+	    	--     |
+	    	--
+			[MapPattern.L] 	= function(self, parent_map, events, seed, entityid, layer, maps)
+				if true then -- LEFT
+					local newmap = Map:new(self, events.map_baseid, seed, entityid, events.map_events, layer, Direction.RIGHT)
+					parent_map.neighbor[Direction.LEFT] = newmap
+					table.insert(maps, newmap)
+				end
+			end,
+	    	--
+	    	--  ----
+	    	--  |   
+	    	--  |  
+	    	--
+			[MapPattern.R] 	= function(self, parent_map, events, seed, entityid, layer, maps)
+				if true then -- RIGHT
+					local newmap = Map:new(self, events.map_baseid, seed, entityid, events.map_events, layer, Direction.LEFT)
+					parent_map.neighbor[Direction.RIGHT] = newmap
+					table.insert(maps, newmap)
+				end
+			end,
+	    	--
+	    	--  -------
+	    	--     |
+	    	--     |
+	    	--
+			[MapPattern.LR] = function(self, parent_map, events, seed, entityid, layer, maps)
+				if true then -- LEFT
+					local newmap = Map:new(self, events.map_baseid, seed, entityid, events.map_events, layer, Direction.RIGHT)
+					parent_map.neighbor[Direction.LEFT] = newmap
+					table.insert(maps, newmap)
+				end
+				if true then -- RIGHT
+					local newmap = Map:new(self, events.map_baseid, seed, entityid, events.map_events, layer, Direction.LEFT)
+					parent_map.neighbor[Direction.RIGHT] = newmap
+					table.insert(maps, newmap)
+				end
+			end,
+	    	--
+	    	--     |
+	    	--     |
+	    	--  ---|
+	    	--     |
+	    	--     |
+	    	--
+			[MapPattern.LI] = function(self, parent_map, events, seed, entityid, layer, maps)
+				if true then -- LEFT
+					local newmap = Map:new(self, events.map_baseid, seed, entityid, events.map_events, layer, Direction.RIGHT)
+					parent_map.neighbor[Direction.LEFT] = newmap
+					table.insert(maps, newmap)
+				end
+				if true then -- UP
+					local newmap = Map:new(self, events.map_baseid, seed, entityid, events.map_events, layer, Direction.DOWN)
+					parent_map.neighbor[Direction.UP] = newmap
+					table.insert(maps, newmap)
+				end
+			end,
+	    	--
+	    	--  |
+	    	--  |
+	    	--  |---
+	    	--  |
+	    	--  |
+	    	--
+			[MapPattern.RI] = function(self, parent_map, events, seed, entityid, layer, maps)
+				if true then -- RIGHT
+					local newmap = Map:new(self, events.map_baseid, seed, entityid, events.map_events, layer, Direction.LEFT)
+					parent_map.neighbor[Direction.RIGHT] = newmap
+					table.insert(maps, newmap)
+				end
+				if true then -- UP
+					local newmap = Map:new(self, events.map_baseid, seed, entityid, events.map_events, layer, Direction.DOWN)
+					parent_map.neighbor[Direction.UP] = newmap
+					table.insert(maps, newmap)
+				end
+			end,
+	    	--
+	    	--     |
+	    	--     |
+	    	--  ---|---
+	    	--     |
+	    	--     |
+	    	--
+			[MapPattern.LRI]= function(self, parent_map, events, seed, entityid, layer, maps)
+				if true then -- LEFT
+					local newmap = Map:new(self, events.map_baseid, seed, entityid, events.map_events, layer, Direction.RIGHT)
+					parent_map.neighbor[Direction.LEFT] = newmap
+					table.insert(maps, newmap)
+				end
+				if true then -- RIGHT
+					local newmap = Map:new(self, events.map_baseid, seed, entityid, events.map_events, layer, Direction.LEFT)
+					parent_map.neighbor[Direction.RIGHT] = newmap
+					table.insert(maps, newmap)
+				end
+				if true then -- UP
+					local newmap = Map:new(self, events.map_baseid, seed, entityid, events.map_events, layer, Direction.DOWN)
+					parent_map.neighbor[Direction.UP] = newmap
+					table.insert(maps, newmap)
+				end
+			end,
+			-----------------------------
+	    	--
+	    	--     |
+	    	--     |
+	    	--  ----
+	    	--
+			[MapPattern.RL]	= function(self, parent_map, events, seed, entityid, layer, maps)
+				if true then -- UP
+					local newmap = Map:new(self, events.map_baseid, seed, entityid, events.map_events, layer, Direction.DOWN)
+					parent_map.neighbor[Direction.UP] = newmap
+					table.insert(maps, newmap)
+				end
+			end,
+	    	--
+	    	--  |
+	    	--  |
+	    	--  |---
+	    	--
+			[MapPattern.RR]	= function(self, parent_map, events, seed, entityid, layer, maps)
+				if true then -- UP
+					local newmap = Map:new(self, events.map_baseid, seed, entityid, events.map_events, layer, Direction.DOWN)
+					parent_map.neighbor[Direction.UP] = newmap
+					table.insert(maps, newmap)
+				end
+			end,
+	    }
+	    assert(t[map.pattern] ~= nil)
+	    t[map.pattern](self, map, events, seed, entityid, layer, maps)
+	end
+
+	return true
 end
 
 --

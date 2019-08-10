@@ -5,111 +5,31 @@
 
 Scene = {
     copy = nil, -- reference to copy instance
-    
-    id = nil,
-    baseid = nil,
-    base = nil,
-    
+        
     seed = nil,
     random_func = nil,
-    
-    events_base = nil, -- copy.script_func() -> {{event_baseid = ?, coord = {x = ?, y = ?}}, ...} }
-    coord_base = nil, -- {x = ?, y = ?}
-    direction = nil,
-    
-    tiles = nil, -- {[y][x] = {objects = {[1]=?, ...}, block = ?} , ... }
-    events = nil, -- all of events, {[eventid] = event instance, ...}
-    obstacles = nil, -- all of obstacles, {[obstacleid] = obstacle instance, ...}
-    roads = nil, -- all of roads, {{x=?,y=?}, ...}
 
-    -- MapPattern
-    pattern = nil,    
-
-    constructor = function(self, copy, baseid, seed, entityid, events_base, direction)
+    entrymap = nil,
+    
+    constructor = function(self, copy, seed, entityid)
         self.copy = copy
-        self.id = cc.ScriptMapNew(baseid)
-        self.baseid = baseid
-        self.base = cc.ScriptLookupTable("Map", self.baseid)
-        assert(self.base ~= nil)
-        assert(self.base.width > 0 and self.base.height > 0)
-
-	    cc.ScriptDebugLog(string.format("++++++++++ scene: %d,%d,%s, constructor", self.id, self.baseid, self.base.name.cn))
-        
         self.seed = seed
         self.random_func = NewRandom(self.seed)
-        self.events_base = events_base
-        assert(self.events_base ~= nil)
-        -- self.coord_base = coord_base
-        self.direction = direction
-        assert(self.coord_base ~= nil)
-        self.tiles = {}
-        self.events = {}
-		self.obstacles = {}
-		self.roads = {}
+
+        self.entrymap = nil
 		self.members = {}
 		self.match = nil
 		self.trigger_event = nil
 
-		-- search for available tile obstacle
-		self:tile_obstacle_baseid_init()
-        assert(self.tile_obstacle_baseid ~= nil and table.size(self.tile_obstacle_baseid) > 0)
-        table.dump(self.tile_obstacle_baseid, 'tile_obstacle_baseid')
-
-		-- search for available wall obstacle
-		self:wall_obstacle_baseid_init()
-		assert(self.wall_obstacle_baseid ~= nil and table.size(self.wall_obstacle_baseid) > 0)
-		table.dump(self.wall_obstacle_baseid, 'wall_obstacle_baseid')
-
-        -- MapPolicy
-        self.FLAG_chessboard = false
-        self.FLAG_wave_wall = false        
-        local policies = {
-            [MapPolicy.CHESSBOARD] = function(self) 
-                self.FLAG_chessboard = true
-                cc.ScriptDebugLog(string.format("    map: %d, policy: chessboard", self.baseid))
-                end,
-            [MapPolicy.WAVE_WALL] = function(self)
-                self.FLAG_wave_wall = true
-                cc.ScriptDebugLog(string.format("    map: %d, policy: wave wall", self.baseid))
-                end,
-        }        
-        if self.base.policy == nil then self.base.policy = {} end
-        for _, policy in pairs(self.base.policy) do
-            if policies[policy] ~= nil then
-               policies[policy](self) 
-            else
-                cc.ScriptErrorLog(string.format("map: %d, unsupport policy: %d", self.baseid, policy))
-            end
-        end
-
-        -- MapPattern
-        self.pattern = nil
-        if self.base.pattern ~= nil and table.size(self.base.pattern) > 0 then 
-            self.pattern = table.random(self.base.pattern, table.size(self.base.pattern), self.random_func)
-        end
-        if self.pattern == nil then self.pattern, _ = self.random_func(MapPattern.I, MapPattern.LRI) end
-        assert(self.pattern ~= nil)
-        cc.ScriptDebugLog(string.format("    map: %d, pattern: %d", self.baseid, self.pattern))
-
         -- generate scene
-		local rc = self:generator() -- init events & obstacles
+		local rc = self:generator(entityid) -- init events & obstacles
 		assert(rc)
     end,
 
     destructor = function(self)
-	    cc.ScriptDebugLog(string.format("---------- scene: %d,%d,%s, destructor", self.id, self.baseid, self.base.name.cn))
-    
         for _, entity in pairs(self.members) do
             self:remove_member(entity)
         end
-        
-        for _, event in pairs(self.events) do event:destructor() end
-        table.clear(self.events)
-        
-        for _, obstacle in pairs(self.obstacles) do obstacle:destructor() end
-        table.clear(self.obstacles)
-        
-        cc.ScriptMapDestroy(self.id) -- ScriptMapDestroy
     end,
     
 
@@ -210,158 +130,6 @@ Scene = {
     -- current match instance
     --
     match = nil,
-
-    --
-    -- gate obstacle baseid: { obstacle_baseid, ... }
-    --
-    gate_obstacle_baseid = nil,
-    gate_obstacle_baseid_init = function(self)
-		self.gate_obstacle_baseid = {}
-        for obstacle_baseid, _ in pairs(self.base.obstacles) do
-            local obstacle_base = cc.ScriptLookupTable("Obstacle", obstacle_baseid)
-            assert(obstacle_base.width > 0 and obstacle_base.height > 0)
-            if obstacle_base.category == ObstacleCategory.GATE then 
-                table.insert(self.gate_obstacle_baseid, obstacle_baseid)
-            end
-        end
-    end,
-    gate_obstacle_baseid_random = function(self)
-        local t_size = table.size(self.gate_obstacle_baseid)
-        if t_size == 0 then return nil end
-        local _, obstacle_baseid = table.random(self.gate_obstacle_baseid, t_size, self.random_func)
-        return obstacle_baseid
-    end,
-    gate_obstacle_baseid_retrieve = function(self)
-        return self:gate_obstacle_baseid_random()
-    end,
-
-    
-    --
-    -- wall obstacle baseid: { obstacle_baseid, ... }
-    --
-    wall_obstacle_baseid = nil,
-    wall_obstacle_baseid_init = function(self)
-		self.wall_obstacle_baseid = {}
-        for obstacle_baseid, _ in pairs(self.base.obstacles) do
-            local obstacle_base = cc.ScriptLookupTable("Obstacle", obstacle_baseid)
-            assert(obstacle_base.width > 0 and obstacle_base.height > 0)
-            if obstacle_base.category == ObstacleCategory.WALL 
-                    or obstacle_base.category == ObstacleCategory.HIGHWALL
-                    or obstacle_base.category == ObstacleCategory.CORNER then
-                table.insert(self.wall_obstacle_baseid, obstacle_baseid)
-            end
-        end
-    end,
-    wall_obstacle_baseid_random = function(self)
-        local t_size = table.size(self.wall_obstacle_baseid)
-        if t_size == 0 then return nil end
-        local _, obstacle_baseid = table.random(self.wall_obstacle_baseid, t_size, self.random_func)
-        return obstacle_baseid
-    end,
-    wall_obstacle_baseid_wave_wall = function(self, coord)
-        local t_size = table.size(self.wall_obstacle_baseid)
-        if t_size == 0 then return nil end
-        local value = coord.x % t_size
-        value = value + (coord.y % 2)
-        value = (value % t_size) + 1
-        assert(self.wall_obstacle_baseid[value] ~= nil, string.format("coord:(%d,%d), t_size:%d, value:%d", coord.x, coord.y, t_size, value))
-        return self.wall_obstacle_baseid[value]
-    end,
-    wall_obstacle_baseid_retrieve = function(self, coord)
-        if self.FLAG_wave_wall then
-            return self:wall_obstacle_baseid_wave_wall(coord)
-        else
-            return self:wall_obstacle_baseid_random()
-        end
-    end,
-    
-    
-    --
-    -- tile obstacle baseid : { obstacle_baseid, ... }
-    --
-    tile_obstacle_baseid = nil,
-    tile_obstacle_baseid_init = function(self)
-		self.tile_obstacle_baseid = {}
-        for obstacle_baseid, _ in pairs(self.base.obstacles) do
-            local obstacle_base = cc.ScriptLookupTable("Obstacle", obstacle_baseid)
-            assert(obstacle_base.width > 0 and obstacle_base.height > 0)
-            if obstacle_base.category == ObstacleCategory.TILE and obstacle_base.block == BlockCategory.NONE then
-                table.insert(self.tile_obstacle_baseid, obstacle_baseid)
-            end
-        end
-    end,
-    tile_obstacle_baseid_random = function(self)
-        local t_size = table.size(self.tile_obstacle_baseid)
-        if t_size == 0 then return nil end
-        local _, obstacle_baseid = table.random(self.tile_obstacle_baseid, t_size, self.random_func)
-        return obstacle_baseid
-    end,
-    tile_obstacle_baseid_chessboard = function(self, coord)
-        local t_size = table.size(self.tile_obstacle_baseid)
-        if t_size == 0 then return nil end
-        local value = coord.x % t_size
-        value = value + (coord.y % 2)
-        value = (value % t_size) + 1
-        assert(self.tile_obstacle_baseid[value] ~= nil, string.format("coord:(%d,%d), t_size:%d, value:%d", coord.x, coord.y, t_size, value))
-        return self.tile_obstacle_baseid[value]
-    end,
-    tile_obstacle_baseid_retrieve = function(self, coord)
-        if self.FLAG_chessboard then
-            return self:tile_obstacle_baseid_chessboard(coord)
-        else
-            return self:tile_obstacle_baseid_random()
-        end
-    end,
-    
-
-	FLAG_generate_try_times = 10,    
-    FLAG_prior_obstacle_size = 2,
-    FLAG_event_distance = 1,
-	FLAG_entry_branch = 1,
-	FLAG_exit_branch = 1,
-	FLAG_event_allow_corner = true,
-	FLAG_event_allow_edge = true,
-	FLAG_trigger_event_distance = 1,
-	FLAG_adjust_dest_obstacle = false,
-	FLAG_adjust_dest_event = true,
-
-    -- MapPolicy
-    FLAG_chessboard = false,
-    FLAG_wave_wall = false,
-
-    -- 
-	FLAG_road_width = 3,
-	FLAG_walk_wall_width = 1,
-	FLAG_area_width = 5,
-	FLAG_area_height = 5,
-	FLAG_pattern_width = 15,
-	FLAG_pattern_height = 15,
-    
-    --
-    -- unsigned int distance(from, to)
-    --
-    distance = function(self, from, to)
-        assert(self:valid_coord(from) and self:valid_coord(to))
-        return ManhattanDistance(from, to)
-    end,
-
-    --
-    -- bool is_corner(coord)
-    --
-    is_corner = function(self, coord)
-        return (coord.x == 0 and coord.y == 0)
-            or (coord.x == 0 and coord.y == self.base.height - 1)
-            or (coord.x == self.base.width - 1 and coord.y == 0)
-            or (coord.x == self.base.width - 1 and coord.y == self.base.height - 1)
-    end,
-    
-    --
-    -- bool is_edge(coord)
-    --
-    is_edge = function(self, coord)
-        return coord.x == 0 or coord.y == 0 
-            or coord.x == self.base.width - 1 or coord.y == self.base.height - 1
-    end
 }
 
 function Scene:new(copy, baseid, seed, entityid, events_base, coord_base)

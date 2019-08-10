@@ -135,15 +135,16 @@ function Copy:create_scene(entityid, layer)
 
     -- copy.script_func(entityid, copy_baseid, copy_layers, randomseed)
     -- events: { map_baseid: 10, map_events: {{event_baseid = ?, coord = {x = ?, y = ?}}, ...} }
-    local events = self.script_func(entityid, self.baseid, layer, self.seeds[layer])
-    if events == nil then
-        cc.ScriptErrorLog(string.format(">>>>>>>>>> copy: %d, layer: %d not exist", self.baseid, layer))
-        return nil
-    end
-    assert(events.map_baseid ~= nil and events.map_events ~= nil)
+    --local events = self.script_func(entityid, self.baseid, layer, self.seeds[layer])
+    --if events == nil then
+    --    cc.ScriptErrorLog(string.format(">>>>>>>>>> copy: %d, layer: %d not exist", self.baseid, layer))
+    --    return nil
+    --end
+    --assert(events.map_baseid ~= nil and events.map_events ~= nil)
 
     -- init new scene
-    return Scene:new(self, events.map_baseid, self.seeds[layer], entityid, events.map_events, {x=0,y=0})
+    --return Scene:new(self, events.map_baseid, self.seeds[layer], entityid, events.map_events, {x=0,y=0})
+    return Scene:new(self, self.seeds[layer], entityid)
 end
 
 

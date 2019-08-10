@@ -1,5 +1,5 @@
 --
-------------------- Scene pattern -------------------
+------------------- Map pattern -------------------
 --
 
 --
@@ -179,47 +179,28 @@ local pattern_RR = {
 	{ '*', '*', '*', '*', '*', '*', '*', '*', '*', '*', '*', '*', '*', '*', '*' }, -- 14
 }
 
-local pattern_RLR = {
-----   0    1    2    3    4    5    6    7    8    9   10   11   12   13   14	
-	{ '*', '*', '*', '*', '*', 'I', '.', '.', '.', 'I', '*', '*', '*', '*', '*' }, --  0
-	{ '*', '*', '*', '*', '*', 'I', '.', '.', '.', 'I', '*', '*', '*', '*', '*' }, --  1
-	{ '*', '*', '*', '*', '*', 'I', '.', '.', '.', 'I', '*', '*', '*', '*', '*' }, --  2
-	{ '*', '*', '*', '*', '*', 'I', '.', '.', '.', 'I', '*', '*', '*', '*', '*' }, --  3
-	{ '*', '*', '*', '*', '*', 'I', '.', '.', '.', 'I', '*', '*', '*', '*', '*' }, --  4
-	{ 'I', 'I', 'I', 'I', 'I', '.', '.', '.', '.', '.', 'I', 'I', 'I', 'I', 'I' }, --  5
-	{ '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.' }, --  6
-	{ '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.' }, --  7
-	{ '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.' }, --  8
-	{ 'I', 'I', 'I', 'I', 'I', '.', '.', '.', '.', '.', 'I', 'I', 'I', 'I', 'I' }, --  9
-	{ '*', '*', '*', '*', '*', 'I', 'I', 'I', 'I', 'I', '*', '*', '*', '*', '*' }, -- 10
-	{ '*', '*', '*', '*', '*', '*', '*', '*', '*', '*', '*', '*', '*', '*', '*' }, -- 11
-	{ '*', '*', '*', '*', '*', '*', '*', '*', '*', '*', '*', '*', '*', '*', '*' }, -- 12
-	{ '*', '*', '*', '*', '*', '*', '*', '*', '*', '*', '*', '*', '*', '*', '*' }, -- 13
-	{ '*', '*', '*', '*', '*', '*', '*', '*', '*', '*', '*', '*', '*', '*', '*' }, -- 14
-}
 
 --
 -- pattern, table tiles_pattern_random()
 --
-function Scene:tiles_pattern_retrieve(pattern)
-	local patterns = {
-		[MapPattern.I] 	= pattern_I,
-		[MapPattern.L] 	= pattern_L,
-		[MapPattern.R] 	= pattern_R,
-		[MapPattern.LR] = pattern_LR,
-		[MapPattern.LI] = pattern_LI,
-		[MapPattern.RI] = pattern_RI,
-		[MapPattern.LRI]= pattern_LRI,
+function Map:tiles_pattern_retrieve(pattern)
+	local table_pattern = {
+		[MapPattern.I] 		= pattern_I,
+		[MapPattern.L] 		= pattern_L,
+		[MapPattern.R] 		= pattern_R,
+		[MapPattern.LR] 	= pattern_LR,
+		[MapPattern.LI] 	= pattern_LI,
+		[MapPattern.RI] 	= pattern_RI,
+		[MapPattern.LRI]	= pattern_LRI,
 		-----------------------------
-		[MapPattern.RL]	= pattern_RL,
-		[MapPattern.RR]	= pattern_RR,
-		[MapPattern.RLR]= pattern_RLR
+		[MapPattern.RL]		= pattern_RL,
+		[MapPattern.RR]		= pattern_RR,
 	}
 	if pattern == nil then
-		return table.random(patterns, table.size(patterns), self.random_func)
+		return table.random(table_pattern, table.size(table_pattern), self.random_func)
 	else
-		assert(patterns[pattern] ~= nil)
-		return pattern, patterns[pattern]
+		assert(table_pattern[pattern] ~= nil)
+		return pattern, table_pattern[pattern]
 	end
 end
 

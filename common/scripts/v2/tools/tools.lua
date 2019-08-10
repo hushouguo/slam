@@ -134,6 +134,15 @@ table.equal = function(t1, t2)
 	return true
 end
 
+--
+-- key, value table.pop_front(t)
+--
+table.pop_front = function(t)
+	if type(t) ~= 'table' then return nil end
+	for key, value in pairs(t) return key, value end
+	return nil
+end
+
 function File() return debug.getinfo(2,'S').source end
 function Line() return debug.getinfo(2, 'l').currentline end
 function Function() 
