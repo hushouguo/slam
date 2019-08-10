@@ -1,8 +1,0 @@
-.logs
-CMakeCache.txt
-CMakeFiles
-Makefile
-cmake_install.cmake
-shard/StorageServer/StorageServer
-shard/GatewayServer/GatewayServer
-shard/tnode/tnode
