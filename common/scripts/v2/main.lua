@@ -24,6 +24,7 @@ require('objects/obstacle')
 require('match/match')
 
 require('scene/scene')
+require('scene/pattern')
 require('scene/scene_creator')
 
 require('copy/copy')

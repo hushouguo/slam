@@ -53,6 +53,11 @@ Scene = {
         assert(self.tile_obstacle_baseid ~= nil and table.size(self.tile_obstacle_baseid) > 0)
         table.dump(self.tile_obstacle_baseid, 'tile_obstacle_baseid')
 
+		-- search for available wall obstacle
+		self:wall_obstacle_baseid_init()
+		assert(self.wall_obstacle_baseid ~= nil and table.size(self.wall_obstacle_baseid) > 0)
+		table.dump(self.wall_obstacle_baseid, 'wall_obstacle_baseid')
+
         -- MapPolicy
         self.FLAG_chessboard = false
         self.FLAG_wave_wall = false        
@@ -239,8 +244,8 @@ Scene = {
             local obstacle_base = cc.ScriptLookupTable("Obstacle", obstacle_baseid)
             assert(obstacle_base.width > 0 and obstacle_base.height > 0)
             if obstacle_base.category == ObstacleCategory.WALL 
-                    || obstacle_base.category == ObstacleCategory.HIGHWALL
-                    || obstacle_base.category == ObstacleCategory.CORNER then
+                    or obstacle_base.category == ObstacleCategory.HIGHWALL
+                    or obstacle_base.category == ObstacleCategory.CORNER then
                 table.insert(self.wall_obstacle_baseid, obstacle_baseid)
             end
         end

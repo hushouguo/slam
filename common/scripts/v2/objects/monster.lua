@@ -13,13 +13,13 @@ Monster = {
 		self.round_interval = FLAG_monster_round_interval
 		self.round_last_time = 0
 		
-		cc.ScriptDebugLog(string.format("entity: %d,%d,%s, create monster ai", 
-		    self.entity.id, self.entity.baseid, self.entity.base.name.cn))
+--		cc.ScriptDebugLog(string.format("entity: %d,%d,%s, create monster ai", 
+--		    self.entity.id, self.entity.baseid, self.entity.base.name.cn))
 	end,
 
 	destructor = function(self)
-		cc.ScriptDebugLog(string.format("entity: %d,%d,%s, destroy monster ai", 
-		    self.entity.id, self.entity.baseid, self.entity.base.name.cn))
+--		cc.ScriptDebugLog(string.format("entity: %d,%d,%s, destroy monster ai", 
+--		    self.entity.id, self.entity.baseid, self.entity.base.name.cn))
 	end
 }
 

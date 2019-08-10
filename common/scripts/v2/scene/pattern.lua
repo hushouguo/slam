@@ -152,7 +152,7 @@ function Scene:tiles_pattern_retrieve(pattern)
 		[MapPattern.RI] = pattern_RI,
 		[MapPattern.LRI]= pattern_LRI
 	}
-	if pattern == nil
+	if pattern == nil then
 		return table.random(patterns, table.size(patterns), self.random_func)
 	else
 		assert(patterns[pattern] ~= nil)

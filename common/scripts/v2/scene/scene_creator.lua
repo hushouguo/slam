@@ -143,8 +143,8 @@ end
 --
 function Scene:tiles_pattern_generator()
     assert(self.pattern ~= nil)
-    assert(self.base.width >= FLAG_pattern_width)
-    assert(self.base.height >= FLAG_pattern_height)
+    assert(self.base.width >= self.FLAG_pattern_width)
+    assert(self.base.height >= self.FLAG_pattern_height)
     local _, template_pattern = self:tiles_pattern_retrieve(self.pattern)
     for y, t in pairs(template_pattern) do
     	for x, cr in pairs(t) do
@@ -155,6 +155,8 @@ function Scene:tiles_pattern_generator()
     			self:tiles_fill(self:create_obstacle_object(self:tile_obstacle_baseid_retrieve(coord), coord))
     		elseif cr == 'I' then
     			self:tiles_fill(self:create_obstacle_object(self:wall_obstacle_baseid_retrieve(coord), coord))
+			elseif cr == '*' then
+				-- block point
     		else
     			cc.ScriptErrorLog(string.format("illegal char: %s", cr))
     		end
