@@ -1,0 +1,32 @@
+------------------------
+--测试BOSS
+------------------------
+return {
+    baseid = 1202,
+    name = {cn="哥布林Boss#1",en=""},
+    desc = {cn="一个大佬",en=""},
+    resource = {quality=1,icon="Sprites/EntityHead/DEFAULT",uiModel="Models/UI/UI_qiunv",mapModel="Models/Map/Map_wu",matchModel="Models/Battle/Bat_qiunv"},
+    career = 0,
+    category = 2,
+    level = 0,
+    levelup_baseid = 0,
+    inithp = 100,
+    maxhp = 100,
+    round_mp = 2,
+    strength = 0,
+    armor = 0,
+    shield = 0,
+    init_gold = 0,
+    init_cards = {10010,10010,10010,10010,10010},
+    max_cards = 100,
+    init_buffs = {},
+    init_items = {},
+    init_puppets = {},
+    round_cards = 1,
+    max_hold_cards = 0,
+    max_puppets = 0,
+    max_pack_slots = 99,
+    max_equip_slots = 0,
+    purchase_card_script_func = nil,
+    destroy_card_script_func = nil,
+}

@@ -1,0 +1,57 @@
+加金币: [加背包里)
+addgold [value] value default: 100
+
+加血
+addhp [value] value default: maxhp
+
+加能量
+addmp [value] value default: base.round_mp
+
+加卡: (在探索场景里，加到背包里；在战斗场景里，加到手牌里)
+addcard [card_baseid]
+
+加道具: (加背包里)
+additem [item_baseid] [number] number default: 1
+
+加宠物: (加背包里)
+addpuppet [entity_baseid]
+
+加buff: (加到自身身上)
+addbuff [buff_baseid] [layer] layer default: 1
+
+完成当前事件: (如果在战斗中，则直接获胜)
+endevent
+
+跳转到副本指定层地图
+map [layer] layer default: 1
+
+列出背包所有卡牌
+listcard
+
+列出背包所有道具
+listitem
+
+列出背包所有宠物
+listpuppet
+
+升级卡牌
+levelupcard cardid
+
+升级宠物
+leveluppuppet entityid
+
+销毁卡牌
+destroycard cardid
+
+销毁道具
+destroyitem itemid
+
+解散宠物
+destroypuppet entityid
+
+在地图上添加障碍: (x, y不填，自动找个空地放)
+* addobstacle [obstacle_baseid] [x] [y]
+
+在地图上添加事件: (x, y不填, 自动找个空地放)
+* addevent [event_baseid] [x] [y]
+

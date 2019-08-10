@@ -1,0 +1,119 @@
+通用代码:
+	common.lua
+		common.lua里有全局变量g_enable_debug和g_copy
+		g_enable_debug表示是否开启调试模式的开关
+		g_copy是当前副本的实例，Copy类的一个实例
+
+
+1. copy.script_func:
+	-- 副本表格脚本api
+	-- entityid: 进入玩家id
+	-- copy_baseid: 副本表格ID
+	-- copy_layers: 副本当前层数, 默认层数从1开始
+	-- randomseed: 随机数种子
+	-- 返回值:
+	--   { map_baseid: 10, map_events: {{event_baseid = ?, coord = {x = ?, y = ?}}, ...} }
+	-- explain:
+	--   map_baseid: 索引map表, 指明该层使用哪张地图
+	--   map_events: 地图上事件列表,每个event_baseid都用来索引event表, coord用来固定位置, 如果有配置的话
+	-- NOTE:
+	--   1: map_events在地图初始化时都会执行一次,生成事件内容, 执行的顺序按照map_events的整数索引从小到大来执行
+	function copy.script_func(entityid, copy_baseid, copy_layers, randomseed)
+
+
+2. event.script_func:
+	-- 事件表格脚本api
+	-- entityid: 进入玩家id
+	-- copy_baseid: 副本表格ID
+	-- copy_layers: 副本当前层数, 默认层数从1开始
+	-- event_baseid: 事件表格ID
+	-- randomseed: 随机数种子
+	-- 返回值:
+	--[[
+		{
+			trigger_event_baseid = ?, -- 如果存在trigger_event_baseid, 则当前事件结束后无论结果如何都会触发
+
+			monster = {
+				entity_baseid = number, 
+				... , 
+			},
+
+			reward = {
+				{
+					-- 每组里面是N选1
+					cards = { card_baseid, ... }, 
+					items = { {item_baseid = number}, ... }, 
+					gold = ?,
+					puppets = { entity_baseid, ... }
+				},
+				...
+			},
+
+			shop = {
+					cards = {{card_baseid = ?}, ...}, 
+					items = {{item_baseid = ?}, ...}
+			},
+
+			destroy_card = { price_gold = ? },
+			levelup_card = { price_gold = ? },
+			levelup_puppet = { price_gold = ? },
+
+			story = storyid,
+			storyoption = storyoptionid, -- index to storyoption.xls
+		}
+	]]
+	-- explain:
+	--   A: 如果只返回一类内容, 比如monster, 那么其他shop, story等配成nil即可
+	-- 	 B: monster.rewards里是多个组, 每个组里面是N选1, 可以配成多张卡或者多个道具N选1, 也可以混合配成卡和道具混合在一起N选1
+	--   
+	function event.script_func(entityid, copy_baseid, copy_layers, event_baseid, randomseed)
+
+	-- explain:
+	--   A: event_baseid是指触发storyoption的这个事件的baseid
+	--   
+	function storyoption.script_func(entityid, copy_baseid, copy_layers, event_baseid, randomseed)
+
+
+3. item.script_func:
+	-- 道具表格脚本api
+	-- entityid: 进入玩家id
+	-- randomseed: 随机数种子
+	-- 返回值:
+	--[[ item
+			-- hp_add, ...
+	]]
+	--[[
+			{
+				hp = ?, -- 10, 10%
+				mp = ?,
+				maxhp = ?,
+				round_mp = ?,
+				strength = ?,
+				armor = ?,
+				shield = ?,
+				weakness = ?,
+				buffs = {['10010'] = buff_layer, ...}
+			}
+	]] 
+	-- explain:
+	--   item.script_func会按照ItemCategory不同,有不同的返回结构
+	--   对于ItemCategory.USABLE: item.script_func里直接去修改属性
+	--   对于ItemCategory.EQUIPABLE: item.script_func返回属性加成表, 表里的单个属性支持定值叠加和百分比叠加
+	-- NOTE:
+	function item.script_func(entityid, item, randomseed)
+
+
+数据结构:
+1. map.obstacles = { obstacle_baseid = min_number, ... }
+   指明地图上障碍的集合,程序从该集合中随机组合来形成场景
+
+2. map.STICK_events = {{event_baseid = ?, coord = {x = ?, y = ?}}, ...} }
+   在该地图固定的位置上放置指定的事件
+   NOTE 1: 该事件必须在copy.script_func返回的map_events里存在, 否则不会生成
+   NOTE 2: 如果该固定位置的事件和copy.script_func返回的map_events里的位置冲突,以map_events为准
+   
+3. map.STICK_obstacles = {{obstacle_baseid = ?, coord = {x = ?, y = ?}}, ...} }
+   在该地图固定的位置上放置指定的障碍
+
+
+4. 

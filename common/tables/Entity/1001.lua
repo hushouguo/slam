@@ -1,0 +1,32 @@
+------------------------
+--卡牌测试员
+------------------------
+return {
+    baseid = 1001,
+    name = {cn="卡牌测试员",en=""},
+    desc = {cn="数据库的卡他都有",en=""},
+    resource = {quality=1,icon="Sprites/EntityHead/DEFAULT",uiModel="Models/UI/UI_wu",mapModel="Models/Map/Map_wu",matchModel="Models/Battle/Bat_wu"},
+    career = 1,
+    category = 1,
+    level = 1,
+    levelup_baseid = 0,
+    inithp = 99,
+    maxhp = 99,
+    round_mp = 2,
+    strength = 0,
+    armor = 0,
+    shield = 0,
+    init_gold = 999,
+    init_cards = {10010,10010,10010,10010,10010},
+    max_cards = 100,
+    init_buffs = {},
+    init_items = {},
+    init_puppets = {[1301]=0,[1302]=0,[1303]=0,[1304]=0,[1305]=0,[1306]=0,[1307]=0,[1308]=0,},
+    round_cards = 3,
+    max_hold_cards = 0,
+    max_puppets = 10,
+    max_pack_slots = 99,
+    max_equip_slots = 10,
+    purchase_card_script_func = nil,
+    destroy_card_script_func = nil,
+}

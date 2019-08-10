@@ -1,0 +1,128 @@
+syntax = "proto3";
+
+package protocol;
+
+enum GENDER {
+	MALE							=	0;
+	FEMALE							=	1;
+}
+
+//
+// 职业
+enum CAREER {
+	SOLDIER							=	0;
+	HUNTER							=	1;
+	WITCH							=	2;	
+}
+
+enum CATEGORY {
+	PLAYER							=	0;
+	PUPPET							=	1;
+	MONSTER							=	2;
+}
+
+//
+// 游戏关卡数据
+message Progress {
+	uint32 chapter					=	1;
+	uint32 stage					=	2;
+	uint32 round					=	3;
+}
+
+//
+//装备
+message Equipment {
+	uint32 slot						=	1;	//槽位
+	uint32 cardid					=	2;	//卡牌编号
+}
+
+//
+//BUFF
+message Buff {
+	uint32 baseid					=	1;	//Buff表格索引
+	uint32 data						=	2;	//动态数据
+}
+
+//
+// 对局内数据
+message Round {
+	uint32 card_stack				=	1;	//抽牌堆数量
+	uint32 card_discard				=	2;	//弃牌堆数量
+	uint32 card_exhaust				=	3;	//消耗堆数量
+	repeated Equipment equip		=	4;	//装备栏
+	repeated uint64 puppet			=	5;	//宠物栏
+	uint32 placeholder				=	6;	//游戏内占位
+	uint32 maxhp					=	7;	//max HP
+	uint32 curhp					=	8;	//current HP
+	uint32 maxmp					=	9;	//max MP
+	uint32 curmp					=	10;	//current MP
+	repeated Buff buff				=	11;	//BUFF
+	int32 armor						=	12;	//护甲
+}
+
+//
+// 卡牌基础数据
+message Card {
+	uint32 baseid					=	1;	//表格ID
+}
+
+message Entity {
+	uint64 id						=	1;	//实例ID
+	string account					=	2;	//账号
+	string name						=	3;	//昵称
+	GENDER gender					=	4;	//性别
+	uint32 level					=	5;	//等级
+	uint32 viplevel					=	6;	//VIP等级
+	uint64 gold						=	7;	//金币
+	uint64 diamond					=	8;	//钻石
+	uint32 avatar					=	9;	//头像
+	uint32 baseid					=	10;	//表格ID
+	CAREER career					=	11;	//职业
+	CATEGORY categroy				=	12;	//类别
+	Progress progress				=	13;	//当前进度
+	Round round						=	14;	//当前对局信息
+}
+
+//
+//对局准备
+message RoundPrepareResponse {
+	Progress progress				=	1;	//当前进度
+	repeated Entity entities		=	2;	//参与玩家或宠物
+	repeated Entity opponent		=	3;	//对手,怪物或玩家
+}
+
+//
+//对局准备就绪
+message RoundReadyRequest {
+	uint64 entityid					=	1;	//就绪角色ID
+}
+
+//
+//对局开始
+message RoundBeginResponse {
+	uint64 entityid					=	1;	//
+}
+
+//
+//发牌
+message CardDealResponse {
+	uint64 entityid					=	1;	//发牌玩家编号
+	repeated uint64 cardid			=	2;	//牌组
+}
+
+//
+//出牌
+message CardPlayRequest {
+	uint64 entityid					=	1;	//角色或怪物ID
+	uint32 cardid					=	2;	//
+}
+
+//
+//对局结束
+message RoundEndResponse {
+	uint32 roundid					=	1;	//对局编号
+	Progress progress				=	2;	//当前进度
+	bool result						=	3;	//赢或输
+	//TODO:奖励
+}
+

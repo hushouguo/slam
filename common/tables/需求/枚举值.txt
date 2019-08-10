@@ -1,0 +1,221 @@
+﻿//性别
+enum EntityGender {
+	NONE				=	0;	//无性别定义
+	MALE				=	1;	//男性
+	FEMALE				=	2;	//女性	
+}
+
+//职业
+enum EntityCareer {
+	NONE				=	0;	//无职业
+	Career1				=	1;	//职业1
+	Career2				=	2;	//职业2
+	Career3				=	3;	//职业3
+}
+
+//Entity分类
+enum EntityCategory {
+	NONE				=	0;	//无分类
+	PLAYER				=	1;	//玩家
+	MONSTER				=	2;	//怪物
+}
+
+
+//卡牌品阶
+enum CardQuality {
+	NONE				=	0;	//无品阶
+	Quality1			=	1;	//品阶1
+	Quality2			=	2;	//品阶2
+	Quality3			=	3;	//品阶3
+	Quality4			=	4;	//品阶4
+	Quality5			=	5;	//品阶5
+}
+
+//卡牌种类
+enum CardCategory {
+	NONE				=	0;	//无种类
+	AGGRESSIVE			=	1;	//攻击类
+	SPELL				=	2;	//技能类
+	ABILITY				=	3;	//能力类
+	DUMMY				=	4;	//状态类
+	CURSE				=	5;	//诅咒类
+	EQUIPMENT			=	6;	//装备类
+	PUPPET 				=	7;	//随从类
+}
+
+//目标类型
+enum CardTargetType {
+	NONE				=	0;	//无需目标
+	PICK_SINGLE_ALLIES	=	1;	//对自选单个本方目标
+	PICK_SINGLE_ENEMY	=	2;	//对自选单个敌方目标
+	SELF				=	3;	//对自己
+	SELF_PUPPET			=	4;	//对自己的随从
+	ALLIES_ALL			=	5;	//对所有盟友
+	ALLIES_PUPPET_ALL	=	6;	//对所有盟友随从
+	ENEMY_ALL			=	7;	//对所有敌人
+	ENEMY_PUPPET_ALL	=	8;	//对所有敌人随从
+	ENEMY_RANDOM		=	9;	//对随机一个敌人
+	ALLIES_RANDOM		=	10;	//对随机一个盟友
+	ALL 				=	11;	//对全体
+}
+
+//伤害类型
+enum CardDamageType {
+	NONE				=	0;	//未定义伤害类型
+	PHYSICAL			=	1;	//物理伤害
+	SPELL				=	2;	//法术伤害
+}
+
+
+//障碍类型
+enum ObstacleCategory {
+	NONE				=	0;	//无类型
+	WALL				=	1;	//墙			[76 - 80]
+	HIGHWALL			=	2;	//高墙		[81 - 90]
+	WATER				=	3;	//水			[0 - 50]
+	TREE				=	4;	//树			[61 - 70]
+	GRASS				=	5;	//草			[51 - 55]
+	STONE				=	6;	//石头		[56 - 60]	
+	TILE				=	7;	//地砖		[0]
+	BUILDING			=	8;	//建筑物		[91 - 100]
+	MOUNTAIN			=	9;	//山丘		[71 - 75]
+	DECORATION			=	10;	//装饰		[0]
+}
+
+//阻挡类型
+enum BlockCategory {
+	NONE				=	0;	//无阻挡
+	DYNAMIC				=	1;	//动态阻挡; 破损后阻挡消失
+	STATIC				=	2;	//静态阻挡
+}
+
+//事件类型
+enum EventCategory {
+	NONE				=	0;	//无事件
+	ENTRY 				=	1;	//入口
+	EXIT 				=	2;	//出口
+	MONSTER				=	3;	//怪物
+	SHOP_BUY_CARD		=	4;	//购卡商店
+	SHOP_DESTROY_CARD	=	5;	//销卡商店
+	STORY 				=	6;	//剧情事件
+	SHOP_LEVELUP_CARD	=	7;	//升级卡商店
+	STORY_OPTION		=	8;	//选项事件
+	REWARD				=	9;	//奖励事件
+	SHOP_LEVELUP_PUPPET	=	10;	//升级宠物
+}
+
+//
+// Side
+//
+enum Side = {
+    ALLIES 				= 0; 	//盟友
+    ENEMY 				= 1;	//敌方
+}
+
+
+//
+// BreakPoint
+//
+enum BreakPoint = {
+    ROUND_BEGIN_A       =   1;  // 回合开始前
+    ROUND_BEGIN_Z       =   2;  // 回合开始后
+    CARD_DEAL_A         =   3;  // 发牌前
+    CARD_DEAL_Z         =   4;  // 发牌后
+    CARD_PLAY_A         =   5;  // 出牌前
+    CARD_PLAY_Z         =   6;  // 出牌后
+    CARD_DISCARD_A      =   7;  // 弃牌前
+    CARD_DISCARD_Z      =   8;  // 弃牌后
+    ROUND_END_A         =   9;  // 回合结束前
+    ROUND_END_Z         =   10; // 回合结束后
+    BUFF_ADD_A          =   11; // 添加BUFF开始// 暂停
+    BUFF_ADD_Z          =   12; // 添加BUFF结束
+    BUFF_REMOVE_A       =   13; // 移除BUFF开始
+    BUFF_REMOVE_Z       =   14; // 移除BUFF结束
+    ENTITY_SUFFER_DAMAGE=   15; // 受到伤害
+}
+
+//
+// EventEnd
+//
+enum EventEnd = {
+	NONE				=	0;	// 永远不结束
+	TRIGGER				=	1;	// 触发时结束
+	REWARD				=	2;	// 操作时结束; 操作指：商店购买、销卡、升级卡牌、进入战斗等
+}
+
+
+//
+// MapPolicy
+//
+enum MapPolicy = {
+	NONE				=	0;	// 无策略
+	CHESSBOARD			=	1;	// 棋盘地表; 棋盘地表要求map.obstacles里至少包含两块以上地砖
+}
+
+//
+// placeholder
+//
+enum Placeholder = {
+    NONE                =   0;  // 无排位
+    FRONT               =   1;  // 前排
+    MIDDLE              =   2;  // 中间
+    BACK                =   3;  // 后排
+}
+
+//
+//道具品阶
+//
+enum ItemQuality = {
+	NONE				=	0;	//无品阶
+	WHITE				=	1;	//白
+	GREEN				=	2;	//绿
+	BLUE				=	3;	//蓝
+	PURPLE				=	4;	//紫
+	ORANGE				=	5;	//橙
+}
+
+//
+//道具种类
+//
+enum ItemCategory = {
+	NONE				=	0;	//无种类
+	USABLE				=	1;	//可使用
+	EQUIPABLE			=	2;	//可装备
+	MATERIAL			=	3;	//材料类
+}
+
+
+//
+// Span
+//
+Span = { 
+    NONE                =   0;  // 无范围
+    GLOBAL              =   9;  // 副本外
+    COPY                =   5;  // 探索范围
+    MATCH               =   1;  // 战斗内
+}
+
+//
+// BuffType
+//
+BuffType = {
+    NONE                =   0;  // 无类型
+    TALENT              =   1;  // 祝福
+    EQUIP               =   2;  // 装备
+    CARD                =   3;  // 卡牌
+    ITEM                =   4;  // 道具
+}
+
+//
+// MapPattern
+//
+MapPattern = {
+    NONE                =   0;  // 无样式
+    I                   =   1;  // 直路
+    L                   =   2;  // 左转
+    R                   =   3;  // 右转
+    LR                  =   4;  // 左转和右转
+    LI                  =   5;  // 带左转的直路   
+    RI                  =   6;  // 带右转的直路
+    LRI                 =   7;  // 三岔路
+}

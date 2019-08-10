@@ -1,0 +1,33 @@
+通用代码:
+	common.lua
+		common.lua里有全局变量g_enable_debug和g_match
+		g_enable_debug表示是否开启调试模式的开关
+		g_match是当前比赛的实例，Match类的一个实例
+
+
+a. script： 表格card.xls, buff.xls的script字段直接填写lua function, 
+	函数原型:
+	function(entity, card, buff, pick_entity, breakpoint)
+	end
+
+	entity: Entity对象(entity.lua), 当前打出卡牌或拥有BUFF的实体对象, entity肯定不是nil
+	card: Card对象(card.lua), 当前打出的卡牌对象, 如果不是打牌的BreakPoint, card 是 nil
+	buff: Buff对象(buff.lua), 当前处理的buff对象，如果不是处理buff的BreakPoint, buff 是 nil
+	pick_entity: Entity对象(entity.lua), 打牌时玩家自主选择的目标对象， pick_entity也可能是nil
+	breakpoint: 是BreakPoint的枚举
+	
+b. script function可以访问所有全局变量(挂在_G下面的)
+	客户端提供的接口cc.
+	cc.WriteLog(string)
+	cc.Milliseconds
+	cc.LookupTable
+		...
+		
+	match内部(tools.lua)
+		table.clear(t)
+		table.size(t) -> size
+		table.random(t) -> KEY
+		table.dump(t)
+			...
+
+

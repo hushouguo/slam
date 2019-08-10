@@ -1,0 +1,21 @@
+出牌流程
+	1. 检测 card.base.enable_play
+	2. BreakPoint.CARD_PLAY_A
+	3. 检测职业
+	4. 检测能量
+	5. 扣除能量
+	6. 回复card.base.resume_mp
+	7. 从手牌堆移除
+	8. BreakPoint.CARD_PLAY_Z
+	9.1 card.base.into_stackdiscard 进弃牌堆
+	9.2 card.base.into_stackexhaust 进消耗堆
+	9.3 销毁
+
+弃牌流程
+	1. 检测card.base.enable_discard
+	2. BreakPoint.CARD_DISCARD_A
+	3. 从手牌堆移除
+	4. BreakPoint.CARD_DISCARD_Z
+	5.1 card.base.into_stackdiscard 进弃牌堆
+	5.2 card.base.into_stackexhaust 进消耗堆
+	5.3 销毁

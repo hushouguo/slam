@@ -1,0 +1,44 @@
+syntax = "proto3";
+
+package slam;
+
+enum MSGID {
+	MSGID_BASE						=	0;
+	MSGID_ECHO_REQ					=	1;
+	MSGID_ECHO_REP					=	2;
+}
+
+enum GENDER {
+	MALE	=	0;
+	FEMALE	=	1;
+}
+
+message Entity {
+	int64 id						=	1;
+	string name						=	2;
+	GENDER gender					=	3;
+}
+
+
+message EchoRequest {
+	int32 value_int32				=	1;
+	uint32 value_uint32				=	2;
+	int64 value_int64				=	3;
+	uint64 value_uint64				=	4;
+	sint32 value_sint32				=	5;
+	sint64 value_sint64				=	6;
+	fixed32 value_fixed32			=	7;
+	fixed64 value_fixed64			=	8;
+	sfixed32 value_sfixed32			=	9;
+	sfixed64 value_sfixed64			=	10;
+	bool value_bool					=	11;
+	string value_string				=	12;
+	bytes value_bytes				=	13;
+	repeated int32 value_repeated_int32	= 14;
+	Entity value_entity				=	15;
+}
+
+message EchoResponse {
+	uint64 milliseconds				=	1;
+}
+

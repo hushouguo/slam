@@ -1,0 +1,32 @@
+------------------------
+--战士
+------------------------
+return {
+    baseid = 100,
+    name = {cn="【战士】",en=""},
+    desc = {cn="战士目前两个流派，盾战和攻击战",en=""},
+    resource = null,
+    career = 1,
+    category = 1,
+    level = 1,
+    levelup_baseid = 0,
+    inithp = 99,
+    maxhp = 99,
+    round_mp = 2,
+    strength = 0,
+    armor = 0,
+    shield = 0,
+    init_gold = 100,
+    init_cards = {10010,10010,10010,10010,10010,10030,10160,10160,10160,10160,},
+    max_cards = 100,
+    init_buffs = {},
+    init_items = {},
+    init_puppets = {},
+    round_cards = 3,
+    max_hold_cards = 0,
+    max_puppets = 10,
+    max_pack_slots = 99,
+    max_equip_slots = 10,
+    purchase_card_script_func = nil,
+    destroy_card_script_func = nil,
+}
