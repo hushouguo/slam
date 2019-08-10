@@ -137,57 +137,29 @@ function Scene:tiles_dump()
 	-- end
 end
 
---
--- void tiles_pattern_I_generator()
---
-function Scene:tiles_pattern_I_generator()
-    local begin_x = math.floor(self.base.width / 2) - math.floor(FLAG_road_width / 2)
-    local end_y = self.base.height - 1
-    for yy = 0, end_y do
-        for xx = 0, FLAG_road_width - 1 do
-            local coord = {
-                x = xx + begin_x, y = yy
-            }
-            self:tiles_fill(self:create_obstacle_object(self:tile_obstacle_baseid_retrieve(coord), coord))
-        end
-    end
-end
-
---
--- void tiles_pattern_L_generator()
---
-function tiles_pattern_L_generator()
-    local begin_x = math.floor(self.base.width / 2) - math.floor(FLAG_road_width / 2)
-    local end_y = math.floor(self.height / 2) + math.floor(FLAG_road_width / 2)
-    for yy = 0, end_y do
-        for xx = 0, FLAG_road_width - 1 do
-            local coord = {
-                x = xx + begin_x, y = yy
-            }
-            self:tiles_fill(self:create_obstacle_object(self:tile_obstacle_baseid_retrieve(coord), coord))
-        end
-    end
-    for xx = 0, 
-end
-
 
 --
 -- void tiles_pattern_generator()
 --
 function Scene:tiles_pattern_generator()
     assert(self.pattern ~= nil)
-    assert(self.base.width > (FLAG_road_width + 2 * FLAG_walk_wall_width))
-    assert(self.base.height > (FLAG_road_height + 2 * FLAG_walk_wall_width))
-    
-    -- generate roads
-    
-    local coord_area = {
-        x = math.floor((self.base.width - FLAG_area_width - 2 * FLAG_walk_wall_width) / 2),
-        y = math.floor((self.base.height - FLAG_area_height - 2 * FLAG_walk_wall_width) / 2)
-    }
-    assert(coord_area.x > 0, string.format("x: %d, base.width: %d, area_width: %d", x, self.base.width, FLAG_area_width))
-    assert(coord_area.y > 0, string.format("y: %d, base.height: %d, area_height: %d", y, self.base.height, FLAG_area_height))
-    
+    assert(self.base.width >= FLAG_pattern_width)
+    assert(self.base.height >= FLAG_pattern_height)
+    local _, template_pattern = self:tiles_pattern_retrieve(self.pattern)
+    for y, t in pairs(template_pattern) do
+    	for x, cr in pairs(t) do
+    		local coord = {
+    			x = x, y = y
+    		}
+    		if cr == '.' then    		
+    			self:tiles_fill(self:create_obstacle_object(self:tile_obstacle_baseid_retrieve(coord), coord))
+    		elseif cr == 'I' then
+    			self:tiles_fill(self:create_obstacle_object(self:wall_obstacle_baseid_retrieve(coord), coord))
+    		else
+    			cc.ScriptErrorLog(string.format("illegal char: %s", cr))
+    		end
+    	end
+    end
 end
 
 --
@@ -487,17 +459,17 @@ function Scene:generator()
     while try_times > 0 do
         self:tiles_init()
         self:tiles_pattern_generator()
-        self:tiles_event_generator()
-        self:tiles_obstacle_STICK_generator()
-        self:tiles_obstacle_BLOCK_generator(size)
-        if self:tiles_link_events() then
-            self:tiles_obstacle_padding_tile()
+        --self:tiles_event_generator()
+        --self:tiles_obstacle_STICK_generator()
+        --self:tiles_obstacle_BLOCK_generator(size)
+        --if self:tiles_link_events() then
+            --self:tiles_obstacle_padding_tile()
 			self:tiles_dump()
             return true
-        end
-        size = size + 1
-        try_times = try_times - 1
-		cc.ScriptDebugLog('try times: ' .. tostring(try_times) .. ', size: ' .. tostring(size))
+        --end
+        --size = size + 1
+        --try_times = try_times - 1
+		--cc.ScriptDebugLog('try times: ' .. tostring(try_times) .. ', size: ' .. tostring(size))
     end
     return false
 end

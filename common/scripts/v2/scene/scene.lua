@@ -327,6 +327,8 @@ Scene = {
 	FLAG_walk_wall_width = 1,
 	FLAG_area_width = 5,
 	FLAG_area_height = 5,
+	FLAG_pattern_width = 15,
+	FLAG_pattern_height = 15,
     
     --
     -- unsigned int distance(from, to)
