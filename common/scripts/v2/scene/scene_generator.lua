@@ -314,12 +314,12 @@ function Scene:maps_create_index()
 	local function map_locate(self, map)
 		assert(map.locate ~= nil)
 		
-		for yy = 0, FLAG_map_height - 1 do
+		for yy = 0, self.FLAG_map_height - 1 do
 			local y = yy + map.locate.y
-			for xx = 0, FLAG_map_width - 1 do
+			for xx = 0, self.FLAG_map_width - 1 do
 				local x = xx + map.locate.x
 				if self.maps[y] == nil then self.maps[y] = {} end
-				assert(self.maps[y][x] == nil)
+				assert(self.maps[y][x] == nil, string.format("coord: (%d,%d)", x, y))
 				self.maps[y][x] = map
 			end
 		end
@@ -334,8 +334,8 @@ function Scene:maps_create_index()
 				map_locate(self, neighbor)
 			end
 		end
-	end	
-	assert(self.entrymap ~= nil)
+	end
+	self.maps = {}
 	map_locate(self, self.entrymap)
 end
 
