@@ -271,7 +271,7 @@ function Scene:maps_generator(entityid)
 	end
 
 	local layer = 1
-	local seed = seed_layer(layer)
+	local seed = seed_by_layer(layer)
 	local maps = {}
 
 	
@@ -282,7 +282,7 @@ function Scene:maps_generator(entityid)
 	    cc.ScriptErrorLog(string.format(">>>>>>>>>> copy: %d, layer: %d not exist", self.copy.baseid, layer))
 	    return false
 	end
-	self.entrymap = create_newmap(self, maps, nil, entityid, events, seed, layer, Direction.NONE)
+	self.entrymap = create_newmap(self, maps, nil, entityid, events, seed, layer, Direction.UP)
 	assert(self.entrymap ~= nil)
 
 
@@ -291,7 +291,7 @@ function Scene:maps_generator(entityid)
 		assert(map ~= nil)
 
 		layer = map.layer + 1
-		local seed = seed_layer(layer)
+		local seed = seed_by_layer(layer)
 	    local events = self.copy.script_func(entityid, self.copy.baseid, layer, seed)
 	    if events == nil then 
 			cc.ScriptErrorLog(string.format("copy: %d, layer: %d, no more map", self.copy.baseid, layer))
