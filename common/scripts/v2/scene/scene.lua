@@ -9,17 +9,31 @@ Scene = {
     seed = nil,
     random_func = nil,
 
+    members = nil, -- {[entityid] = entity, ...}
+    trigger_event = nil,
+    match = nil,
+
     entrymap = nil,
+    maps = nil,
+
+
+	FLAG_map_width = 15,
+	FLAG_map_height = 15,	
+	FLAG_entry_locate_x = 0,
+	FLAG_entry_locate_y = 0,
+
     
     constructor = function(self, copy, seed, entityid)
         self.copy = copy
         self.seed = seed
         self.random_func = NewRandom(self.seed)
 
-        self.entrymap = nil
 		self.members = {}
-		self.match = nil
 		self.trigger_event = nil
+		self.match = nil
+		
+        self.entrymap = nil
+        self.maps = nil
 
         -- generate scene
 		local rc = self:generator(entityid) -- init events & obstacles
@@ -31,69 +45,35 @@ Scene = {
             self:remove_member(entity)
         end
     end,
-    
+
+	--
+	-- map locate_coord(coord)
+	locate_coord = function(self, coord)
+		return self.maps[coord.y] == nil and nil or self.maps[coord.y][coord.x]
+	end,
 
     --
     -- bool valid_coord(coord)
-    --
     valid_coord = function(self, coord)
-        return coord.x >= 0 and coord.y >= 0 and coord.x < self.base.width and coord.y < self.base.height
+    	return self:locate_coord(coord) ~= nil
     end,
 
     --
     -- bool moveable(coord)
-    --
     moveable = function(self, coord)
-		return self:valid_coord(coord)
-	    		and self.tiles[coord.y][coord.x] ~= nil 
-	    		and self.tiles[coord.y][coord.x].block == BlockCategory.NONE
+    	local map = self:locate_coord(coord)
+    	return map == nil and false or map:moveable(coord)
     end,
     
     --
     -- bool passable(coord)
-    -- 
     passable = function(self, coord)
-        local function passable_objects(self, coord)
-            local t = self.tiles[coord.y][coord.x]
-            assert(t ~= nil and t.objects ~= nil and t.block ~= nil)
-            if t.block == BlockCategory.STATIC then return false end
-            for _, object in pairs(t.objects) do
-                if object.base.block == BlockCategory.STATIC -- static block
-                        -- dynamic event block & this event will never accomplish
-                        or (object.base.block == BlockCategory.DYNAMIC and object.base.endtype == EventEnd.NONE) 
-                then
-                    return false
-                end
-            end
-            return true
-        end
-		return self:valid_coord(coord)
-				and (self.tiles[coord.y][coord.x] == nil 
-					or self.tiles[coord.y][coord.x].block == BlockCategory.NONE
-					or passable_objects(self, coord))
-    end,
-
-    --
-    -- void resetblock(coord)
-    --
-    resetblock = function(self, coord)
-        assert(self:valid_coord(coord))
-        local t = self.tiles[coord.y][coord.x]
-        assert(t ~= nil and t.objects ~= nil and t.block ~= nil)
-        t.block = BlockCategory.NONE
-        for _, object in pairs(t.objects) do
-            local block = object.base.block
-            if object.accomplish and block == BlockCategory.DYNAMIC then block = BlockCategory.NONE end
-            -- STATIC:2, DYNAMIC:1, NONE:0
-            if block > t.block then t.block = block end
-        end
-        -- cc.ScriptErrorLog(string.format("resetblock: (%d,%d) to block: %d", coord.x, coord.y, t.block))
+    	local map = self:locate_coord(coord)
+    	return map == nil and false or map:passable(coord)
     end,
 
     --
     -- members hashmap & [add|remove]_member methods
-    --
-    members = nil, -- {[entityid] = entity, ...}
     add_member = function(self, entity)
         assert(entity.copy.id == self.copy.id)
         entity.coord = self:tiles_entry_coord()
@@ -121,21 +101,6 @@ Scene = {
         end
     end,
 
-    --
-    -- trigger_event
-    --
-    trigger_event = nil,
-
-    --
-    -- current match instance
-    --
-    match = nil,
-
-	FLAG_map_width = 15,
-	FLAG_map_height = 15,
-	
-	FLAG_entry_locate_x = 0,
-	FLAG_entry_locate_y = 0,
 }
 
 function Scene:new(copy, baseid, seed, entityid, events_base, coord_base)
@@ -146,23 +111,16 @@ function Scene:new(copy, baseid, seed, entityid, events_base, coord_base)
 	return object
 end
 
-
---
--- bool checkDone()
---
 function Scene:checkDone()
     return table.size(self.members) == 0
 end
 
---
--- void update(delta)
---
 function Scene:update(delta)
     if self.match ~= nil then 
 		if self.match:checkDone() then
-			cc.ScriptDebugLog(string.format("match isDone, scene: %d, %d", self.id, self.baseid))    
+			cc.ScriptDebugLog(string.format("match isDone"))    
 			self:end_match()
-			cc.ScriptDebugLog(string.format("match close, scene: %d, %d", self.id, self.baseid))    
+			cc.ScriptDebugLog(string.format("match close"))    
 		else
 			self.match:update(delta) 
 		end

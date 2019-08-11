@@ -187,3 +187,21 @@ function ChebyshevDistance(src_coord, dest_coord)
 	return math.max(math.abs(dest_coord.x - src_coord.x), math.abs(dest_coord.y - src_coord.y))
 end
 
+function ReverseDirection(direction)
+	local t = {
+		[Direction.NONE] = Direction.NONE,
+		[Direction.LEFT] = Direction.RIGHT, [Direction.RIGHT] = Direction.LEFT, 
+		[Direction.UP] = Direction.DOWN, [Direction.DOWN] = Direction.UP
+	}
+	assert(t[direction] ~= nil)
+	return t[direction]
+end
+
+function RandomDirection()
+	local t = {
+		Direction.LEFT, Direction.RIGHT, Direction.UP, Direction.DOWN
+	}
+	local _, direction = table.random(t, table.size(t))
+	return direction
+end
+

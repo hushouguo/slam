@@ -356,6 +356,8 @@ local function unittest()
 	end
 	cc.ScriptExitMap = function(entityid, mapid)
 	end
+	
+	
     cc.ScriptExitCopy = function(entityid)
         -- os.exit()
 		exit_copy = true
