@@ -130,6 +130,12 @@ Scene = {
     -- current match instance
     --
     match = nil,
+
+	FLAG_map_width = 15,
+	FLAG_map_height = 15,
+	
+	FLAG_entry_locate_x = 0,
+	FLAG_entry_locate_y = 0,
 }
 
 function Scene:new(copy, baseid, seed, entityid, events_base, coord_base)

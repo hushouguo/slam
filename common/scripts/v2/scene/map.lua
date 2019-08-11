@@ -20,11 +20,14 @@ Map = {
     obstacles = nil, -- all of obstacles, {[obstacleid] = obstacle instance, ...}
     roads = nil, -- all of roads, {{x=?,y=?}, ...}
     
-    pattern = nil, -- MapPattern
     neighbor = nil, -- { [direction] = map, ... }
     layer = nil,
+    entry_direction = nil,
+    locate = nil, -- {x = ?, y = ?}
 
-    constructor = function(self, scene, baseid, seed, entityid, events_base, layer, link_direction)
+    pattern = nil, -- MapPattern
+    
+    constructor = function(self, scene, baseid, seed, entityid, events_base, layer, entry_direction)
         self.scene = scene
         self.id = cc.ScriptMapNew(baseid)
         self.baseid = baseid
@@ -41,8 +44,10 @@ Map = {
 		self.obstacles = {}
 		self.roads = {}
 
-		self.layer = layer
 		self.neighbor = {}
+		self.layer = layer
+		self.entry_direction = entry_direction
+		self.locate = nil
 
 		-- search for available tile obstacle
 		self:tile_obstacle_baseid_init()
@@ -88,7 +93,7 @@ Map = {
 	    cc.ScriptDebugLog(string.format("++++++++ map: %d,%d,%s, layer: %d, constructor", self.id, self.baseid, self.base.name.cn, self.layer))
 
         -- generate map
-		local rc = self:generator(link_direction) -- init events & obstacles
+		local rc = self:generator() -- init events & obstacles
 		assert(rc)
     end,
 

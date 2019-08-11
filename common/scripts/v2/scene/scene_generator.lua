@@ -6,7 +6,7 @@
 --
 -- void tiles_dump()
 --
-function Scene:tiles_dump()
+function Scene:maps_dump()
 	local function exist_entity(self, coord)
 		for _, entity in pairs(self.members) do
 			if entity.coord.x == coord.x and entity.coord.y == coord.y then return true end
@@ -53,32 +53,6 @@ function Scene:tiles_dump()
 	-- end
 end
 
-
---
--- void tiles_pattern_generator()
---
-function Scene:tiles_pattern_generator()
-    assert(self.pattern ~= nil)
-    assert(self.base.width >= self.FLAG_pattern_width)
-    assert(self.base.height >= self.FLAG_pattern_height)
-    local _, template_pattern = self:tiles_pattern_retrieve(self.pattern)
-    for y, t in pairs(template_pattern) do
-    	for x, cr in pairs(t) do
-    		local coord = {
-    			x = x, y = y
-    		}
-    		if cr == '.' then    		
-    			self:tiles_fill(self:create_obstacle_object(self:tile_obstacle_baseid_retrieve(coord), coord))
-    		elseif cr == 'I' then
-    			self:tiles_fill(self:create_obstacle_object(self:wall_obstacle_baseid_retrieve(coord), coord))
-			elseif cr == '*' then
-				-- block point
-    		else
-    			cc.ScriptErrorLog(string.format("illegal char: %s", cr))
-    		end
-    	end
-    end
-end
 
 --
 -- bool tiles_link_events()
@@ -200,9 +174,56 @@ function Scene:tiles_link_events()
 end
 
 --
--- void dump()
+-- void maps_dump()
 --
-function Scene:dump()
+function Scene:maps_dump()
+	assert(self.entrymap ~= nil)
+	local function map_pattern_string(pattern)
+		local t = {
+			[MapPattern.I] 		= '|',
+			[MapPattern.L] 		= '--|',
+			[MapPattern.R] 		= pattern_R,
+			[MapPattern.LR] 	= pattern_LR,
+			[MapPattern.LI] 	= pattern_LI,
+			[MapPattern.RI] 	= pattern_RI,
+			[MapPattern.LRI]	= pattern_LRI,
+			-----------------------------
+			[MapPattern.RL]		= pattern_RL,
+			[MapPattern.RR]		= pattern_RR,
+		}
+	end
+	local function map_locate_coords(map, coords)
+		local t = {
+			Direction.LEFT, Direction.RIGHT, Direction.UP, Direction.DOWN
+		}
+		for _, direction in pairs(t) do
+			local neighbor = map.neighbor[direction]
+			if neighbor ~= nil then
+				assert(neighbor.locate ~= nil)
+				if coords[neighbor.locate.y] == nil then
+					coords[neighbor.locate.y] = {}
+				end
+				local o = coords[neighbor.locate.y]
+				if o[neighbor.locate.x] == nil then
+					o[neighbor.locate.x] = neighbor.pattern
+				end
+				map_locate_coords(neighbor, coords)
+			end
+		end
+	end
+	
+	local coords = {}
+	--map_locate_coords(self.entrymap, coords)
+
+	for _, yy in pairs(coords) do
+		for _, pattern in pairs(yy) do
+			io.write(tostring(pattern) .. ' ')
+		end
+		io.write("\n")
+	end
+	
+	
+	
 	local function dump_map(map)
 		cc.ScriptDebugLog(string.format("map: %d, layer: %d", map.baseid, map.layer))
 		map:tiles_dump()
@@ -221,18 +242,39 @@ function Scene:dump()
 end
 
 --
---  bool generator()
+--  bool maps_generator(entityid)
 --
-function Scene:generator(entityid)
-	local function seed_layer(layer)
+function Scene:maps_generator(entityid)
+	local function reverse_direction(direction)
+		local t = {
+			[Direction.NONE] = Direction.NONE,
+			[Direction.LEFT] = Direction.RIGHT, [Direction.RIGHT] = Direction.LEFT, 
+			[Direction.UP] = Direction.DOWN, [Direction.DOWN] = Direction.UP
+		}
+		assert(t[direction] ~= nil)
+		return t[direction]
+	end
+	
+	local function seed_by_layer(layer)
 		local _, seed = NewRandom(self.seed)(1, layer)
 		return seed
+	end
+
+	local function create_newmap(self, maps, parent, entityid, events, seed, layer, exit_direction)
+		local newmap = Map:new(self, events.map_baseid, seed, entityid, events.map_events, layer, reverse_direction(exit_direction))
+		if parent ~= nil then
+			assert(parent.neighbor[exit_direction] == nil)
+			parent.neighbor[exit_direction] = newmap
+		end
+		table.insert(maps, newmap)
+		return newmap
 	end
 
 	local layer = 1
 	local seed = seed_layer(layer)
 	local maps = {}
 
+	
 	-- copy.script_func(entityid, copy_baseid, copy_layers, randomseed)
 	-- events: { map_baseid: 10, map_events: {{event_baseid = ?, coord = {x = ?, y = ?}}, ...} }
 	local events = self.copy.script_func(entityid, self.copy.baseid, layer, seed)
@@ -240,9 +282,9 @@ function Scene:generator(entityid)
 	    cc.ScriptErrorLog(string.format(">>>>>>>>>> copy: %d, layer: %d not exist", self.copy.baseid, layer))
 	    return false
 	end
-	self.entrymap = Map:new(self, events.map_baseid, seed, entityid, events.map_events, layer, Direction.NONE)
+	self.entrymap = create_newmap(self, maps, nil, entityid, events, seed, layer, Direction.NONE)
 	assert(self.entrymap ~= nil)
-	table.insert(maps, self.entrymap)
+
 
 	while table.size(maps) > 0 do
 		local _, map = table.pop_front(maps)
@@ -265,10 +307,12 @@ function Scene:generator(entityid)
 	    	--  |
 	    	--
 			[MapPattern.I] 	= function(self, parent_map, events, seed, entityid, layer, maps)
-				if true then -- UP
-					local newmap = Map:new(self, events.map_baseid, seed, entityid, events.map_events, layer, Direction.DOWN)
-					parent_map.neighbor[Direction.UP] = newmap
-					table.insert(maps, newmap)
+				if parent_map.entry_direction == Direction.DOWN then
+					create_newmap(self, maps, parent_map, entityid, events, seed, layer, Direction.UP)
+				elseif parent_map.entry_direction == Direction.UP then
+					create_newmap(self, maps, parent_map, entityid, events, seed, layer, Direction.DOWN)
+				else
+					assert(false, string.format("parent.entry_direction: %d, parent.pattern: %d", parent_map.entry_direction, parent_map.pattern))
 				end
 			end,
 	    	--
@@ -277,10 +321,12 @@ function Scene:generator(entityid)
 	    	--     |
 	    	--
 			[MapPattern.L] 	= function(self, parent_map, events, seed, entityid, layer, maps)
-				if true then -- LEFT
-					local newmap = Map:new(self, events.map_baseid, seed, entityid, events.map_events, layer, Direction.RIGHT)
-					parent_map.neighbor[Direction.LEFT] = newmap
-					table.insert(maps, newmap)
+				if parent_map.entry_direction == Direction.DOWN then
+					create_newmap(self, maps, parent_map, entityid, events, seed, layer, Direction.LEFT)
+				elseif parent_map.entry_direction == Direction.LEFT then
+					create_newmap(self, maps, parent_map, entityid, events, seed, layer, Direction.DOWN)
+				else
+					assert(false, string.format("parent.entry_direction: %d, parent.pattern: %d", parent_map.entry_direction, parent_map.pattern))
 				end
 			end,
 	    	--
@@ -289,10 +335,12 @@ function Scene:generator(entityid)
 	    	--  |  
 	    	--
 			[MapPattern.R] 	= function(self, parent_map, events, seed, entityid, layer, maps)
-				if true then -- RIGHT
-					local newmap = Map:new(self, events.map_baseid, seed, entityid, events.map_events, layer, Direction.LEFT)
-					parent_map.neighbor[Direction.RIGHT] = newmap
-					table.insert(maps, newmap)
+				if parent_map.entry_direction == Direction.DOWN then
+					create_newmap(self, maps, parent_map, entityid, events, seed, layer, Direction.RIGHT)
+				elseif parent_map.entry_direction == Direction.RIGHT then
+					create_newmap(self, maps, parent_map, entityid, events, seed, layer, Direction.DOWN)
+				else
+					assert(false, string.format("parent.entry_direction: %d, parent.pattern: %d", parent_map.entry_direction, parent_map.pattern))
 				end
 			end,
 	    	--
@@ -301,15 +349,17 @@ function Scene:generator(entityid)
 	    	--     |
 	    	--
 			[MapPattern.LR] = function(self, parent_map, events, seed, entityid, layer, maps)
-				if true then -- LEFT
-					local newmap = Map:new(self, events.map_baseid, seed, entityid, events.map_events, layer, Direction.RIGHT)
-					parent_map.neighbor[Direction.LEFT] = newmap
-					table.insert(maps, newmap)
-				end
-				if true then -- RIGHT
-					local newmap = Map:new(self, events.map_baseid, seed, entityid, events.map_events, layer, Direction.LEFT)
-					parent_map.neighbor[Direction.RIGHT] = newmap
-					table.insert(maps, newmap)
+				if parent_map.entry_direction == Direction.DOWN then
+					create_newmap(self, maps, parent_map, entityid, events, seed, layer, Direction.LEFT)
+					create_newmap(self, maps, parent_map, entityid, events, seed, layer, Direction.RIGHT)
+				elseif parent_map.entry_direction == Direction.LEFT then
+					create_newmap(self, maps, parent_map, entityid, events, seed, layer, Direction.RIGHT)
+					create_newmap(self, maps, parent_map, entityid, events, seed, layer, Direction.DOWN)
+				elseif parent_map.entry_direction == Direction.RIGHT then
+					create_newmap(self, maps, parent_map, entityid, events, seed, layer, Direction.LEFT)
+					create_newmap(self, maps, parent_map, entityid, events, seed, layer, Direction.DOWN)
+				else
+					assert(false, string.format("parent.entry_direction: %d, parent.pattern: %d", parent_map.entry_direction, parent_map.pattern))
 				end
 			end,
 	    	--
@@ -320,15 +370,17 @@ function Scene:generator(entityid)
 	    	--     |
 	    	--
 			[MapPattern.LI] = function(self, parent_map, events, seed, entityid, layer, maps)
-				if true then -- LEFT
-					local newmap = Map:new(self, events.map_baseid, seed, entityid, events.map_events, layer, Direction.RIGHT)
-					parent_map.neighbor[Direction.LEFT] = newmap
-					table.insert(maps, newmap)
-				end
-				if true then -- UP
-					local newmap = Map:new(self, events.map_baseid, seed, entityid, events.map_events, layer, Direction.DOWN)
-					parent_map.neighbor[Direction.UP] = newmap
-					table.insert(maps, newmap)
+				if parent_map.entry_direction == Direction.DOWN then
+					create_newmap(self, maps, parent_map, entityid, events, seed, layer, Direction.LEFT)
+					create_newmap(self, maps, parent_map, entityid, events, seed, layer, Direction.UP)
+				elseif parent_map.entry_direction == Direction.LEFT then
+					create_newmap(self, maps, parent_map, entityid, events, seed, layer, Direction.UP)
+					create_newmap(self, maps, parent_map, entityid, events, seed, layer, Direction.DOWN)
+				elseif parent_map.entry_direction == Direction.UP then
+					create_newmap(self, maps, parent_map, entityid, events, seed, layer, Direction.LEFT)
+					create_newmap(self, maps, parent_map, entityid, events, seed, layer, Direction.DOWN)
+				else
+					assert(false, string.format("parent.entry_direction: %d, parent.pattern: %d", parent_map.entry_direction, parent_map.pattern))
 				end
 			end,
 	    	--
@@ -339,15 +391,17 @@ function Scene:generator(entityid)
 	    	--  |
 	    	--
 			[MapPattern.RI] = function(self, parent_map, events, seed, entityid, layer, maps)
-				if true then -- RIGHT
-					local newmap = Map:new(self, events.map_baseid, seed, entityid, events.map_events, layer, Direction.LEFT)
-					parent_map.neighbor[Direction.RIGHT] = newmap
-					table.insert(maps, newmap)
-				end
-				if true then -- UP
-					local newmap = Map:new(self, events.map_baseid, seed, entityid, events.map_events, layer, Direction.DOWN)
-					parent_map.neighbor[Direction.UP] = newmap
-					table.insert(maps, newmap)
+				if parent_map.entry_direction == Direction.DOWN then
+					create_newmap(self, maps, parent_map, entityid, events, seed, layer, Direction.RIGHT)
+					create_newmap(self, maps, parent_map, entityid, events, seed, layer, Direction.UP)
+				elseif parent_map.entry_direction == Direction.RIGHT then
+					create_newmap(self, maps, parent_map, entityid, events, seed, layer, Direction.UP)
+					create_newmap(self, maps, parent_map, entityid, events, seed, layer, Direction.DOWN)
+				elseif parent_map.entry_direction == Direction.UP then
+					create_newmap(self, maps, parent_map, entityid, events, seed, layer, Direction.RIGHT)
+					create_newmap(self, maps, parent_map, entityid, events, seed, layer, Direction.DOWN)
+				else
+					assert(false, string.format("parent.entry_direction: %d, parent.pattern: %d", parent_map.entry_direction, parent_map.pattern))
 				end
 			end,
 	    	--
@@ -358,20 +412,24 @@ function Scene:generator(entityid)
 	    	--     |
 	    	--
 			[MapPattern.LRI]= function(self, parent_map, events, seed, entityid, layer, maps)
-				if true then -- LEFT
-					local newmap = Map:new(self, events.map_baseid, seed, entityid, events.map_events, layer, Direction.RIGHT)
-					parent_map.neighbor[Direction.LEFT] = newmap
-					table.insert(maps, newmap)
-				end
-				if true then -- RIGHT
-					local newmap = Map:new(self, events.map_baseid, seed, entityid, events.map_events, layer, Direction.LEFT)
-					parent_map.neighbor[Direction.RIGHT] = newmap
-					table.insert(maps, newmap)
-				end
-				if true then -- UP
-					local newmap = Map:new(self, events.map_baseid, seed, entityid, events.map_events, layer, Direction.DOWN)
-					parent_map.neighbor[Direction.UP] = newmap
-					table.insert(maps, newmap)
+				if parent_map.entry_direction == Direction.DOWN then
+					create_newmap(self, maps, parent_map, entityid, events, seed, layer, Direction.UP)
+					create_newmap(self, maps, parent_map, entityid, events, seed, layer, Direction.LEFT)
+					create_newmap(self, maps, parent_map, entityid, events, seed, layer, Direction.RIGHT)
+				elseif parent_map.entry_direction == Direction.UP then
+					create_newmap(self, maps, parent_map, entityid, events, seed, layer, Direction.DOWN)
+					create_newmap(self, maps, parent_map, entityid, events, seed, layer, Direction.LEFT)
+					create_newmap(self, maps, parent_map, entityid, events, seed, layer, Direction.RIGHT)
+				elseif parent_map.entry_direction == Direction.LEFT then
+					create_newmap(self, maps, parent_map, entityid, events, seed, layer, Direction.UP)
+					create_newmap(self, maps, parent_map, entityid, events, seed, layer, Direction.DOWN)
+					create_newmap(self, maps, parent_map, entityid, events, seed, layer, Direction.RIGHT)
+				elseif parent_map.entry_direction == Direction.RIGHT then
+					create_newmap(self, maps, parent_map, entityid, events, seed, layer, Direction.UP)
+					create_newmap(self, maps, parent_map, entityid, events, seed, layer, Direction.DOWN)
+					create_newmap(self, maps, parent_map, entityid, events, seed, layer, Direction.LEFT)
+				else
+					assert(false, string.format("parent.entry_direction: %d, parent.pattern: %d", parent_map.entry_direction, parent_map.pattern))
 				end
 			end,
 			-----------------------------
@@ -381,10 +439,12 @@ function Scene:generator(entityid)
 	    	--  ----
 	    	--
 			[MapPattern.RL]	= function(self, parent_map, events, seed, entityid, layer, maps)
-				if true then -- UP
-					local newmap = Map:new(self, events.map_baseid, seed, entityid, events.map_events, layer, Direction.DOWN)
-					parent_map.neighbor[Direction.UP] = newmap
-					table.insert(maps, newmap)
+				if parent_map.entry_direction == Direction.LEFT then
+					create_newmap(self, maps, parent_map, entityid, events, seed, layer, Direction.UP)
+				elseif parent_map.entry_direction == Direction.UP then
+					create_newmap(self, maps, parent_map, entityid, events, seed, layer, Direction.LEFT)
+				else
+					assert(false, string.format("parent.entry_direction: %d, parent.pattern: %d", parent_map.entry_direction, parent_map.pattern))
 				end
 			end,
 	    	--
@@ -393,10 +453,12 @@ function Scene:generator(entityid)
 	    	--  |---
 	    	--
 			[MapPattern.RR]	= function(self, parent_map, events, seed, entityid, layer, maps)
-				if true then -- UP
-					local newmap = Map:new(self, events.map_baseid, seed, entityid, events.map_events, layer, Direction.DOWN)
-					parent_map.neighbor[Direction.UP] = newmap
-					table.insert(maps, newmap)
+				if parent_map.entry_direction == Direction.RIGHT then
+					create_newmap(self, maps, parent_map, entityid, events, seed, layer, Direction.UP)
+				elseif parent_map.entry_direction == Direction.UP then
+					create_newmap(self, maps, parent_map, entityid, events, seed, layer, Direction.RIGHT)
+				else
+					assert(false, string.format("parent.entry_direction: %d, parent.pattern: %d", parent_map.entry_direction, parent_map.pattern))
 				end
 			end,
 	    }
@@ -406,6 +468,74 @@ function Scene:generator(entityid)
 	end
 
 	return true
+end
+
+--
+-- bool maps_locate()
+--
+function Scene:maps_locate()
+	assert(self.entrymap ~= nil)
+	assert(self.entrymap.locate == nil)
+	
+	local function map_locate(map)
+		local t = {
+			[Direction.LEFT] 	= {x = -1, y =  0},
+			[Direction.RIGHT] 	= {x =  1, y =  0},
+			[Direction.UP] 		= {x =  0, y =  1},
+			[Direction.DOWN] 	= {x =  0, y = -1}
+		}
+		for direction, offset in pairs(t) do
+			local neighbor = map.neighbor[direction]
+			if neighbor ~= nil then
+				neighbor.locate = {
+					x = map.locate.x + offset.x * self.FLAG_map_width,
+					y = map.locate.y + offset.y * self.FLAG_map_height
+				}
+				map_locate(neighbor)
+			end
+		end
+	end
+	
+	self.entrymap.locate = { x = self.FLAG_entry_locate_x, y = self.FLAG_entry_locate_y }
+	map_locate(self.entrymap)
+
+	local function map_locate_min(map, min)
+		local t = {
+			Direction.LEFT, Direction.RIGHT, Direction.UP, Direction.DOWN
+		}
+		for _, direction in pairs(t) do
+			local neighbor = map.neighbor[direction]
+			if neighbor ~= nil then
+				assert(neighbor.locate ~= nil)
+				if neighbor.locate.x < min.x then min.x = neighbor.locate.x end
+				if neighbor.locate.y < min.y then min.y = neighbor.locate.y end
+				map_locate_min(neighbor, min)
+			end
+		end
+	end
+	
+	local min = {
+		x = 0, y = 0
+	}
+	map_locate_min(self.entrymap, min)
+	cc.ScriptDebugLog(string.format("map locate min: (%d, %d)", min.x, min.y))
+
+	-- relocate map
+	if min.x < 0 or min.y < 0 then
+		self.entrymap.locate = {
+			x = math.abs(min.x), y = math.abs(min.y)
+		}
+		map_locate(self.entrymap)
+	end
+end
+
+--
+--  bool generator()
+--
+function Scene:generator(entityid)
+	self:maps_generator(entityid)
+	self:maps_locate()
+	self:maps_dump()
 end
 
 --

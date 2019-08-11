@@ -139,12 +139,12 @@ end
 
 
 --
--- void tiles_pattern_generator(link_direction)
+-- void tiles_pattern_generator()
 --
-function Map:tiles_pattern_generator(link_direction)
+function Map:tiles_pattern_generator()
 	local t = {
 		[Direction.NONE] = {
-			MapPattern.I, MapPattern.LI, MapPattern.RI, MapPattern.LRI, MapPattern.L, MapPattern.R, MapPattern.LR
+			MapPattern.I, MapPattern.L, MapPattern.R, MapPattern.LR, MapPattern.LI, MapPattern.RI, MapPattern.LRI
 		},		
 		[Direction.LEFT] = {
 			MapPattern.L, MapPattern.LR, MapPattern.LI, MapPattern.RL
@@ -159,8 +159,8 @@ function Map:tiles_pattern_generator(link_direction)
 			MapPattern.I, MapPattern.LI, MapPattern.RI, MapPattern.LRI, MapPattern.L, MapPattern.R, MapPattern.LR
 		},		
 	}
-	assert(t[link_direction] ~= nil)
-	_, self.pattern = table.random(t[link_direction], table.size(t[link_direction]), self.random_func)	
+	assert(t[self.entry_direction] ~= nil)
+	_, self.pattern = table.random(t[self.entry_direction], table.size(t[self.entry_direction]), self.random_func)	
     assert(self.pattern ~= nil)
     assert(self.base.width >= self.FLAG_pattern_width)
     assert(self.base.height >= self.FLAG_pattern_height)
@@ -475,9 +475,9 @@ end
 --
 --  bool generator()
 --
-function Map:generator(link_direction)    
+function Map:generator()    
 	self:tiles_init()
-	self:tiles_pattern_generator(link_direction)
+	self:tiles_pattern_generator()
 	--self:tiles_dump()
     return true
 end
