@@ -178,67 +178,25 @@ end
 --
 function Scene:maps_dump()
 	assert(self.entrymap ~= nil)
-	local function map_pattern_string(pattern)
-		local t = {
-			[MapPattern.I] 		= '|',
-			[MapPattern.L] 		= '--|',
-			[MapPattern.R] 		= pattern_R,
-			[MapPattern.LR] 	= pattern_LR,
-			[MapPattern.LI] 	= pattern_LI,
-			[MapPattern.RI] 	= pattern_RI,
-			[MapPattern.LRI]	= pattern_LRI,
-			-----------------------------
-			[MapPattern.RL]		= pattern_RL,
-			[MapPattern.RR]		= pattern_RR,
-		}
-	end
-	local function map_locate_coords(map, coords)
-		local t = {
-			Direction.LEFT, Direction.RIGHT, Direction.UP, Direction.DOWN
-		}
-		for _, direction in pairs(t) do
-			local neighbor = map.neighbor[direction]
-			if neighbor ~= nil then
-				assert(neighbor.locate ~= nil)
-				if coords[neighbor.locate.y] == nil then
-					coords[neighbor.locate.y] = {}
-				end
-				local o = coords[neighbor.locate.y]
-				if o[neighbor.locate.x] == nil then
-					o[neighbor.locate.x] = neighbor.pattern
-				end
-				map_locate_coords(neighbor, coords)
-			end
-		end
-	end
-	
-	local coords = {}
-	--map_locate_coords(self.entrymap, coords)
-
-	for _, yy in pairs(coords) do
-		for _, pattern in pairs(yy) do
-			io.write(tostring(pattern) .. ' ')
-		end
-		io.write("\n")
-	end
-	
-	
-	
-	local function dump_map(map)
-		cc.ScriptDebugLog(string.format("map: %d, layer: %d", map.baseid, map.layer))
+	local function dump_map(map, maps)
+		cc.ScriptDebugLog(string.format("map: %d, layer: %d, locate: (%d,%d)", map.baseid, map.layer, map.locate.x, map.locate.y))
 		map:tiles_dump()
 		local t = {
 			Direction.LEFT, Direction.RIGHT, Direction.UP, Direction.DOWN
 		}
 		for _, direction in pairs(t) do
 			if map.neighbor[direction] ~= nil then
-				cc.ScriptDebugLog(string.format("----- direction: %d", direction))
-				dump_map(map.neighbor[direction])
+				table.insert(maps, map.neighbor[direction])
 			end
 		end
 	end
 	cc.ScriptDebugLog("Scene dump")
-	dump_map(self.entrymap)
+	local maps = {}
+	table.insert(maps, self.entrymap)
+	while table.size(maps) > 0 do
+		local _, map = table.pop_front(maps)
+		dump_map(map, maps)
+	end
 end
 
 --
@@ -255,9 +213,10 @@ function Scene:maps_generator(entityid)
 		return t[direction]
 	end
 	
-	local function seed_by_layer(layer)
+	local function seed_by_layer(self, layer)
 		local _, seed = NewRandom(self.seed)(1, layer)
-		return seed
+		self.seed = seed
+		return self.seed
 	end
 
 	local function create_newmap(self, maps, parent, entityid, events, seed, layer, exit_direction)
@@ -271,7 +230,7 @@ function Scene:maps_generator(entityid)
 	end
 
 	local layer = 1
-	local seed = seed_by_layer(layer)
+	local seed = seed_by_layer(self, layer)
 	local maps = {}
 
 	
@@ -291,7 +250,7 @@ function Scene:maps_generator(entityid)
 		assert(map ~= nil)
 
 		layer = map.layer + 1
-		local seed = seed_by_layer(layer)
+		local seed = seed_by_layer(self, layer)
 	    local events = self.copy.script_func(entityid, self.copy.baseid, layer, seed)
 	    if events == nil then 
 			cc.ScriptErrorLog(string.format("copy: %d, layer: %d, no more map", self.copy.baseid, layer))

@@ -188,7 +188,7 @@ end
 --- alpha版本手动配置地图
 M.manual = function(entityid,copy_baseid,copy_layers,randomseed)
     -- config
-    local maxLayer = 2
+    local maxLayer = 5
     local maps = {5000,5001}
 
     if copy_layers > maxLayer then return nil end
