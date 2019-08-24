@@ -169,7 +169,9 @@ void slam_main_exit(int status) {
         slam_close(__slam_main->fd_worker_sockets[SLAM_FD_WORKER]);
         slam_close(__slam_main->fd_worker_sockets[SLAM_FD_MASTER]);
 		
-        slam_log_delete(__slam_main->log);
+		if (__slam_main->log) {
+			slam_log_delete(__slam_main->log);
+		}
         
 		if (!__slam_main->runasmaster) {            
 		    if (__slam_main->runnable) {
@@ -193,24 +195,27 @@ void slam_main_exit(int status) {
 }
 
 void slam_main_run_master() {
-	int status = 0;
-	pid_t pid = wait(&status);
-	(void)(pid);
-	if (__slam_main->halt) {
-		return;
-	}
-	if (WIFEXITED(status) && WEXITSTATUS(status) == EXIT_FAILURE) {
-		exit(EXIT_FAILURE);
-	}
-	else {
-	    slam_main_spawn_child_process();
-        if (!__slam_main->runasmaster) {
-            if (!slam_main_init_child_process()) {
-                log_error("child process: %d, exit status: %d(%s), reload init error", 
-                        pid, WEXITSTATUS(status), WIFEXITED(status) ? "normal" : "abnormal");
-                slam_main_exit(EXIT_FAILURE);
-            }
-        }
+	while (true) {
+		int status = 0;
+		pid_t pid = wait(&status);
+		if (pid == -1) {
+			if (errno == ECHILD) {
+				break; // no more unwaited-child process
+			}
+			log_error("wait error: %d, %s", errno, errstring(errno));
+			continue;
+		}
+		log_trace("child process: %d, exit status: %d(%s)", pid, status, WIFEXITED(status) ? "normal" : "abnormal"); 
+		if (!__slam_main->halt && status != EXIT_FAILURE) {
+			slam_main_spawn_child_process();
+			if (!__slam_main->runasmaster) {
+				if (!slam_main_init_child_process()) {
+					log_error("child process: %d, init error for reload", pid); 
+					slam_main_exit(EXIT_FAILURE);
+				}
+				break; // child process exit loop
+			}
+		}
 	}
 }
 
@@ -236,7 +241,7 @@ int main(int argc, char** argv) {
 	slam_main_run();
 	slam_main_exit(SLAM_OK);
 	log_trace("Bye!");
-	return 0;
+	return EXIT_SUCCESS;
 }
 
 __attribute__((constructor)) static void __slam_main_init() {

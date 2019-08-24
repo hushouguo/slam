@@ -6,7 +6,7 @@ project (${target})
 set(CMAKE_CXX_COMPILER "gcc")
 set(CMAKE_BUILD_TYPE "Debug")#Release
 
-set(DEPS_DIR ${PROJECT_SOURCE_DIR}/../deps)
+set(DEPS_DIR ${PROJECT_SOURCE_DIR}/lib)
 set(LUA_DIR ${DEPS_DIR}/luajit-2.0.5)
 set(PROTOBUF_DIR ${DEPS_DIR}/protobuf-3.6.1)
 set(MYSQL_DIR ${DEPS_DIR}/mysql-5.6.37)

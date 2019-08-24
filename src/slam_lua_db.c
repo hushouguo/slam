@@ -10,7 +10,6 @@
 static bool slam_lua_db_encode_key(lua_State* L, int t, slam_byte_buffer_t* byte_buffer) {
     size_t len = 0;
     const char* key = lua_tolstring(L, t, &len);
-	log_trace("encode key: %s", key);
     slam_byte_buffer_write(byte_buffer, key, len);
     return true;
 }
@@ -18,7 +17,6 @@ static bool slam_lua_db_encode_key(lua_State* L, int t, slam_byte_buffer_t* byte
 //
 // false, 0, '', 1.23
 static bool slam_lua_db_encode_value(lua_State* L, int t, slam_byte_buffer_t* byte_buffer) {
-	log_trace("encode value: %d, %s", t, lua_tostring(L, t));
     if (lua_isnone(L, t) || lua_isnil(L, t)) {
         slam_byte_buffer_write(byte_buffer, "null", 4);
     }
@@ -34,20 +32,15 @@ static bool slam_lua_db_encode_value(lua_State* L, int t, slam_byte_buffer_t* by
         slam_byte_buffer_write(byte_buffer, value, len);
         slam_byte_buffer_write(byte_buffer, "'", 1);
     }
-	else if (lua_isfunction(L, t)) {
-		//log_alarm("t: %d, type: %s", t, lua_typename(L, lua_type(L, t)));
-	}
     else {
         CHECK_RETURN(false, false, "value is illegal type: %s", lua_typename(L, lua_type(L, t)));
     }
-	log_trace("encode value: %d, %s end", t, lua_tostring(L, t));
     return true;
 }
 
 //
 // Key = Value, ...
 static bool slam_lua_db_encode_table(lua_State* L, int t, slam_byte_buffer_t* byte_buffer) {
-	log_alarm("func: %s, t: %d, %s begin", __FUNCTION__, t, lua_typename(L, lua_type(L, t)));
     bool rc = false;
     /* table is in the stack at index 't' */
     lua_pushnil(L); /* first key */
@@ -56,9 +49,6 @@ static bool slam_lua_db_encode_table(lua_State* L, int t, slam_byte_buffer_t* by
             slam_byte_buffer_write(byte_buffer, ",", 1);
         }
         /* -2 : key, -1 : value */
-		log_trace("\tt: %d, %s, %s", -1, lua_typename(L, lua_type(L, -1)), lua_tostring(L, -1));
-		log_trace("\tt: %d, %s, %s", -2, lua_typename(L, lua_type(L, -2)), lua_tostring(L, -2));
-
         rc = slam_lua_db_encode_key(L, -2, byte_buffer);
         CHECK_RETURN(rc, false, "encode key error");
         slam_byte_buffer_write(byte_buffer, "=", 1);
@@ -66,7 +56,6 @@ static bool slam_lua_db_encode_table(lua_State* L, int t, slam_byte_buffer_t* by
         CHECK_RETURN(rc, false, "encode value error");
         lua_pop(L, 1); /* removes 'value'; keeps 'key' for next iteration */
     }
-	log_alarm("func: %s, t: %d, %s end", __FUNCTION__, t, lua_typename(L, lua_type(L, t)));
     return true;
 }
 
@@ -126,18 +115,18 @@ static bool slam_lua_db_decode_result(lua_State* L, slam_db_result_t* result) {
 //
 // userdata newdb(host, username, password, port)
 static int cc_newdb(lua_State* L) {
-    int args = lua_gettop(L);
-    
+    int args = lua_gettop(L);// this:userdata in bottom of lua stack
+
     CHECK_RETURN(args == 4, 0, "`%s` lack args:%d", __FUNCTION__, args);
-    CHECK_RETURN(lua_isstring(L, -args), 0, "[%s]", lua_typename(L, lua_type(L, -args)));
-    CHECK_RETURN(lua_isstring(L, -(args - 1)), 0, "[%s]", lua_typename(L, lua_type(L, -(args - 1))));
-    CHECK_RETURN(lua_isstring(L, -(args - 2)), 0, "[%s]", lua_typename(L, lua_type(L, -(args - 2))));
-    CHECK_RETURN(lua_isnumber(L, -(args - 3)), 0, "[%s]", lua_typename(L, lua_type(L, -(args - 3))));
+    CHECK_RETURN(lua_isstring(L, 1), 0, "[%s]", lua_typename(L, lua_type(L, 1)));
+    CHECK_RETURN(lua_isstring(L, 2), 0, "[%s]", lua_typename(L, lua_type(L, 2)));
+    CHECK_RETURN(lua_isstring(L, 3), 0, "[%s]", lua_typename(L, lua_type(L, 3)));
+    CHECK_RETURN(lua_isnumber(L, 4), 0, "[%s]", lua_typename(L, lua_type(L, 4)));
     
-    const char* host = lua_tostring(L, -args);
-    const char* username = lua_tostring(L, -(args - 1));
-    const char* password = lua_tostring(L, -(args - 2));
-    int port = lua_tointeger(L, -(args - 3));
+    const char* host = lua_tostring(L, 1);
+    const char* username = lua_tostring(L, 2);
+    const char* password = lua_tostring(L, 3);
+    int port = lua_tointeger(L, 4);
     const char* database = nullptr;
 
     //
@@ -175,21 +164,22 @@ static int __cc_db_tostring(lua_State *L) {
     return 1;
 }
 
-#if 0
 //
-// uint64_t db:insert_id()
+// int64_t db:insert_id()
 static int cc_db_insert_id(lua_State* L) {    
     int args = lua_gettop(L);// this:userdata in bottom of lua stack
-    CHECK_RETURN(args == 1, 0, "`%s` lack args:%d", __FUNCTION__, args);
-
+    if (args != 1) {
+        lua_pushinteger(L, -1);
+        CHECK_RETURN(false, 1, "`%s` lack args: %d", __FUNCTION__, args);
+    }
     slam_db_t** db = (slam_db_t **) luaL_checkudata(L, 1, SLAM_LUA_METATABLE_DB_NAME);
-    luaL_argcheck(L, db != nullptr, 1, "invalid `db` userdata");
-
-    uint64_t insertid = slam_db_insert_id(*db);
-    lua_pushinteger(L, insertid);
+    if (!db) {
+        lua_pushinteger(L, -1);
+        CHECK_RETURN(false, 1, "invalid userdata: %s", SLAM_LUA_METATABLE_DB_NAME);
+    }
+    lua_pushinteger(L, slam_db_insert_id(*db));
     return 1;
 }
-#endif
 
 //
 // bool db:execute(sql)
@@ -234,12 +224,12 @@ static int cc_db_query(lua_State* L) {
         CHECK_RETURN(false, 1, "invalid userdata: %s", SLAM_LUA_METATABLE_DB_NAME);
     }
 
-    if (!lua_isstring(L, -(args - 1))) {
+    if (!lua_isstring(L, 2)) {
         lua_pushnil(L);
-        CHECK_RETURN(false, 1, "args error: %s", lua_typename(L, lua_type(L, -(args - 1))));
+        CHECK_RETURN(false, 1, "args error: %s", lua_typename(L, lua_type(L, 2)));
     }
 
-    const char* sql = lua_tostring(L, -(args - 1));
+    const char* sql = lua_tostring(L, 2);
     slam_db_result_t* result = slam_db_query(*db, sql);
     if (!result) {
         lua_pushnil(L);
@@ -267,21 +257,18 @@ static int cc_db_insert(lua_State* L) {
         CHECK_RETURN(false, 1, "invalid userdata: %s", SLAM_LUA_METATABLE_DB_NAME);
     }
 
-    if (!lua_isstring(L, -(args - 1))) {
+    if (!lua_isstring(L, 2)) {
         lua_pushboolean(L, false);
-        CHECK_RETURN(false, 1, "args error: %s", lua_typename(L, lua_type(L, -(args - 1))));
+        CHECK_RETURN(false, 1, "args error: %s", lua_typename(L, lua_type(L, 2)));
     }
 
-    if (!lua_istable(L, -(args - 2))) {
+    if (!lua_istable(L, 3)) {
         lua_pushboolean(L, false);
-        CHECK_RETURN(false, 1, "args error: %s", lua_typename(L, lua_type(L, -(args - 2))));
+        CHECK_RETURN(false, 1, "args error: %s", lua_typename(L, lua_type(L, 3)));
     }
 	
-	slam_lua_dump_table(L, -1, "stack top");
-	return false;
-
     size_t len = 0;
-    const char* table_name = lua_tolstring(L, -(args - 1), &len);
+    const char* table_name = lua_tolstring(L, 2, &len);
 
 	log_trace("func: %s, args: %d, table: %s", __FUNCTION__, args, table_name);
 
@@ -289,8 +276,7 @@ static int cc_db_insert(lua_State* L) {
     slam_byte_buffer_write(byte_buffer, "insert into `", 13);
     slam_byte_buffer_write(byte_buffer, table_name, len);
     slam_byte_buffer_write(byte_buffer, "` set ", 6);
-    //bool rc = slam_lua_db_encode_table(L, -(args - 2), byte_buffer);
-	bool rc = true;
+    bool rc = slam_lua_db_encode_table(L, 3, byte_buffer);
     if (rc) {
         slam_byte_buffer_write(byte_buffer, "\0", 1);
         const char* sql = (const char*) slam_byte_buffer_readbuffer(byte_buffer);
@@ -318,35 +304,35 @@ static int cc_db_update(lua_State* L) {
         CHECK_RETURN(false, 1, "invalid userdata: %s", SLAM_LUA_METATABLE_DB_NAME);
     }
 
-    if (!lua_isstring(L, -(args - 1))) {
+    if (!lua_isstring(L, 2)) {
         lua_pushboolean(L, false);
-        CHECK_RETURN(false, 1, "args error: %s", lua_typename(L, lua_type(L, -(args - 1))));
+        CHECK_RETURN(false, 1, "args error: %s", lua_typename(L, lua_type(L, 2)));
     }
 
     size_t table_len = 0;
-    const char* table = lua_tolstring(L, -(args - 1), &table_len);
+    const char* table = lua_tolstring(L, 2, &table_len);
 
-    if (!lua_istable(L, -(args - 2))) {
+    if (!lua_istable(L, 3)) {
         lua_pushboolean(L, false);
-        CHECK_RETURN(false, 1, "args error: %s", lua_typename(L, lua_type(L, -(args - 2))));
+        CHECK_RETURN(false, 1, "args error: %s", lua_typename(L, lua_type(L, 3)));
     }
 
     size_t where_len = 0;
     const char* where = nullptr;
     
     if (args == 4) {
-        if (!lua_isstring(L, -(args - 3))) {
+        if (!lua_isstring(L, 4)) {
             lua_pushboolean(L, false);
-            CHECK_RETURN(false, 1, "args error: %s", lua_typename(L, lua_type(L, -(args - 3))));
+            CHECK_RETURN(false, 1, "args error: %s", lua_typename(L, lua_type(L, 4)));
         }
-        where = lua_tolstring(L, -(args - 3), &where_len);
+        where = lua_tolstring(L, 4, &where_len);
     }
     
     slam_byte_buffer_t* byte_buffer = slam_byte_buffer_new(4096);
     slam_byte_buffer_write(byte_buffer, "update `", 8);
     slam_byte_buffer_write(byte_buffer, table, table_len);
     slam_byte_buffer_write(byte_buffer, "` set ", 6);
-    bool rc = slam_lua_db_encode_table(L, -(args - 2), byte_buffer);
+    bool rc = slam_lua_db_encode_table(L, 3, byte_buffer);
     if (rc) {
         if (where) {
             slam_byte_buffer_write(byte_buffer, " where ", 7);
@@ -389,9 +375,9 @@ void slam_lua_reg_db_func(slam_lua_t* lua) {
     //
     // bool db:update(table_name, record, where)
     LUA_REGISTER(L, "update", cc_db_update);
-    //
-    // uint64_t db:insert_id()
-    //LUA_REGISTER(L, "insert_id", cc_db_insert_id);
+	//
+    // int64_t db:insert_id()
+    LUA_REGISTER(L, "insert_id", cc_db_insert_id);
 
 
     //

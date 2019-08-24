@@ -72,7 +72,13 @@ table.dump(t)
 
 local rc = db:execute("USE `test`")
 assert(rc)
-local t = db:insert("test4", {})
-assert(rc)
+--local t = db:insert("test1", {id=2, name='dany'})
+local t = db:query("select * from test1")
+assert(t)
+table.dump(t)
+--local t = db:insert("test1", {id=3, name='tom'})
+assert(t)
+local t = db:update("test1", {name = 'spanish'}, 'id=3')
+assert(t)
 
 
