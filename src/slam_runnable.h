@@ -8,6 +8,7 @@
 
 struct slam_runnable_s {
 	slam_lua_t* lua;
+	slam_poll_t* poll;
 	slam_protocol_t* protocol;
 	slam_timer_list_t* timer_list;
 };
@@ -17,6 +18,7 @@ typedef struct slam_runnable_s slam_runnable_t;
 extern slam_runnable_t* slam_runnable_new();
 extern void slam_runnable_delete(slam_runnable_t* runnable);
 
+extern void slam_runnable_wakeup(slam_runnable_t* runnable);
 extern void slam_runnable_run(slam_runnable_t* runnable);
 
 // load & reload entryfile

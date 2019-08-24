@@ -6,6 +6,6 @@
 #ifndef __SLAM_LUA_FUNC_H__
 #define __SLAM_LUA_FUNC_H__
 
-extern void slam_lua_reg_func(lua_State* L);
+extern void slam_lua_reg_std_func(slam_lua_t* lua);
 
 #endif

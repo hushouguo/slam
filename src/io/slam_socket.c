@@ -49,7 +49,7 @@ slam_socket_t* slam_socket_newfd(SOCKET connfd, int socket_type) {
 	socket->fd = connfd;
 	socket->type = socket_type;
 	socket->readmessage = nullptr;
-	socket->sendmq = slam_message_queue_new();	
+	socket->sendmq = slam_message_queue_new(__slam_main->socket_send_queue_size);	
 	return socket;
 }
 
@@ -132,10 +132,10 @@ bool slam_socket_connect(slam_socket_t* socket, const char* address, int port, i
 	slam_socket_blocking(socket->fd);
 	if (connect(socket->fd, (struct sockaddr*)&sockaddr, sizeof(struct sockaddr_in)) < 0) {
 		if (errno == EINTR) {
-			Error("connectSignal timeout");
+			log_error("connectSignal timeout");
 		}
 		else {
-			Error("connectSignal error: %d, %s", errno, errstring(errno));
+			log_error("connectSignal error: %d, %s", errno, errstring(errno));
 		}
 		result = false;
 	}
@@ -172,7 +172,7 @@ slam_socket_t* slam_socket_accept(slam_socket_t* socket) {
 			CHECK_RETURN(false, nullptr, "accept error: %d,%s", errno, errstring(errno));
 		}
 		if (!slam_socket_nonblocking(connfd)) {
-		    Error("set fd: %d nonblocking error: %d, %s", connfd, errno, errstring(errno));
+		    log_error("set fd: %d nonblocking error: %d, %s", connfd, errno, errstring(errno));
 		    slam_close(connfd);
 		}
 		else {		
@@ -211,7 +211,7 @@ ssize_t slam_socket_read_bytes(slam_socket_t* socket, void* buf, size_t bufsize)
 			readbytes += len;
 		}
 	}	
-	//Debug("socket: %d read bytes: %ld", socket->fd, readbytes);
+	//log_debug("socket: %d read bytes: %ld", socket->fd, readbytes);
 	return readbytes;
 }
 
@@ -293,7 +293,7 @@ bool slam_socket_poll_write(slam_socket_t* socket) {
 			CHECK_RETURN(false, false, "socket send error: %d, %s", errno, errstring(errno));
 		}
 		else {
-			//Debug("socket: %d send bytes: %ld", socket->fd, len);
+			//log_debug("socket: %d send bytes: %ld", socket->fd, len);
             message->bytesize += len;
             assert(message->bytesize <= message->bufsize);
     	    if (message->bytesize == message->bufsize) {

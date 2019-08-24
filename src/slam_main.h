@@ -10,6 +10,10 @@
 #define SLAM_VERSION_MINOR		1
 #define SLAM_VERSION_PATCH		0
 
+#define SLAM_FD_MASTER          0
+#define SLAM_FD_WORKER          1
+#define SLAM_FD_IO              0
+
 struct slam_main_s {
 	bool halt;
 	bool runasdaemon;
@@ -43,8 +47,17 @@ struct slam_main_s {
 
     /* max size of package */
     size_t max_package_size;
-    size_t message_queue_size;
 
+    /* message queue */
+    size_t receive_queue_size;
+    size_t socket_send_queue_size;
+
+    /* worker <=> io */
+    int fd_io_sockets[2];
+
+    /* master <=> worker */
+    int fd_worker_sockets[2];
+    
     /* log */
     slam_log_t* log;
     
@@ -63,7 +76,7 @@ typedef struct slam_main_s slam_main_t;
 extern slam_main_t* __slam_main;
 
 extern bool slam_main_init(int argc, char** argv);
-extern void slam_main_delete();
+extern void slam_main_exit(int status);
 extern void slam_main_run();
 
 #endif

@@ -31,6 +31,7 @@
 #include <time.h>
 #include <sys/time.h>
 #include <locale.h>
+#include <execinfo.h>
 
 #include "lua.h"
 #include "lauxlib.h"
@@ -40,6 +41,9 @@
 // tcmalloc-2.6.1
 #include <gperftools/tcmalloc.h>
 
+// mysql 5.6.37
+#include "mysql.h"
+#include "errmsg.h"
 
 #if !defined(__plusplus)
 #define nullptr NULL
@@ -76,9 +80,12 @@ typedef uint64_t entityid_t;
 #define slam_close(fd)	do { if (fd >= 0) { close(fd); fd = -1; } } while(0)
 #define slam_shutdown(fd, how)	do { if (fd >= 0) { shutdown(fd, how); fd = -1; } } while(0)
 
-#define SLAM_OK          0
-#define SLAM_ERROR      -1
-#define SLAM_PANIC		-2
+#define CONVERT_CST_TIME            1
+#define SYS_ERRNO	                256
+
+#define SLAM_OK                    	0
+#define SLAM_ERROR				   -1
+#define SLAM_PANIC		           -2
 
 #if !defined(PATH_MAX)
 #define PATH_MAX						MAX_PATH
@@ -128,6 +135,9 @@ typedef uint64_t entityid_t;
 
 #include "slam_log.h"
 
+#include "slam_byte_buffer.h"
+#include "slam_utils.h"
+
 #include "io/slam_atomic.h"
 #include "io/slam_spinlock.h"
 #include "io/slam_thread_cond.h"
@@ -137,11 +147,16 @@ typedef uint64_t entityid_t;
 #include "io/slam_poll.h"
 #include "io/slam_io_thread.h"
 
-#include "slam_byte_buffer.h"
-#include "slam_utils.h"
+#include "db/slam_db_conf.h"
+#include "db/slam_db_result.h"
+#include "db/slam_db.h"
+#include "db/slam_db_table.h"
+
 #include "slam_lua_value.h"
 #include "slam_lua.h"
 #include "slam_lua_func.h"
+#include "slam_lua_db.h"
+
 #include "slam_timer_list.h"
 #include "slam_protocol.h"
 #include "slam_runnable.h"

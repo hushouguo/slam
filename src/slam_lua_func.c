@@ -127,7 +127,7 @@ static int cc_newtimer(lua_State* L) {
 		slam_lua_value_set_nil(ctx);
 	}
 	else {
-		Error("not support ctx type: %s", lua_typename(L, lua_type(L, -(args - 2))));
+		log_error("not support ctx type: %s", lua_typename(L, lua_type(L, -(args - 2))));
 	}
 	
 	CHECK_RETURN(lua_isfunction(L, -(args - 3)), 0, "[%s]", lua_typename(L, lua_type(L, -(args - 3))));
@@ -151,7 +151,10 @@ static int cc_remove_timer(lua_State* L) {
 	return 0;
 }
 
-void slam_lua_reg_func(lua_State* L) {
+void slam_lua_reg_std_func(slam_lua_t* lua) {
+	lua_State* L = lua->L;
+
+	slam_lua_begin_namespace(lua, SLAM_LUA_REGISTER_NAMESPACE);
 
 	/* proto */
 	LUA_REGISTER(L, "loadmsg", cc_loadmsg); /* bool loadmsg(filename) */
@@ -167,5 +170,6 @@ void slam_lua_reg_func(lua_State* L) {
 	LUA_REGISTER(L, "newtimer", cc_newtimer);/* int newtimer(milliseconds, forever, ctx, function(id, ctx) end) */
 	LUA_REGISTER(L, "removetimer", cc_remove_timer); /* void remove_timer(int) */
 	
+	slam_lua_end_namespace(lua);
 }
 

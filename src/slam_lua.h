@@ -9,6 +9,7 @@
 #define	SLAM_LUA_USE_LUAJIT						1
 #define SLAM_LUA_STACK_SIZE						8192
 #define SLAM_LUA_REGISTER_NAMESPACE				"cc"
+#define SLAM_LUA_METATABLE_DB_NAME              "cc.DB"
 
 
 #define LUA_REGISTER(L, F, ROUTINE) \
@@ -40,8 +41,8 @@ extern bool slam_lua_dofile(slam_lua_t* lua, const char* filename);
 extern void slam_lua_cleanup(slam_lua_t* lua);
 extern void slam_lua_tracestack(slam_lua_t* lua);
 
-extern void slam_lua_dump_table(slam_lua_t* lua, int idx, const char* prefix);
-extern void slam_lua_dump_root_table(slam_lua_t* lua);
+extern void slam_lua_dump_table(lua_State* L, int idx, const char* prefix);
+extern void slam_lua_dump_root_table(lua_State* L);
 
 extern void slam_lua_reg_namespace(slam_lua_t* lua, const char* ns);
 extern void slam_lua_begin_namespace(slam_lua_t* lua, const char* ns);

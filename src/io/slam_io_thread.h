@@ -12,6 +12,7 @@ extern slam_io_thread_t* slam_io_thread_new(slam_message_queue_t* mq);
 extern void slam_io_thread_delete(slam_io_thread_t* io);
 
 // extern interface
+extern void slam_io_wakeup(slam_io_thread_t* io);
 extern SOCKET slam_io_newserver(slam_io_thread_t* io, const char* address, int port);
 extern SOCKET slam_io_newclient(slam_io_thread_t* io, const char* address, int port, int timeout);
 extern void slam_io_closesocket(slam_io_thread_t* io, SOCKET fd);

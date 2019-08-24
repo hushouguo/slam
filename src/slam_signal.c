@@ -6,7 +6,7 @@
 #include "slam.h"
 
 static void slam_signal_handler(int sig) {
-    Debug("receive signal: %d", sig);
+    log_trace("receive signal: %d", sig);
     switch (sig) {
         case SIGHUP:
         	__slam_main->reload_entryfile = true;
@@ -22,7 +22,7 @@ static void slam_signal_handler(int sig) {
        	case SIGUSR2:
             break;
             
-        default: Alarm("unhandled signal: %d", sig); break;
+        default: log_alarm("unhandled signal: %d", sig); break;
     };
 }            
 

@@ -28,10 +28,10 @@ void slam_timer_delete(slam_timer_t* timer_node) {
 void slam_timer_list_dump(slam_timer_list_t* timer_list, const char* prefix) {
 	slam_timer_t* timer_node = timer_list->timer_head_node;
 	if (prefix) {
-		Debug("%s", prefix);
+		log_debug("%s", prefix);
 	}
 	while (timer_node != nullptr) {
-		Debug("    timer, interval: %ld, expire_time: %ld, forever: %d, ref: %d",
+		log_debug("    timer, interval: %ld, expire_time: %ld, forever: %d, ref: %d",
 			timer_node->interval,
 			timer_node->expire_time,
 			timer_node->forever,

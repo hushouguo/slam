@@ -57,14 +57,13 @@ bool slam_poll_set_socket_pollout(slam_poll_t* poll, SOCKET fd, bool pollout) {
 }
 
 ssize_t slam_poll_wait(slam_poll_t* poll, slam_poll_event* events, size_t events_size, int timeout) {
-	int events_number = TEMP_FAILURE_RETRY(
-	                        epoll_wait(
+	int events_number = epoll_wait(
 	                            poll->epfd, 
 	                            events, 
 	                            events_size, 
     // timeout: -1 to block indefinitely, 0 to return immediately, even if no events are available	                            
 	                            timeout 
-	                        ));
+	                        );
 	if (events_number < 0) {
 		if (errno == EINTR) {
 			return 0; /* wake up by signal */

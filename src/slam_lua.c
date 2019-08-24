@@ -23,9 +23,8 @@ slam_lua_t* slam_lua_new(size_t stack_size) {
 	lua->entryfile = nullptr;
 	lua->stack_size = stack_size;
 	slam_lua_reg_namespace(lua, SLAM_LUA_REGISTER_NAMESPACE);
-	slam_lua_begin_namespace(lua, SLAM_LUA_REGISTER_NAMESPACE);
-	slam_lua_reg_func(lua->L);
-	slam_lua_end_namespace(lua);
+	slam_lua_reg_std_func(lua);
+	slam_lua_reg_db_func(lua);
 	return lua;
 }
 
@@ -47,7 +46,7 @@ bool slam_lua_load_entryfile(slam_lua_t* lua, const char* entryfile) {
 
 void slam_lua_showversion(slam_lua_t* lua) {
 #if SLAM_LUA_USE_LUAJIT
-	Debug("JIT: %s -- %s", LUAJIT_VERSION, LUAJIT_COPYRIGHT);		
+	log_debug("JIT: %s -- %s", LUAJIT_VERSION, LUAJIT_COPYRIGHT);		
 	lua_getfield(lua->L, LUA_REGISTRYINDEX, "_LOADED");
 	lua_getfield(lua->L, -1, "jit");  /* Get jit.* module table. */
 	lua_remove(lua->L, -2);
@@ -55,7 +54,7 @@ void slam_lua_showversion(slam_lua_t* lua) {
 	lua_remove(lua->L, -2);
 	int n = lua_gettop(lua->L);
 	lua_call(lua->L, 0, LUA_MULTRET);
-	Debug("JIT: %s", lua_toboolean(lua->L, n) ? "ON" : "OFF");
+	log_debug("JIT: %s", lua_toboolean(lua->L, n) ? "ON" : "OFF");
 #else
 	Alarm("JIT: not found");
 #endif
@@ -78,12 +77,29 @@ const char* slam_lua_tostring(slam_lua_t* lua, int idx) {
 	return lua_typename(lua->L, lua_type(lua->L, idx));
 }
 
+const char* slam_L_tostring(lua_State* L, int idx) {
+	if (lua_istable(L, idx)) { return "[table]"; }
+	else if (lua_isnone(L, idx)) { return "[none]"; }
+	else if (lua_isnil(L, idx)) { return "[nil]"; }
+	else if (lua_isboolean(L, idx)) {
+		return lua_toboolean(L, idx) != 0 ? "[true]" : "[false]";
+	}
+	else if (lua_isfunction(L, idx)) { return "[function]"; }
+	else if (lua_isuserdata(L, idx)) { return "[userdata]"; }
+	else if (lua_islightuserdata(L, idx)) { return "[lightuserdata]"; }
+	else if (lua_isthread(L, idx)) { return "[thread]"; }
+	else {
+		return lua_tostring(L, idx);
+	}
+	return lua_typename(L, lua_type(L, idx));
+}
+
 bool slam_lua_pcall(slam_lua_t* lua, int args, slam_lua_value_t* lvalue) {
 	int error, traceback = 0;
 	int func_idx = -(args + 1);
 	
 	if (!lua_isfunction(lua->L, func_idx)) {
-		Error("value at stack [%d] is not function\n", func_idx);
+		log_error("value at stack [%d] is not function\n", func_idx);
 		lua_pop(lua->L, args + 1);/* remove function and args */
 		return false;
 	}
@@ -102,7 +118,7 @@ bool slam_lua_pcall(slam_lua_t* lua, int args, slam_lua_value_t* lvalue) {
 	/* check error */
 	if (error) {
 		if (traceback == 0) {
-			Error("%s\n", lua_tostring(lua->L, -1));/* ... error */
+			log_error("%s\n", lua_tostring(lua->L, -1));/* ... error */
 			lua_pop(lua->L, 1); /* remove error message from stack */
 		}
 		else {
@@ -129,7 +145,7 @@ bool slam_lua_pcall(slam_lua_t* lua, int args, slam_lua_value_t* lvalue) {
 			slam_lua_value_set_string(lvalue, lua_tostring(lua->L, -1));
 		}
 		else {
-			Error("Not support return type: %s", lua_typename(lua->L, lua_type(lua->L, -1)));
+			log_error("Not support return type: %s", lua_typename(lua->L, lua_type(lua->L, -1)));
 		}
 	}
 	
@@ -164,43 +180,43 @@ void slam_lua_cleanup(slam_lua_t* lua) {
 
 void slam_lua_tracestack(slam_lua_t* lua) {
 	int i, args = lua_gettop(lua->L);
-	Debug("lua tracestack: %d", args);
+	log_debug("lua tracestack: %d", args);
 	for (i = 1; i <= args; ++i) {
-		Debug("	[%s]  (%s)", slam_lua_tostring(lua, i), lua_typename(lua->L, lua_type(lua->L, i)));
+		log_debug("	[%s]  (%s)", slam_lua_tostring(lua, i), lua_typename(lua->L, lua_type(lua->L, i)));
 	}
 }
 
-void slam_lua_dump_table(slam_lua_t* lua, int idx, const char* prefix) {
-	lua_pushnil(lua->L);
-	while(lua_next(lua->L, idx)) {
+void slam_lua_dump_table(lua_State* L, int idx, const char* prefix) {
+	lua_pushnil(L);
+	while(lua_next(L, idx)) {
 		const char *key, *value;
 		/* -2 : key, -1 : value */
-		lua_pushvalue(lua->L, -2);
-		key = lua_tostring(lua->L, -1);
-		value = slam_lua_tostring(lua, -2);
-		lua_pop(lua->L, 1);
+		lua_pushvalue(L, -2);
+		key = lua_tostring(L, -1);
+		value = slam_L_tostring(L, -2);
+		lua_pop(L, 1);
 	
-		Debug("%s%15s: %s", prefix, key, value);
+		log_debug("%s%15s: %s", prefix, key, value);
 	
-		if (lua_istable(lua->L, -1) && strcasecmp(key, SLAM_LUA_REGISTER_NAMESPACE) == 0) {
+		if (lua_istable(L, -1) && strcasecmp(key, SLAM_LUA_REGISTER_NAMESPACE) == 0) {
 			char buffer[960];
 			snprintf(buffer, sizeof(buffer), "%s\t\t", prefix);
-			Debug("%15s{", prefix);
-			slam_lua_dump_table(lua, lua_gettop(lua->L), buffer);
-			Debug("%15s}", prefix);
+			log_debug("%15s{", prefix);
+			slam_lua_dump_table(L, lua_gettop(L), buffer);
+			log_debug("%15s}", prefix);
 		}
 	
-		lua_pop(lua->L, 1);/* removes 'value'; keeps 'key' for next iteration */
+		lua_pop(L, 1);/* removes 'value'; keeps 'key' for next iteration */
 	}
 }
 
-void slam_lua_dump_root_table(slam_lua_t* lua) {
-	lua_getglobal(lua->L, "_G");
-	Debug("dump root table");
-	Debug("{");
-	slam_lua_dump_table(lua, lua_gettop(lua->L), "\t");
-	Debug("}");
-	lua_pop(lua->L, 1);/* remove `table` */
+void slam_lua_dump_root_table(lua_State* L) {
+	lua_getglobal(L, "_G");
+	log_debug("dump root table");
+	log_debug("{");
+	slam_lua_dump_table(L, lua_gettop(L), "\t");
+	log_debug("}");
+	lua_pop(L, 1);/* remove `table` */
 }
 
 void slam_lua_reg_namespace(slam_lua_t* lua, const char* ns) {
@@ -283,17 +299,17 @@ void slam_lua_pushvalue(slam_lua_t* lua, slam_lua_value_t* lvalue) {
 		lua_pushstring(lua->L, slam_lua_value_get_string(lvalue));
 	}
 	else {
-		Error("illegal lvalue->type: %d", slam_lua_value_type(lvalue));
+		log_error("illegal lvalue->type: %d", slam_lua_value_type(lvalue));
 		lua_pushnil(lua->L);
 	}
 }
 
 void slam_lua_dump_registry_table(slam_lua_t* lua) {
 	lua_getregistry(lua->L);
-	Debug("dump registry table");
-	Debug("{");
-	slam_lua_dump_table(lua, lua_gettop(lua->L), "\t");
-	Debug("}");
+	log_debug("dump registry table");
+	log_debug("{");
+	slam_lua_dump_table(lua->L, lua_gettop(lua->L), "\t");
+	log_debug("}");
 	lua_pop(lua->L, 1);/* remove `table` */
 }
 

@@ -8,6 +8,13 @@
 slam_runnable_t* slam_runnable_new() {
 	slam_runnable_t* runnable = (slam_runnable_t *) slam_malloc(sizeof(slam_runnable_t));
 	runnable->lua = nullptr;
+	runnable->poll = slam_poll_new();
+	if (!slam_poll_add_socket(runnable->poll, __slam_main->fd_io_sockets[SLAM_FD_WORKER])) {
+		return nullptr;
+	}	
+	if (!slam_poll_add_socket(runnable->poll, __slam_main->fd_worker_sockets[SLAM_FD_WORKER])) {
+		return nullptr;
+	}
 	runnable->protocol = slam_protocol_new();
 	runnable->timer_list = slam_timer_list_new();
 	return runnable;
@@ -18,8 +25,11 @@ void slam_runnable_delete(slam_runnable_t* runnable) {
 		slam_lua_event_stop(runnable); /* notify event.stop to lua */
 		slam_lua_delete(runnable->lua);
 	}
+	slam_poll_delete(runnable->poll);
 	slam_timer_list_delete(runnable->timer_list);
-	slam_protocol_delete(runnable->protocol);
+	if (runnable->protocol) {
+	    slam_protocol_delete(runnable->protocol);
+	}
 	slam_free(runnable);
 }
 
@@ -29,32 +39,52 @@ bool slam_runnable_load_entryfile(slam_runnable_t* runnable, const char* entryfi
 		slam_lua_delete(runnable->lua);
 	}
 	runnable->lua = slam_lua_new(SLAM_LUA_STACK_SIZE);
+	if (runnable->protocol) {
+	    slam_protocol_delete(runnable->protocol);
+	}
+	runnable->protocol = slam_protocol_new();
 	if (!slam_lua_load_entryfile(runnable->lua, entryfile)) {
-		slam_lua_delete(runnable->lua);
 		return false;
 	}
 	slam_lua_event_start(runnable);
 	return true;
 }
 
-void slam_runnable_run(slam_runnable_t* runnable) {	
-	//slam_runnable_do_message(runnable, );
-	//slam_timer_list_run(runnable);
-	while (!slam_message_queue_empty(__slam_main->mq)) {
-	    slam_message_t* message = slam_message_queue_pop_front(__slam_main->mq);
-	    if (message->type == MESSAGE_TYPE_PROTOBUF_PACKAGE) {
-    	    slam_protocol_decode(runnable, message);
-	    }
-	    else if (message->type == MESSAGE_TYPE_ESTABLISH_CONNECTION) {
-	        slam_lua_event_establish_connection(runnable, message->fd);
-	    }
-	    else if (message->type == MESSAGE_TYPE_LOST_CONNECTION) {
-	        slam_lua_event_lost_connection(runnable, message->fd);
-	    }
-	    else {
-	        Error("illegal message->type: %d", message->type);
-	    }
+void slam_runnable_wakeup(slam_runnable_t* runnable) {
+    slam_poll_set_socket_pollout(runnable->poll, __slam_main->fd_io_sockets[SLAM_FD_WORKER], true);
+}
+
+void slam_runnable_do_message(slam_runnable_t* runnable) {
+    while (!slam_message_queue_empty(__slam_main->mq)) {
+        slam_message_t* message = slam_message_queue_pop_front(__slam_main->mq);
+        if (message->type == MESSAGE_TYPE_PROTOBUF_PACKAGE) {
+            slam_protocol_decode(runnable, message);
+        }
+        else if (message->type == MESSAGE_TYPE_ESTABLISH_CONNECTION) {
+            slam_lua_event_establish_connection(runnable, message->fd);
+        }
+        else if (message->type == MESSAGE_TYPE_LOST_CONNECTION) {
+            slam_lua_event_lost_connection(runnable, message->fd);
+        }
+        else {
+            log_error("illegal message->type: %d", message->type);
+        }
         slam_message_delete(message);
+    }
+}
+
+void slam_runnable_run(slam_runnable_t* runnable) {
+    while (!__slam_main->halt) {
+        slam_poll_event events[__slam_main->poll_event_number];
+        int64_t timeout = slam_timer_list_min_interval(runnable->timer_list);
+        ssize_t i, events_number = slam_poll_wait(runnable->poll, events, __slam_main->poll_event_number, timeout);
+        (void)(i);
+        (void)(events_number);
+        if (__slam_main->halt) {
+            return; // after waking up, check the exit mark first
+        }
+        slam_runnable_do_message(runnable);
+    	slam_timer_list_run(runnable);
 	}
 }
 

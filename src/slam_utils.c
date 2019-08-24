@@ -5,30 +5,27 @@
 
 #include "slam.h"
 
-#define CONVERT_CST_TIME    1
-#define SYS_ERRNO	        128
+static char** __errlist = nullptr;
 
-	static char** __errlist = nullptr;
+__attribute__((constructor)) static void __strerror_init() {
+	if (!__errlist) {
+		__errlist = (char **) slam_malloc(SYS_ERRNO * sizeof(char*));
+	}
+	int err;
+	for (err = 0; err < SYS_ERRNO; ++err) {
+		__errlist[err] = strdup(strerror(err));
+	}
+}
 
-	__attribute__((constructor)) static void __strerror_init() {
-		if (!__errlist) {
-			__errlist = (char **) slam_malloc(SYS_ERRNO * sizeof(char*));
-		}
-		int err;
+__attribute__((destructor)) static void __strerror_destroy() {
+	if (__errlist) {
+	    int err;
 		for (err = 0; err < SYS_ERRNO; ++err) {
-			__errlist[err] = strdup(strerror(err));
+			slam_free(__errlist[err]);
 		}
+		slam_free(__errlist);
 	}
-
-	__attribute__((destructor)) static void __strerror_destroy() {
-		if (__errlist) {
-		    int err;
-			for (err = 0; err < SYS_ERRNO; ++err) {
-				slam_free(__errlist[err]);
-			}
-			slam_free(__errlist);
-		}
-	}
+}
 
 //
 // like ::strerror
@@ -337,46 +334,46 @@ void DumpLibraryVersion() {
         Alarm << "specify config file: Unspecified";
     }
     else {
-        Trace << "specify config file: " << sConfig.confile;
+        log_trace << "specify config file: " << sConfig.confile;
     }
     sConfig.dump();
 
-    //Trace << std::setw(24) << std::setfill(' ') << i.first << ": " << i.second;
+    //log_trace << std::setw(24) << std::setfill(' ') << i.first << ": " << i.second;
     
     //
     // output 3rd libraries
     //
-    Trace("all 3rd libraries:");
+    log_trace("all 3rd libraries:");
     
 #ifdef TC_VERSION_STRING		
-            Trace("    tcmalloc: %d.%d%s", TC_VERSION_MAJOR, TC_VERSION_MINOR, TC_VERSION_PATCH);
+            log_trace("    tcmalloc: %d.%d%s", TC_VERSION_MAJOR, TC_VERSION_MINOR, TC_VERSION_PATCH);
 #else
-            Trace("    not link tcmalloc");
+            log_trace("    not link tcmalloc");
 #endif
     
 #ifdef LIBEVENT_VERSION
-            Trace("    libevent: %s", LIBEVENT_VERSION);
+            log_trace("    libevent: %s", LIBEVENT_VERSION);
 #endif
     
 #ifdef ZMQ_VERSION_MAJOR
-            Trace("    libzmq: %d.%d.%d", ZMQ_VERSION_MAJOR, ZMQ_VERSION_MINOR, ZMQ_VERSION_PATCH);
+            log_trace("    libzmq: %d.%d.%d", ZMQ_VERSION_MAJOR, ZMQ_VERSION_MINOR, ZMQ_VERSION_PATCH);
 #endif
     
 #ifdef LUAJIT_VERSION
-            Trace("    luaJIT: %s -- %s", LUAJIT_VERSION, LUAJIT_COPYRIGHT);
+            log_trace("    luaJIT: %s -- %s", LUAJIT_VERSION, LUAJIT_COPYRIGHT);
 #endif
     
 #ifdef GOOGLE_PROTOBUF_VERSION
-            Trace("    protobuf: %d, library: %d", GOOGLE_PROTOBUF_VERSION, GOOGLE_PROTOBUF_MIN_LIBRARY_VERSION);
+            log_trace("    protobuf: %d, library: %d", GOOGLE_PROTOBUF_VERSION, GOOGLE_PROTOBUF_MIN_LIBRARY_VERSION);
 #endif
     
-            Trace("    rapidxml: 1.13");
+            log_trace("    rapidxml: 1.13");
     
 #ifdef MYSQL_SERVER_VERSION		
-            Trace("    mysql: %s", MYSQL_SERVER_VERSION);
+            log_trace("    mysql: %s", MYSQL_SERVER_VERSION);
 #endif
     
-            Trace("    gcc version: %d.%d.%d", __GNUC__, __GNUC_MINOR__, __GNUC_PATCHLEVEL__);
+            log_trace("    gcc version: %d.%d.%d", __GNUC__, __GNUC_MINOR__, __GNUC_PATCHLEVEL__);
         }
 
 
@@ -452,7 +449,7 @@ void DumpLibraryVersion() {
 			setOpenFilesLimit(max_files);
 		}
 	
-		Trace("stack size: %u (limit.stack_size), max files: %u (limit.max_files)", getStackSizeLimit(), getOpenFilesLimit());
+		log_trace("stack size: %u (limit.stack_size), max files: %u (limit.max_files)", getStackSizeLimit(), getOpenFilesLimit());
 	
 		//
 		// verify lua version
@@ -510,16 +507,16 @@ void slam_mallinfo() {
 #else
     struct mallinfo info = mallinfo();
 #endif
-	Trace("dump memory allocate info");
-    Trace("    arena:    %d", info.arena);
-    Trace("    ordblks:  %d", info.ordblks);
-    Trace("    smblks:   %d", info.smblks);
-    Trace("    hblks:    %d", info.hblks);
-    Trace("    hblkhd:   %d", info.hblkhd);
-    Trace("    usmblks:  %d", info.usmblks);
-    Trace("    fsmblks:  %d", info.fsmblks);
-    Trace("    uordblks: %d", info.uordblks);
-    Trace("    fordblks: %d", info.fordblks);
-    Trace("    keepcost: %d", info.keepcost);
+	log_trace("dump memory allocate info");
+    log_trace("    arena:    %d", info.arena);
+    log_trace("    ordblks:  %d", info.ordblks);
+    log_trace("    smblks:   %d", info.smblks);
+    log_trace("    hblks:    %d", info.hblks);
+    log_trace("    hblkhd:   %d", info.hblkhd);
+    log_trace("    usmblks:  %d", info.usmblks);
+    log_trace("    fsmblks:  %d", info.fsmblks);
+    log_trace("    uordblks: %d", info.uordblks);
+    log_trace("    fordblks: %d", info.fordblks);
+    log_trace("    keepcost: %d", info.keepcost);
 }
 

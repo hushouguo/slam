@@ -13,9 +13,11 @@
 #define SLAM_DEF_POLL_EVENT_NUMBER      1024
 #define SLAM_DEF_MAX_PACKAGE_SIZE       4*MB	// bytes
 #define SLAM_DEF_MESSAGE_QUEUE_SIZE     10000
+#define SLAM_DEF_SEND_QUEUE_SIZE        1000
 #define SLAM_DEF_LOGFILE                "slam.log"
 
 slam_main_t* __slam_main = nullptr;
+
 
 void Usage() {
 	fprintf(stderr, "Usage: slam [OPTIONS]\n");
@@ -56,8 +58,15 @@ bool slam_main_spawn_child_process() {
 		__slam_main->runasmaster = false;
 		slam_set_process_title(__slam_main->argc, __slam_main->argv, " worker");
 	}
-	if (!__slam_main->runasmaster) {
-        __slam_main->mq = slam_message_queue_new();
+	return true;
+}
+
+bool slam_main_init_child_process() {
+	if (!__slam_main->runasmaster) { // child process continue initialization
+        if (socketpair(AF_UNIX, SOCK_STREAM, 0, __slam_main->fd_io_sockets) != 0) {
+            return false;
+        }        	    
+        __slam_main->mq = slam_message_queue_new(__slam_main->receive_queue_size);
 		__slam_main->runnable = slam_runnable_new();
 		if (!__slam_main->runnable) {
 			return false;
@@ -76,7 +85,6 @@ bool slam_main_spawn_child_process() {
 bool slam_main_init(int argc, char* argv[]) {
 	setlocale(LC_ALL, "");
 
-    slam_main_delete();
 	if (!__slam_main) {
 		__slam_main = (slam_main_t *) slam_malloc(sizeof(slam_main_t));
 		
@@ -102,8 +110,12 @@ bool slam_main_init(int argc, char* argv[]) {
 
         __slam_main->poll_event_number = SLAM_DEF_POLL_EVENT_NUMBER;
         __slam_main->max_package_size = SLAM_DEF_MAX_PACKAGE_SIZE;
-        __slam_main->message_queue_size = SLAM_DEF_MESSAGE_QUEUE_SIZE;
+        __slam_main->receive_queue_size = SLAM_DEF_MESSAGE_QUEUE_SIZE;
+        __slam_main->socket_send_queue_size = SLAM_DEF_SEND_QUEUE_SIZE;
 
+        int rc = socketpair(AF_UNIX, SOCK_STREAM, 0, __slam_main->fd_worker_sockets);
+        CHECK_RETURN(rc == 0, false, "socketpair error: %d, %s", errno, errstring(errno));
+        
         __slam_main->log = slam_log_new(__slam_main->logfile);
 		__slam_main->mq = nullptr;
 		__slam_main->runnable = nullptr;
@@ -134,11 +146,12 @@ bool slam_main_init(int argc, char* argv[]) {
 	do {
 		uint32_t i = 0;
 		for (; i < __slam_main->worker_number; ++i) {
-			if (!slam_main_spawn_child_process()) {
-				exit(SLAM_PANIC);
-			}
-			if (!__slam_main->runasmaster) {
-				break;
+		    slam_main_spawn_child_process();
+		    if (!__slam_main->runasmaster) {
+    			if (!slam_main_init_child_process()) {
+    				slam_main_exit(EXIT_FAILURE);
+    			}
+    			break; // child process exit loop
 			}
 		}
 	} while (false);	
@@ -146,39 +159,63 @@ bool slam_main_init(int argc, char* argv[]) {
 	return true;
 }
 
-void slam_main_delete() {
+void slam_main_exit(int status) {
 	if (__slam_main) {
+		__slam_main->halt = true;
+
 		slam_free(__slam_main->entryfile);
 		slam_free(__slam_main->logfile);
+
+        slam_close(__slam_main->fd_worker_sockets[SLAM_FD_WORKER]);
+        slam_close(__slam_main->fd_worker_sockets[SLAM_FD_MASTER]);
 		
         slam_log_delete(__slam_main->log);
-		if (!__slam_main->runasmaster) {
-			slam_runnable_delete(__slam_main->runnable);
-			slam_io_thread_delete(__slam_main->io);
-			slam_message_queue_delete(__slam_main->mq);
+        
+		if (!__slam_main->runasmaster) {            
+		    if (__slam_main->runnable) {
+    			slam_runnable_delete(__slam_main->runnable);
+			}
+			if (__slam_main->io) {
+    			slam_io_thread_delete(__slam_main->io);
+			}
+			if (__slam_main->mq) {
+    			slam_message_queue_delete(__slam_main->mq);
+			}			
+            slam_close(__slam_main->fd_io_sockets[SLAM_FD_IO]);
+            slam_close(__slam_main->fd_io_sockets[SLAM_FD_WORKER]);
 		}
-		
+	
+		log_trace("process: %d, %s, exit: %d", getpid(), (__slam_main->runasmaster ? "master" : "worker"), status);
+
 		slam_free(__slam_main);
 	}
+	exit(status);
 }
 
 void slam_main_run_master() {
 	int status = 0;
 	pid_t pid = wait(&status);
 	(void)(pid);
-	if (status == SLAM_PANIC) {
-		exit(SLAM_PANIC);
+	if (__slam_main->halt) {
+		return;
+	}
+	if (WIFEXITED(status) && WEXITSTATUS(status) == EXIT_FAILURE) {
+		exit(EXIT_FAILURE);
 	}
 	else {
-		if (!slam_main_spawn_child_process()) {
-			exit(SLAM_PANIC);
-		}
+	    slam_main_spawn_child_process();
+        if (!__slam_main->runasmaster) {
+            if (!slam_main_init_child_process()) {
+                log_error("child process: %d, exit status: %d(%s), reload init error", 
+                        pid, WEXITSTATUS(status), WIFEXITED(status) ? "normal" : "abnormal");
+                slam_main_exit(EXIT_FAILURE);
+            }
+        }
 	}
 }
 
 void slam_main_run_worker() {
 	slam_runnable_run(__slam_main->runnable);
-	usleep(1);
 }
 
 void slam_main_run() {
@@ -190,6 +227,16 @@ void slam_main_run() {
 			slam_main_run_worker();
 		}
 	}
+}
+
+int main(int argc, char** argv) {
+	if (!slam_main_init(argc, argv)) {
+	    return EXIT_FAILURE;
+	}
+	slam_main_run();
+	slam_main_exit(SLAM_OK);
+	log_trace("Bye!");
+	return 0;
 }
 
 __attribute__((constructor)) static void __slam_main_init() {

@@ -15,7 +15,6 @@ struct slam_io_thread_s {
     slam_message_queue_t* mq;
 	slam_poll_t* poll;
 	slam_socket_t* sockets[MAX_SOCKET_NUMBER];
-	int pipefd[2];
 };
 
 bool slam_io_thread_establish_connection_event(slam_io_thread_t* io, SOCKET fd) {
@@ -104,7 +103,6 @@ void slam_io_thread_write_socket(slam_io_thread_t* io, SOCKET fd) {
 void slam_io_thread_do_message(slam_io_thread_t* io, int timeout) {
 	slam_poll_event events[__slam_main->poll_event_number];
 	ssize_t i, events_number = slam_poll_wait(io->poll, events, __slam_main->poll_event_number, timeout);
-	Debug("------------------- io thread wakeup --------------------");
 	if (__slam_main->halt) {
 	    return; // after waking up, check the exit mark first
 	}
@@ -131,15 +129,16 @@ void slam_io_thread_do_message(slam_io_thread_t* io, int timeout) {
 			}
 		}
 	}
+	if (!slam_message_queue_empty(io->mq)) {
+	    slam_runnable_wakeup(__slam_main->runnable);
+	}
 }
 
 void* slam_io_thread_run(void* arg) {
 	slam_io_thread_t* io = (slam_io_thread_t *) arg;
-    Debug("slam_io_thread start");
     while (!__slam_main->halt) {
         slam_io_thread_do_message(io, -1);
     }
-    Debug("slam_io_thread stop");
 	return nullptr;
 }
 
@@ -148,7 +147,7 @@ slam_io_thread_t* slam_io_thread_new(slam_message_queue_t* mq) {
     io->mq = mq;
 	memset(io->sockets, 0, sizeof(io->sockets));
 	io->poll = slam_poll_new();
-	if (pipe(io->pipefd) || !slam_poll_add_socket(io->poll, io->pipefd[0])) {
+	if (!slam_poll_add_socket(io->poll, __slam_main->fd_io_sockets[SLAM_FD_IO])) {
 	    slam_poll_delete(io->poll);	slam_free(io);
 		return nullptr;
 	}
@@ -161,7 +160,7 @@ slam_io_thread_t* slam_io_thread_new(slam_message_queue_t* mq) {
 
 void slam_io_thread_delete(slam_io_thread_t* io) {
     int fd = 0;
-    write(io->pipefd[1], &fd, sizeof(fd));    
+    slam_io_wakeup(io);
     pthread_join(io->thread_handle, nullptr);
 	slam_poll_delete(io->poll);
 	for (fd = 0; fd < MAX_SOCKET_NUMBER; ++fd) {
@@ -169,9 +168,12 @@ void slam_io_thread_delete(slam_io_thread_t* io) {
 			slam_socket_delete(io->sockets[fd]);
 		}
 	}
-	slam_close(io->pipefd[0]);
-	slam_close(io->pipefd[1]);
+	slam_close(__slam_main->fd_io_sockets[SLAM_FD_IO]);
     slam_free(io);
+}
+
+void slam_io_wakeup(slam_io_thread_t* io) {
+    slam_poll_set_socket_pollout(io->poll, __slam_main->fd_io_sockets[SLAM_FD_IO], true);
 }
 
 // extern interface
@@ -202,11 +204,11 @@ SOCKET slam_io_newclient(slam_io_thread_t* io, const char* address, int port, in
 }
 
 void slam_io_closesocket(slam_io_thread_t* io, SOCKET fd) {
-    slam_shutdown(fd, SHUT_RD); // trigger poll event to destroy socket
+    slam_shutdown(fd, SHUT_RD); // wakeup io & trigger poll event to destroy socket
 }
 
 bool slam_io_response(slam_io_thread_t* io, slam_message_t* message) {
-    ASSERT_SOCKET(message->fd);
+    CHECK_RETURN(VALID_SOCKET(message->fd), false, "message->fd: %d is not valid", message->fd);
 	if (io->sockets[message->fd] == nullptr) {
 		return false; /* already close */
 	}
@@ -215,6 +217,6 @@ bool slam_io_response(slam_io_thread_t* io, slam_message_t* message) {
 	if (!slam_socket_write_message(socket, message)) {
 	    return false; // mq is full
 	}
-	return slam_poll_set_socket_pollout(io->poll, message->fd, true); // trigger poll out event for this fd
+	return slam_poll_set_socket_pollout(io->poll, message->fd, true); // wakeup io & trigger poll out event for this fd
 }
 
