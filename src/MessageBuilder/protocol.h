@@ -17,6 +17,8 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
+#include <unordered_map>
+
 //luajit-2.0.5
 #include "lua.hpp"
 
@@ -44,14 +46,14 @@ using namespace google::protobuf::compiler;
 
 #define ENABLE_DEBUG					1
 #if ENABLE_DEBUG
-#define Debug(MESSAGE, ...)	fprintf(stdout, "Debug:" MESSAGE "\n", ##__VA_ARGS__)
+#define Debug(MESSAGE, ...)	fprintf(stdout, "Debug:" MESSAGE "\n", ##__VA_ARGS__); fflush(stdout)
 #else
 #define Debug(MESSAGE, ...)
 #endif
 
-#define Trace(MESSAGE, ...)	fprintf(stderr, "Trace:" MESSAGE "\n", ##__VA_ARGS__)
-#define Alarm(MESSAGE, ...)	fprintf(stderr, "Alarm:" MESSAGE "\n", ##__VA_ARGS__)
-#define Error(MESSAGE, ...)	fprintf(stderr, "Error:" MESSAGE "\n", ##__VA_ARGS__)
+#define Trace(MESSAGE, ...)	fprintf(stderr, "Trace:" MESSAGE "\n", ##__VA_ARGS__); fflush(stderr)
+#define Alarm(MESSAGE, ...)	fprintf(stderr, "Alarm:" MESSAGE "\n", ##__VA_ARGS__); fflush(stderr)
+#define Error(MESSAGE, ...)	fprintf(stderr, "Error:" MESSAGE "\n", ##__VA_ARGS__); fflush(stderr)
 
 #define CHECK_RETURN(RC, RESULT, MESSAGE, ...) do { if (!(RC)) { Error(MESSAGE, ##__VA_ARGS__); return RESULT; } } while (false)
 #define CHECK_GOTO(RC, SYMBOL, MESSAGE, ...) do { if (!(RC)) { Error(MESSAGE, ##__VA_ARGS__); goto SYMBOL; } } while (false)

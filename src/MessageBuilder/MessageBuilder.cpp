@@ -18,7 +18,7 @@ void MessageBuilderInit() {
 void MessageBuilderDestroy() {
     SafeDelete(__parser);    
     // Optional:  Delete all global objects allocated by libprotobuf.
-    google::protobuf::ShutdownProtobufLibrary();
+    //google::protobuf::ShutdownProtobufLibrary();
 }
 
 int MessageBuilderLoadDescriptor(const char* filename) { 

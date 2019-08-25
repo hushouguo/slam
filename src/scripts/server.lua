@@ -21,19 +21,25 @@ function slam_lua_event_message(fd, msgid, t)
 	table.dump(t)
 end
 
-cc.loadmsg("protos")
-cc.bindmsg(1, "slam.EchoRequest", function(fd, msgid, t)
+local rc = cc.loadmsg("protos")
+assert(rc)
+local rc = cc.bindmsg(1, "slam.EchoRequest", function(fd, msgid, t)
 	print(string.format("bind message from fd: %d, msgid: %d", fd, msgid))
 	table.dump(t)
 	cc.response(fd, 2, {milliseconds = 1})
 end)
-cc.bindmsg(2, "slam.EchoResponse", function(fd, msgid, t)
+assert(rc)
+local rc = cc.bindmsg(2, "slam.EchoResponse", function(fd, msgid, t)
 	print(string.format("bind message from fd: %d, msgid: %d", fd, msgid))
 	table.dump(t)
 end)
-cc.newserver("127.0.0.1", 12306)
+assert(rc)
+local fd = cc.newserver("127.0.0.1", 12306)
+assert(fd)
 
+--[[
 local timer1 = cc.newtimer(1000, true, '1000', function(timerid, ctx)
 	print(string.format("os.time: %d, timerid: %d, ctx: %s", os.time(), timerid, tostring(ctx)))
 end)
+--]]
 

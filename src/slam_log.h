@@ -33,7 +33,7 @@ enum {
 };
 
 #define LOG_LEVEL                       LOG_LEVEL_DEBUG
-#define ENABLE_ERROR_LOCATION           0
+#define ENABLE_ERROR_LOCATION           1
 #define ENABLE_BACKTRACE				0	
 #define ENABLE_CONSOLE_COLOR            1
 #define LOG_TIMESTAMP_FORMAT            "%y/%02m/%02d %02H:%02M:%02S"

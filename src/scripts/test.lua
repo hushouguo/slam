@@ -27,6 +27,18 @@ end
 --cc.newserver("127.0.0.1", 12306)
 --
 
+local count = 0
+local timer1 = cc.newtimer(1000, true, '1000', function(timerid, ctx)
+	print(string.format("os.time: %d, timerid: %d, ctx: %s", os.time(), timerid, tostring(ctx)))
+end)
+local timer2 = cc.newtimer(2000, true, '2000', function(timerid, ctx)
+	print(string.format("os.time: %d, timerid: %d, ctx: %s", os.time(), timerid, tostring(ctx)))
+	count = count + 1
+	if count == 3 then
+		cc.removetimer(timer1)
+	end
+end)
+
 --[[
 local count = 0
 local timer1 = cc.newtimer(100, true, '1000', function(timerid, ctx)

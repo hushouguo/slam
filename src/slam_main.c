@@ -15,6 +15,8 @@
 #define SLAM_DEF_MESSAGE_QUEUE_SIZE     10000
 #define SLAM_DEF_SEND_QUEUE_SIZE        1000
 #define SLAM_DEF_LOGFILE                "slam.log"
+#define SLAM_DEF_WORKER_NUMBER			1
+#define SLAM_DEF_AUTO_RELOAD_CHILD		0
 
 slam_main_t* __slam_main = nullptr;
 
@@ -101,8 +103,8 @@ bool slam_main_init(int argc, char* argv[]) {
 		
 		__slam_main->limit_stack_size = SLAM_DEF_LIMIT_STACK_SIZE;
 		__slam_main->limit_max_files = SLAM_DEF_LIMIT_OPEN_FILES;
-
-		__slam_main->worker_number = slam_cpus();
+		
+		__slam_main->worker_number = SLAM_DEF_WORKER_NUMBER == 0 ? slam_cpus() : SLAM_DEF_WORKER_NUMBER;
 
 		__slam_main->conn_max_silent = SLAM_DEF_CONN_MAX_SILENT;
 		__slam_main->conn_check_interval = SLAM_DEF_CONN_CHECK_INTERVAL;
@@ -206,6 +208,7 @@ void slam_main_run_master() {
 			continue;
 		}
 		log_trace("child process: %d, exit status: %d(%s)", pid, status, WIFEXITED(status) ? "normal" : "abnormal"); 
+#if SLAM_DEF_AUTO_RELOAD_CHILD		
 		if (!__slam_main->halt && status != EXIT_FAILURE) {
 			slam_main_spawn_child_process();
 			if (!__slam_main->runasmaster) {
@@ -216,6 +219,7 @@ void slam_main_run_master() {
 				break; // child process exit loop
 			}
 		}
+#endif		
 	}
 }
 

@@ -138,10 +138,8 @@ void* luaT_message_parser_encode(MessageParser* parser, lua_State* L, msgid_t ms
 	Message* message = parser->GetMessage(msgid);
 	CHECK_RETURN(message, nullptr, "not register message: %d", msgid);
 	message->Clear();
-
 	const Descriptor* descriptor = parser->FindMessageDescriptor(message);
 	CHECK_RETURN(descriptor, nullptr, "not found descriptor for message: %s", message->GetTypeName().c_str());
-
 	assert(message->ByteSize() == 0);
 	try {
 		if (!encodeDescriptor(parser, L, message, descriptor, message->GetReflection())) {
@@ -154,12 +152,17 @@ void* luaT_message_parser_encode(MessageParser* parser, lua_State* L, msgid_t ms
 	}
 
 	size_t byteSize = message->ByteSize();
-	
+
 	void* buf = ::malloc(size + byteSize);	
-	if (!message->SerializeToArray((char*)buf + size, byteSize)) {
-		Error("Serialize message: %s failure, byteSize: %ld", message->GetTypeName().c_str(), byteSize);
-		::free(buf);
-		return nullptr;
+	try {
+		if (!message->SerializeToArray((char*)buf + size, byteSize)) {
+			Error("Serialize message: %s failure, byteSize: %ld", message->GetTypeName().c_str(), byteSize);
+			::free(buf);
+			return nullptr;
+		}
+	}
+	catch(std::exception& e) {
+		CHECK_RETURN(false, nullptr, "SerializeToArray exception: %s", e.what());
 	}
 
 	size += byteSize;

@@ -4,7 +4,7 @@ local fd_client
 
 function slam_lua_event_start()
 	print("event start");
-	cc.response(fd_client, 1, {
+	local rc = cc.response(fd_client, 1, {
 		value_int32 = -1,
 		value_uint32 = 1,
 		value_int64 = -1234567890,
@@ -27,6 +27,7 @@ function slam_lua_event_start()
 			gender = 1
 		}
 	})
+	assert(rc)
 end
 
 function slam_lua_event_stop()

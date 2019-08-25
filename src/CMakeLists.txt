@@ -8,7 +8,7 @@ set(CMAKE_BUILD_TYPE "Debug")#Release
 
 set(DEPS_DIR ${PROJECT_SOURCE_DIR}/lib)
 set(LUA_DIR ${DEPS_DIR}/luajit-2.0.5)
-set(PROTOBUF_DIR ${DEPS_DIR}/protobuf-3.6.1)
+set(PROTOBUF_DIR ${DEPS_DIR}/protobuf-3.3.0)
 set(MYSQL_DIR ${DEPS_DIR}/mysql-5.6.37)
 set(MESSAGE_BUILDER_DIR ${PROJECT_SOURCE_DIR}/MessageBuilder)
 set(TCMALLOC_DIR ${DEPS_DIR}/gperftools-2.7)
@@ -36,5 +36,5 @@ target_link_libraries(${target} ${LUA_DIR}/lib/libluajit-5.1.a)
 target_link_libraries(${target} ${PROTOBUF_DIR}/lib/libprotobuf.a)
 target_link_libraries(${target} ${MYSQL_DIR}/lib/libmysqlclient.a)
 #target_link_libraries(${target} ${CURL_DIR}/lib/libcurl.a)
-target_link_libraries(${target} ${TCMALLOC_DIR}/lib/libtcmalloc_minimal.a) 
+#target_link_libraries(${target} ${TCMALLOC_DIR}/lib/libtcmalloc_minimal.a) 
 

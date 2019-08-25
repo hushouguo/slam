@@ -68,6 +68,7 @@ bool slam_protocol_decode(slam_runnable_t* runnable, const slam_message_t* messa
 slam_message_t* slam_protocol_encode(slam_runnable_t* runnable, SOCKET fd, msgid_t msgid) {
     size_t head_size = sizeof(slam_message_t) + sizeof(slam_rawmessage_t);
     size_t size = head_size; // reserved size
+	log_trace("func: %s, fd: %d, msgid: %d", __FUNCTION__, fd, msgid);
     void* buf = MessageBuilderEncode(
                         runnable->lua->L,
                         msgid,
@@ -75,7 +76,7 @@ slam_message_t* slam_protocol_encode(slam_runnable_t* runnable, SOCKET fd, msgid
                     );
     CHECK_RETURN(buf, nullptr, "EncodeMessage: %d error, size: %ld", msgid, size);
     assert(size >= head_size);
-    //Trace("EncodeMessage: %d, from %ld to %ld", msgid, head_size, size);
+    log_trace("EncodeMessage: %d, from %ld to %ld", msgid, head_size, size);
     slam_message_t* message = (slam_message_t *) buf;
     message->fd = fd;
     message->type = MESSAGE_TYPE_PROTOBUF_PACKAGE;

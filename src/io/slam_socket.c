@@ -245,6 +245,7 @@ bool slam_socket_poll_read(slam_socket_t* socket, slam_message_queue_t* readmq) 
             if (!slam_message_queue_push_back(readmq, socket->readmessage)) {
                 return false; // readmq is full
             }
+			//log_trace("socket: %d read a message: %d,%ld", socket->fd, socket->readmessage->type, socket->readmessage->bufsize);
             socket->readmessage = nullptr;
         }
         else {
@@ -297,6 +298,7 @@ bool slam_socket_poll_write(slam_socket_t* socket) {
             message->bytesize += len;
             assert(message->bytesize <= message->bufsize);
     	    if (message->bytesize == message->bufsize) {
+				//log_trace("socket: %d write a message: %d,%ld", socket->fd, message->type, message->bufsize);
     	        slam_message_queue_pop_front(socket->sendmq);
     	        slam_message_delete(message);
     	    }

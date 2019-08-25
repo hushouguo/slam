@@ -12,7 +12,7 @@ set(LIBRARY_OUTPUT_PATH .)
 
 set(DEPS_DIR ${PROJECT_SOURCE_DIR}/../lib)
 set(LUA_DIR ${DEPS_DIR}/luajit-2.0.5)
-set(PROTOBUF_DIR ${DEPS_DIR}/protobuf-3.6.1)
+set(PROTOBUF_DIR ${DEPS_DIR}/protobuf-3.3.0)
 
 add_definitions(-Wall -Werror -D_GNU_SOURCE -DLINUX -DX64 -fstack-protector-all -D_LARGEFILE64_SOURCE -DDEBUG -std=c++11 -rdynamic)
 

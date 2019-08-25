@@ -106,6 +106,7 @@ void slam_io_thread_do_message(slam_io_thread_t* io, int timeout) {
 	if (__slam_main->halt) {
 	    return; // after waking up, check the exit mark first
 	}
+	//log_trace("io thread wakeup:%ld ----------- ", events_number);
 	for (i = 0; i < events_number; ++i) {
 		slam_poll_event* event = &events[i];
 		if (event->events & EPOLLERR) {

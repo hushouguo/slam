@@ -24,7 +24,7 @@ slam_lua_t* slam_lua_new(size_t stack_size) {
 	lua->stack_size = stack_size;
 	slam_lua_reg_namespace(lua, SLAM_LUA_REGISTER_NAMESPACE);
 	slam_lua_reg_std_func(lua);
-	slam_lua_reg_db_func(lua);
+	//slam_lua_reg_db_func(lua);
 	return lua;
 }
 

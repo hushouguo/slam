@@ -32,6 +32,7 @@
 #include <sys/time.h>
 #include <locale.h>
 #include <execinfo.h>
+#include <malloc.h>
 
 #include "lua.h"
 #include "lauxlib.h"
@@ -39,7 +40,7 @@
 #include "luajit.h"
 
 // tcmalloc-2.6.1
-#include <gperftools/tcmalloc.h>
+//#include <gperftools/tcmalloc.h>
 
 // mysql 5.6.37
 #include "mysql.h"
