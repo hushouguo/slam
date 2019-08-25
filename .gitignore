@@ -1,0 +1,11 @@
+CMakeCache.txt
+CMakeFiles
+Makefile
+cmake_install.cmake
+libmessagebuilder.a
+lib/gperftools-2.7/
+lib/luajit-2.0.5/
+lib/protobuf-3.3.0/
+lib/protobuf-3.6.1/
+slam
+slam.log

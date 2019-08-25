@@ -10,10 +10,10 @@
 static int cc_newserver(lua_State* L) {
 	int args = lua_gettop(L);
 	CHECK_RETURN(args == 2, 0, "`%s` lack args: %d", __FUNCTION__, args);
-	CHECK_RETURN(lua_isstring(L, -args), 0, "[%s]", lua_typename(L, lua_type(L, -args)));
-	CHECK_RETURN(lua_isnumber(L, -(args - 1)), 0, "[%s]", lua_typename(L, lua_type(L, -(args - 1))));
-	const char* address = lua_tostring(L, -args);
-	int port = lua_tointeger(L, -(args - 1));
+	CHECK_RETURN(lua_isstring(L, 1), 0, "[%s]", lua_typename(L, lua_type(L, 1)));
+	CHECK_RETURN(lua_isnumber(L, 2), 0, "[%s]", lua_typename(L, lua_type(L, 2)));
+	const char* address = lua_tostring(L, 1);
+	int port = lua_tointeger(L, 2);
 	SOCKET fd = slam_io_newserver(__slam_main->io, address, port);
 	lua_pushinteger(L, fd);
 	return 1;
@@ -24,10 +24,10 @@ static int cc_newserver(lua_State* L) {
 static int cc_newclient(lua_State* L) {
 	int args = lua_gettop(L);
 	CHECK_RETURN(args == 2, 0, "`%s` lack args: %d", __FUNCTION__, args);
-	CHECK_RETURN(lua_isstring(L, -args), 0, "[%s]", lua_typename(L, lua_type(L, -args)));
-	CHECK_RETURN(lua_isnumber(L, -(args - 1)), 0, "[%s]", lua_typename(L, lua_type(L, -(args - 1))));
-	const char* address = lua_tostring(L, -args);
-	int port = lua_tointeger(L, -(args - 1));
+	CHECK_RETURN(lua_isstring(L, 1), 0, "[%s]", lua_typename(L, lua_type(L, 1)));
+	CHECK_RETURN(lua_isnumber(L, 2), 0, "[%s]", lua_typename(L, lua_type(L, 2)));
+	const char* address = lua_tostring(L, 1);
+	int port = lua_tointeger(L, 2);
 	SOCKET fd = slam_io_newclient(__slam_main->io, address, port, SOCKET_CONNECT_TIMEOUT);
 	lua_pushinteger(L, fd);
 	return 1;
@@ -38,17 +38,20 @@ static int cc_newclient(lua_State* L) {
 static int cc_response(lua_State* L) {
 	int args = lua_gettop(L);
 	CHECK_RETURN(args == 3, 0, "`%s` lack args:%d", __FUNCTION__, args);
-	CHECK_RETURN(lua_isnumber(L, -args), 0, "[%s]", lua_typename(L, lua_type(L, -args)));
-	CHECK_RETURN(lua_isnumber(L, -(args - 1)), 0, "[%s]", lua_typename(L, lua_type(L, -(args - 1))));
-	CHECK_RETURN(lua_istable(L, -(args - 2)), 0, "[%s]", lua_typename(L, lua_type(L, -(args - 2))));	
-	SOCKET fd = lua_tointeger(L, -args);
-	msgid_t msgid = lua_tointeger(L, -(args - 1));
+	CHECK_RETURN(lua_isnumber(L, 1), 0, "[%s]", lua_typename(L, lua_type(L, 1)));
+	CHECK_RETURN(lua_isnumber(L, 2), 0, "[%s]", lua_typename(L, lua_type(L, 2)));
+	CHECK_RETURN(lua_istable(L, 3), 0, "[%s]", lua_typename(L, lua_type(L, 3)));	
+	SOCKET fd = lua_tointeger(L, 1);
+	msgid_t msgid = lua_tointeger(L, 2);
+	log_trace("func: %s", __FUNCTION__);
 	slam_message_t* message = slam_protocol_encode(__slam_main->runnable, fd, msgid);
-	bool rc = false;
 	if (message) {
-	    rc = slam_io_response(__slam_main->io, message);
+	    slam_io_response(__slam_main->io, message);
 	}
-	lua_pushboolean(L, rc);
+	else {
+		log_error("protocol encode error");
+	}
+	lua_pushboolean(L, message != nullptr);
 	return 1;
 }
 
@@ -57,8 +60,8 @@ static int cc_response(lua_State* L) {
 static int cc_closesocket(lua_State* L) {
 	int args = lua_gettop(L);
 	CHECK_RETURN(args == 1, 0, "`%s` lack args:%d", __FUNCTION__, args);
-	CHECK_RETURN(lua_isnumber(L, -args), 0, "[%s]", lua_typename(L, lua_type(L, -args)));
-	SOCKET fd = lua_tointeger(L, -args);
+	CHECK_RETURN(lua_isnumber(L, 1), 0, "[%s]", lua_typename(L, lua_type(L, 1)));
+	SOCKET fd = lua_tointeger(L, 1);
 	slam_io_closesocket(__slam_main->io, fd);
 	return 0;
 }
@@ -68,8 +71,8 @@ static int cc_closesocket(lua_State* L) {
 static int cc_loadmsg(lua_State* L) {
 	int args = lua_gettop(L);
 	CHECK_RETURN(args == 1, 0, "`%s` lack args:%d", __FUNCTION__, args);
-	CHECK_RETURN(lua_isstring(L, -args), 0, "[%s]", lua_typename(L, lua_type(L, -args)));
-	const char* filename = lua_tostring(L, -args);
+	CHECK_RETURN(lua_isstring(L, 1), 0, "[%s]", lua_typename(L, lua_type(L, 1)));
+	const char* filename = lua_tostring(L, 1);
 	bool rc = slam_protocol_load_descriptor(__slam_main->runnable->protocol, filename);
 	lua_pushboolean(L, rc);
 	return 1;
@@ -80,16 +83,16 @@ static int cc_loadmsg(lua_State* L) {
 static int cc_bindmsg(lua_State* L) {
 	int args = lua_gettop(L);
 	CHECK_RETURN(args == 3, 0, "`%s` lack args:%d", __FUNCTION__, args);
-	CHECK_RETURN(lua_isnumber(L, -args), 0, "[%s]", lua_typename(L, lua_type(L, -args)));
-	CHECK_RETURN(lua_isstring(L, -(args - 1)), 0, "[%s]", lua_typename(L, lua_type(L, -(args - 1))));
-	CHECK_RETURN(lua_isfunction(L, -(args - 2)), 0, "[%s]", lua_typename(L, lua_type(L, -(args - 2))));
+	CHECK_RETURN(lua_isnumber(L, 1), 0, "[%s]", lua_typename(L, lua_type(L, 1)));
+	CHECK_RETURN(lua_isstring(L, 2), 0, "[%s]", lua_typename(L, lua_type(L, 2)));
+	CHECK_RETURN(lua_isfunction(L, 3), 0, "[%s]", lua_typename(L, lua_type(L, 3)));
 	
-	msgid_t msgid = lua_tointeger(L, -args);
-	const char* typename = lua_tostring(L, -(args - 1));
+	msgid_t msgid = lua_tointeger(L, 1);
+	const char* typename = lua_tostring(L, 2);
 	const char* ref_name = slam_protocol_reg_message(__slam_main->runnable->protocol, msgid, typename);
 	if (ref_name != nullptr) {
 	    lua_pushstring(L, ref_name);    // key: ref_name
-	    lua_pushvalue(L, -(args - 1));  // value: lua function
+	    lua_pushvalue(L, 3);  // value: lua function
 	    lua_settable(L, LUA_REGISTRYINDEX);
 	}
 		
@@ -102,38 +105,38 @@ static int cc_bindmsg(lua_State* L) {
 static int cc_newtimer(lua_State* L) {
 	int args = lua_gettop(L);
 	CHECK_RETURN(args == 4, 0, "`%s` lack args:%d", __FUNCTION__, args);
-	CHECK_RETURN(lua_isnumber(L, -args), 0, "[%s]", lua_typename(L, lua_type(L, -args)));
-	CHECK_RETURN(lua_isboolean(L, -(args - 1)), 0, "[%s]", lua_typename(L, lua_type(L, -(args - 1))));
+	CHECK_RETURN(lua_isnumber(L, 1), 0, "[%s]", lua_typename(L, lua_type(L, 1)));
+	CHECK_RETURN(lua_isboolean(L, 2), 0, "[%s]", lua_typename(L, lua_type(L, 2)));
 	
-	lua_Integer milliseconds = lua_tointeger(L, -args);
-	bool forever = lua_toboolean(L, -(args - 1));
+	lua_Integer milliseconds = lua_tointeger(L, 1);
+	bool forever = lua_toboolean(L, 2);
 
 	slam_lua_value_t* ctx = slam_lua_value_new();
-	if (lua_isboolean(L, -(args - 2))) {
-		slam_lua_value_set_boolean(ctx, lua_toboolean(L, -(args - 2)));
+	if (lua_isboolean(L, 3)) {
+		slam_lua_value_set_boolean(ctx, lua_toboolean(L, 3));
 	}
-	else if (lua_isnumber(L, -(args - 2))) {
-		lua_Number value = lua_tonumber(L, -(args - 2));
+	else if (lua_isnumber(L, 3)) {
+		lua_Number value = lua_tonumber(L, 3);
 		if (slam_is_integer(value)) {
-			slam_lua_value_set_integer(ctx, lua_tointeger(L, -(args - 2)));
+			slam_lua_value_set_integer(ctx, lua_tointeger(L, 3));
 		}
 		else {
-			slam_lua_value_set_number(ctx, lua_tonumber(L, -(args - 2)));
+			slam_lua_value_set_number(ctx, lua_tonumber(L, 3));
 		}
 	}
-	else if (lua_isstring(L, -(args - 2))) {
-		slam_lua_value_set_string(ctx, lua_tostring(L, -(args - 2)));
+	else if (lua_isstring(L, 3)) {
+		slam_lua_value_set_string(ctx, lua_tostring(L, 3));
 	}
-	else if (lua_isnil(L, -(args - 2))) {
+	else if (lua_isnil(L, 3)) {
 		slam_lua_value_set_nil(ctx);
 	}
 	else {
-		log_error("not support ctx type: %s", lua_typename(L, lua_type(L, -(args - 2))));
+		log_error("not support ctx type: %s", lua_typename(L, lua_type(L, 3)));
 	}
 	
-	CHECK_RETURN(lua_isfunction(L, -(args - 3)), 0, "[%s]", lua_typename(L, lua_type(L, -(args - 3))));
+	CHECK_RETURN(lua_isfunction(L, 4), 0, "[%s]", lua_typename(L, lua_type(L, 4)));
 	
-	lua_pushvalue(L, -(args - 3));
+	lua_pushvalue(L, 4);
 	int ref = slam_lua_ref(__slam_main->runnable->lua);
 	slam_timer_t* timer_node = slam_runnable_add_timer(__slam_main->runnable, milliseconds, forever, ref, ctx);
 	
@@ -146,8 +149,8 @@ static int cc_newtimer(lua_State* L) {
 static int cc_remove_timer(lua_State* L) {
 	int args = lua_gettop(L);
 	CHECK_RETURN(args == 1, 0, "`%s` lack args:%d", __FUNCTION__, args);
-	CHECK_RETURN(lua_isnumber(L, -args), 0, "[%s]", lua_typename(L, lua_type(L, -args)));
-	lua_Integer ref = lua_tointeger(L, -args);
+	CHECK_RETURN(lua_isnumber(L, 1), 0, "[%s]", lua_typename(L, lua_type(L, 1)));
+	lua_Integer ref = lua_tointeger(L, 1);
 	slam_runnable_remove_timer(__slam_main->runnable, ref);
 	return 0;
 }
